@@ -20,7 +20,10 @@
  *    2020-01-04  Simon Burke    Started adding Thermostat capability
  *    2020-02-09  Simon Burke    Thermostat capability and refreshing of state from MELCloud appear to be working
  *                               Starting work on splitting into Parent / Child Driver
- *
+ *    2020-02-16  Simon Burke    Adjusted code to use new parent driver logging, i.e. Debug, Info and Error Logging methods
+ *                               Ensured all attributes were setup when device is created
+ *                               Called the on() method in various other commands, ensuring the unit is turned on first
+ *                               Various minor code refinements
  * 
  */
 metadata {
@@ -93,12 +96,18 @@ def initialize() {
     sendEvent(name: 'supportedThermostatFanModes', value: ['Low', 'Mid', 'High', 'Auto'])
     sendEvent(name: 'supportedThermostatModes', value: ['heat', 'dry', 'cool', 'fan', 'auto', 'off'])
     
+    if ("${device.currentValue("coolingSetpoint")}" > 40)
+    { sendEvent(name: "coolingSetpoint", value: "23.0")}
+    
+    if ("${device.currentValue("heatingSetpoint")}" > 40)
+    { sendEvent(name: "heatingSetpoint", value: "23.0")}
+    
 }
 
 
 
 def getRooms() {
-    //retrieves current stat information for the ac unit
+    //retrieves current status information for the ac unit
     
     def vUnitId = ""
     def vRoom = ""
@@ -120,11 +129,11 @@ def getRooms() {
         contentType: "application/json",
         body : bodyJson
 	]
-    log.debug("${bodyJson}, ${headers.Cookie}") 
+    parent.debugLog("${bodyJson}, ${headers.Cookie}") 
 	try {
         
         httpPost(postParams) { resp -> 
-            log.debug("GetRooms: Initial data returned from rooms.aspx: ${resp.data}") 
+            parent.debugLog("GetRooms: Initial data returned from rooms.aspx: ${resp.data}") 
             resp?.data?.each { building -> // Each Building
                                 building?.units?.each // Each AC Unit / Room
                                   { acUnit ->
@@ -135,7 +144,7 @@ def getRooms() {
                                       vMode     = acUnit.mode
                                       vTemp     = acUnit.temp
                                       vSetTemp  = acUnit.settemp
-                                      //log.debug("testing Update")
+                                      
                                       if ("${vUnitId}" == "${device.currentValue("unitId")}") {
                                           
                                           if (vPower == "q") {vModeDesc = "off"}
@@ -160,15 +169,15 @@ def getRooms() {
                                                ||"${vModeDesc}" == "auto")
                                             { setHeatingSetpoint(vSetTemp) }
 
-                                          lastRunningMode = vModeDesc
-                                          log.debug("GetRooms: Interpretted results - ${vRoom}(${vUnitId}) - Power: ${vPower}, Mode: ${vModeDesc}(${vMode}), Temp: ${vTemp}, Set Temp: ${vSetTemp}" ) 
+                                          sendEvent(name: "lastRunningMode", value: "${vModeDesc}")
+                                          parent.debugLog("GetRooms: Interpretted results - ${vRoom}(${vUnitId}) - Power: ${vPower}, Mode: ${vModeDesc}(${vMode}), Temp: ${vTemp}, Set Temp: ${vSetTemp}" ) 
                                       } 
                                   } 
                 }
             }
     }   
 	catch (Exception e) {
-        log.debug "GetRooms : Unable to query Mitsubishi Electric cloud: ${e}"
+        parent.errorLog("GetRooms : Unable to query Mitsubishi Electric cloud: ${e}")
 	}
 }
 
@@ -188,19 +197,19 @@ def unitCommand(command) {
         contentType: "application/json",
         body : bodyJson
 	]
-    log.debug("${bodyJson}, ${headers.Cookie}")       
+    parent.debugLog("${bodyJson}, ${headers.Cookie}")       
 	try {
         
-        httpPost(postParams) { resp -> log.debug("UnitCommand (${command}): Response - ${resp.data}") }
+        httpPost(postParams) { resp -> parent.debugLog("UnitCommand (${command}): Response - ${resp.data}") }
     }
 	catch (Exception e) {
-        log.debug("UnitCommand (${command}): Unable to query Mitsubishi Electric cloud: ${e}")
+        parent.errorLog("UnitCommand (${command}): Unable to query Mitsubishi Electric cloud: ${e}")
 	}
 }
 
 
 //Unsupported commands from Thermostat capability
-def emergencyHeat() { }
+def emergencyHeat() { parent.debugLog("Emergency Heat Command not supported by MELCloud") }
 
 
 //Fan Adjustments
@@ -218,7 +227,7 @@ def fanCirculate() {
 //fanOn - see modes section
 
 //Scheduling Adjustments - Unsupported at present
-def setSchedule(JSON_OBJECT) {}
+def setSchedule(JSON_OBJECT) {parent.debugLog("setSchedule not currently supported by MELCloud")}
 
 
 
@@ -229,18 +238,25 @@ def setSchedule(JSON_OBJECT) {}
 def setCoolingSetpoint(temperature) {
 
     sendEvent(name: "coolingSetpoint", value : temperature)
-    
+    parent.infoLog("${device.label} - Cooling Set Point adjusted to ${temperature}")
+    if (device.currentValue("thermostatOperatingState") == 'cool') {
+        setTemperature(temperature.toDecimal())
+    }
 }
 
 def setHeatingSetpoint(temperature) {
 
     sendEvent(name: "heatingSetpoint", value : temperature)
+    parent.infoLog("${device.label} - Heating Set Point adjusted to ${temperature}")
+    if (device.currentValue("thermostatOperatingState") == 'heat') {
+        setTemperature(temperature.toDecimal())
+    }
 }
 
 def setThermostatFanMode(fanmode) {
     
-    log.debug("setThermostatFanMode: Fan Mode set to ${fanmode}")
     sendEvent(name: "thermostatFanMode", value : fanmode)
+    parent.infoLog("${device.label} - Fan Mode set to ${fanmode}")
 }
 
 
@@ -250,7 +266,8 @@ def setThermostatMode(thermostatmodeX) {
         
         sendEvent(name: "thermostatMode", value : thermostatmodeX)
         sendEvent(name: "thermostatOperatingState", value : thermostatmodeX)
-        log.debug("setThermostatMode: Thermostat Mode Set to ${thermostatmodeX}")
+        parent.infoLog("${device.label} - Thermostat Mode Set to ${thermostatmodeX}")
+        
         if (thermostatmodeX == 'dry') { dry() }
         if (thermostatmodeX == 'cool') { cool() }
         if (thermostatmodeX == 'heat') { heat() }
@@ -261,11 +278,13 @@ def setThermostatMode(thermostatmodeX) {
 
 
 def setTemperature(temperature) {
+    parent.debugLog("setTemperature: Adjusting Temperature to ${temperature}")
     
     unitCommand("TS${temperature}")
-    //if (device.currentValue("thermostatOperatingState") == 'cool') { setCoolingSetPoint(temperature.toDecimal()) }
-    //if (device.currentValue("thermostatOperatingState") == 'heat') { setHeatingSetPoint(temperature.toDecimal()) }
     sendEvent(name: "thermostatSetPoint", value: temperature.toDecimal())
+    parent.infoLog("${device.label} - Temperature adjusted to ${temperature}")
+    
+    
 }
 
 
@@ -290,28 +309,28 @@ def off() {
 //"MD8" - Auto
 
 def auto() {
-
+    on()
     unitCommand("MD8")
 }
 
 def fanOn() {
-
+    on()
     unitCommand("MD7")
 }
 
 def cool() {
-
+    on()
     unitCommand("MD3")
     setTemperature(device.currentValue("coolingSetpoint"))
 }
 
 def dry() {
-
+    on()
     unitCommand("MD2")    
 }
 
 def heat() {
-
+    on()
     unitCommand("MD1")
     setTemperature(device.currentValue("heatingSetpoint"))
 }
