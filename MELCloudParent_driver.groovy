@@ -17,7 +17,7 @@
  *    Date        Who            What
  *    ----        ---            ----
  *    2020-02-09  Simon Burke    Created Parent Driver
- *
+ *    2020-02-16  Simon Burke    Added Debug, Info and Error Logging settings and methods
  * 
  */
 metadata {
@@ -32,13 +32,16 @@ metadata {
 		input(name: "BaseURL", type: "string", title:"MELCloud Base URL", description: "Enter the base URL for the Mitsubishi Electric Cloud Service (MELCloud)", defaultValue: "https://api.melview.net/api/", required: true, displayDuringSetup: true)
 		input(name: "UserName", type: "string", title:"MELCloud Username / Email", description: "Username / Email used to authenticate on Mitsubishi Electric cloud", displayDuringSetup: true)
 		input(name: "Password", type: "password", title:"MELCloud Account Password", description: "Password for authenticating on Mitsubishi Electric cloud", displayDuringSetup: true)
-        
+        input(name: "DebugLogging", type: "bool", title:"Enable Debug Logging", displayDuringSetup: true, defaultValue: false)
+        input(name: "ErrorLogging", type: "bool", title:"Enable Error Logging", displayDuringSetup: true, defaultValue: true)
+        input(name: "InfoLogging", type: "bool", title:"Enable Description Text (Info) Logging", displayDuringSetup: true, defaultValue: false)
     }
 
 }
 
 
 def refresh() {
+  debugLog("refresh: Refresh process called")
   // Authenticate with MEL Cloud Service and
   //   record Authentication Code for use in future communications  
   setAuthCode()
@@ -53,7 +56,7 @@ def initialize() {
 }
 
 def createChildACUnits() {
-    //retrieves current stat information for the ac unit
+    //retrieves current status information for the ac unit
     
     def vUnitId = ""
     def vRoom = ""
@@ -70,32 +73,32 @@ def createChildACUnits() {
         contentType: "application/json",
         body : bodyJson
 	]
-    log.debug("${bodyJson}, ${headers.Cookie}")       
+    debugLog("${bodyJson}, ${headers.Cookie}")       
 	try {
         
         httpPost(postParams) { resp -> 
-            log.debug("GetRooms: Initial data returned from rooms.aspx: ${resp.data}") 
+            debugLog("GetRooms: Initial data returned from rooms.aspx: ${resp.data}") 
             resp?.data?.each { building -> // Each Building
                                 building?.units?.each // Each AC Unit / Room
                                   { acUnit -> 
                                       vRoom     = acUnit.room
                                       vUnitId   = acUnit.unitid
                                       
-                                      createChildDevice("${vUnitId}", "${vRoom}", "AC")
                                       def childDevice = findChildDevice("${vUnitId}", "AC")
-    
-                                      if (childDevice != null) {
+                                      if (childDevide == null) {
+                                          createChildDevice("${vUnitId}", "${vRoom}", "AC")
+                                          childDevice = findChildDevice("${vUnitId}", "AC")
                                           childDevice.sendEvent(name: "unitId", value: "${vUnitId}")
-                                          childDevice.refresh()
-	                                  }
-                                      //log.debug("GetRooms: Interpretted results - ${vRoom}(${vUnitId}) - Power: ${vPower}, Mode: ${vModeDesc}(${vMode}), Temp: ${vTemp}, Set Temp: ${vSetTemp}" ) 
+                                      }
+                                      childDevice.refresh()
+                                      debugLog("GetRooms: Interpretted results - ${vRoom}(${vUnitId}) - Power: ${vPower}, Mode: ${vModeDesc}(${vMode}), Temp: ${vTemp}, Set Temp: ${vSetTemp}" ) 
                                        
                                   } 
-                }
-            }
+                             }
+                           }
     }   
 	catch (Exception e) {
-        log.debug "GetRooms : Unable to query Mitsubishi Electric cloud: ${e}"
+        log.error "GetRooms : Unable to query Mitsubishi Electric cloud: ${e}"
 	}
 }
 
@@ -133,12 +136,12 @@ def setAuthCode() {
             }
             
             sendEvent(name: "authCode", value : newAuthCode)
-            
+            debugLog("setAuthCode: New authentication code value has been set")
         }
             
 	}
 	catch (Exception e) {
-        log.debug "setAuthCode: Unable to query Mitsubishi Electric cloud: ${e}"
+        errorLog("setAuthCode: Unable to query Mitsubishi Electric cloud: ${e}")
 	}
 
 }
@@ -155,14 +158,28 @@ def findChildDevice(childDeviceId, childDeviceType) {
 def getBaseURL() { return BaseURL }
 
 def createChildDevice(childDeviceId, childDeviceName, childDeviceType) {
-    log.debug("createChildDevice: Creating Child Device: ${childDeviceId}, ${childDeviceName}, ${childDeviceType}")
+    debugLog("createChildDevice: Creating Child Device: ${childDeviceId}, ${childDeviceName}, ${childDeviceType}")
     
 	def childDevice = findChildDevice(childDeviceId, childDeviceType)
     
     if (childDevice == null) {
         childDevice = addChildDevice("simnet", "MELCloud AC Unit", deriveChildDNI(childDeviceId, childDeviceType), [label: "${device.displayName} - ${childDeviceName}"])
+        infoLog("createChildDevice: New MEL Air Conditioning Child Device created -  ${device.displayName} - ${childDeviceName}")
 	}
     else {
-      log.debug("createChildDevice: child device ${childDevice.deviceNetworkId} already exists")
+      debugLog("createChildDevice: child device ${childDevice.deviceNetworkId} already exists")
 	}
+}
+
+//Utility methods
+def debugLog(debugMessage) {
+	if (DebugLogging == true) {log.debug(debugMessage)}	
+}
+
+def errorLog(errorMessage) {
+    if (ErrorLogging == true) { log.error(errorMessage)}  
+}
+
+def infoLog(infoMessage) {
+    if(InfoLogging == true) {log.info(infoMessage)}    
 }
