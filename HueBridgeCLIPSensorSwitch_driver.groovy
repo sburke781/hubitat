@@ -49,6 +49,7 @@ def toggleOff() {
 }
 
 def on() {
+	sendEvent(name: "switch", value: "on", isStateChange: true)
 	runCmd(1)
 }
 
