@@ -22,8 +22,9 @@
  *                               Starting work on splitting into Parent / Child Driver
  *    2020-02-16  Simon Burke    Adjusted code to use new parent driver logging, i.e. Debug, Info and Error Logging methods
  *                               Ensured all attributes were setup when device is created
- *                               Called the on() method in various other commands, ensuring the unit is turned on first
  *                               Various minor code refinements
+ *    2020-07-25  Simon Burke    Updated setHeating and setCoolingSetPoint methods to correct error showing up in logs
+ *                                    relating to toDecimal method not being available, changed to toBigDecimal
  * 
  */
 metadata {
@@ -240,7 +241,7 @@ def setCoolingSetpoint(temperature) {
     sendEvent(name: "coolingSetpoint", value : temperature)
     parent.infoLog("${device.label} - Cooling Set Point adjusted to ${temperature}")
     if (device.currentValue("thermostatOperatingState") == 'cool') {
-        setTemperature(temperature.toDecimal())
+        setTemperature(temperature.toBigDecimal())
     }
 }
 
@@ -249,7 +250,7 @@ def setHeatingSetpoint(temperature) {
     sendEvent(name: "heatingSetpoint", value : temperature)
     parent.infoLog("${device.label} - Heating Set Point adjusted to ${temperature}")
     if (device.currentValue("thermostatOperatingState") == 'heat') {
-        setTemperature(temperature.toDecimal())
+        setTemperature(temperature.toBigDecimal())
     }
 }
 
@@ -281,7 +282,7 @@ def setTemperature(temperature) {
     parent.debugLog("setTemperature: Adjusting Temperature to ${temperature}")
     
     unitCommand("TS${temperature}")
-    sendEvent(name: "thermostatSetPoint", value: temperature.toDecimal())
+    sendEvent(name: "thermostatSetPoint", value: temperature.toBigDecimal())
     parent.infoLog("${device.label} - Temperature adjusted to ${temperature}")
     
     
