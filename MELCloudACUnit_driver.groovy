@@ -25,6 +25,9 @@
  *                               Various minor code refinements
  *    2020-07-25  Simon Burke    Updated setHeating and setCoolingSetPoint methods to correct error showing up in logs
  *                                    relating to toDecimal method not being available, changed to toBigDecimal
+ *                               Split out setHeating and setCoolingSetpoint methods to put code to change state / attributes
+ *                                    in "adjust" methods, while set methods call these adjust methods and call the setTemperature
+ *                                    method to execute the command on the a/c
  * 
  */
 metadata {
@@ -157,18 +160,19 @@ def getRooms() {
                                               if (vMode == "8") {vModeDesc = "auto" }
                                           }
     
-                                          sendEvent(name: "temperature", value: "${vTemp}")
+                                          //sendEvent(name: "temperature", value: "${vTemp}")
                                           sendEvent(name: "thermostatOperatingState", value: "${vModeDesc}")
+                                          
                                           sendEvent(name: "thermostatMode", value: "${vModeDesc}")
                                           
                                           if (  "${vModeDesc}" == "cool"
                                              || "${vModeDesc}" == "dry"
                                              || "${vModeDesc}" == "auto")
-                                            { setCoolingSetpoint(vSetTemp) }
+                                            { adjustCoolingSetpoint(vSetTemp) }
 
                                           if (   "${vModeDesc}" == "heat"
                                                ||"${vModeDesc}" == "auto")
-                                            { setHeatingSetpoint(vSetTemp) }
+                                            { adjustHeatingSetpoint(vSetTemp) }
 
                                           sendEvent(name: "lastRunningMode", value: "${vModeDesc}")
                                           parent.debugLog("GetRooms: Interpretted results - ${vRoom}(${vUnitId}) - Power: ${vPower}, Mode: ${vModeDesc}(${vMode}), Temp: ${vTemp}, Set Temp: ${vSetTemp}" ) 
@@ -234,21 +238,45 @@ def setSchedule(JSON_OBJECT) {parent.debugLog("setSchedule not currently support
 
 //Temperature Adjustments
 
-
+def adjustCoolingSetpoint(temperature) {
+ 
+    if (device.currentValue("coolingSetpoint") != temperature) {
+        sendEvent(name: "coolingSetpoint", value : temperature)
+        parent.infoLog("adjustCoolingSetpoint:  Cooling Set Point adjusted to ${temperature} for ${device.label}")
+    }
+    
+    if (device.currentValue("thermostatSetpoint") != temperature) {
+        sendEvent(name: "thermostatSetpoint", value: temperature)
+        parent.infoLog("adjustCoolingSetpoint: Thermostat Set Point adjusted to ${temperature} for ${device.label}")
+    }
+}
 
 def setCoolingSetpoint(temperature) {
 
-    sendEvent(name: "coolingSetpoint", value : temperature)
-    parent.infoLog("${device.label} - Cooling Set Point adjusted to ${temperature}")
+    adjustCoolingSetpoint(temperature)
     if (device.currentValue("thermostatOperatingState") == 'cool') {
         setTemperature(temperature.toBigDecimal())
     }
 }
 
+def adjustHeatingSetpoint(temperature) {
+    
+    
+    if (device.currentValue("heatingSetpoint") != temperature.toBigDecimal()) {
+        sendEvent(name: "heatingSetpoint", value : temperature.toBigDecimal())
+        parent.infoLog("adjustHeatingSetpoint:  Heating Set Point adjusted to ${temperature.toBigDecimal()} for ${device.label}")
+    }
+    
+    if (device.currentValue("thermostatSetpoint") != temperature.toBigDecimal()) {
+        sendEvent(name: "thermostatSetpoint", value: temperature.toBigDecimal())
+        parent.infoLog("adjustHeatingSetpoint: Thermostat Set Point adjusted to ${temperature.toBigDecimal()} for ${device.label}")
+    }
+    
+}
+
 def setHeatingSetpoint(temperature) {
 
-    sendEvent(name: "heatingSetpoint", value : temperature)
-    parent.infoLog("${device.label} - Heating Set Point adjusted to ${temperature}")
+    adjustHeatingSetpoint(temperature)
     if (device.currentValue("thermostatOperatingState") == 'heat') {
         setTemperature(temperature.toBigDecimal())
     }
@@ -267,7 +295,7 @@ def setThermostatMode(thermostatmodeX) {
         
         sendEvent(name: "thermostatMode", value : thermostatmodeX)
         sendEvent(name: "thermostatOperatingState", value : thermostatmodeX)
-        parent.infoLog("${device.label} - Thermostat Mode Set to ${thermostatmodeX}")
+        parent.infoLog("setThermostatMode: Thermostat Mode Set to ${thermostatmodeX} for ${device.label}")
         
         if (thermostatmodeX == 'dry') { dry() }
         if (thermostatmodeX == 'cool') { cool() }
@@ -279,12 +307,10 @@ def setThermostatMode(thermostatmodeX) {
 
 
 def setTemperature(temperature) {
-    parent.debugLog("setTemperature: Adjusting Temperature to ${temperature}")
+    parent.debugLog("setTemperature: Adjusting Temperature to ${temperature} for ${device.label}")
     
     unitCommand("TS${temperature}")
-    sendEvent(name: "thermostatSetPoint", value: temperature.toBigDecimal())
-    parent.infoLog("${device.label} - Temperature adjusted to ${temperature}")
-    
+    parent.infoLog("${device.label} - Temperature adjusted to ${temperature} for ${device.label}")
     
 }
 
