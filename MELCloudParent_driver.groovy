@@ -130,13 +130,17 @@ def setAuthCode() {
             def newAuthCode = "";
             
             resp.getHeaders('Set-Cookie').each {
+                debugLog("setAuthCode: Cookie - ${it.value}")
                 def cookie = it.value.split(';')[0]
-			    if (cookie.startsWith('auth=')) newAuthCode = cookie.split('=')[1]
+                if (cookie.startsWith('auth=')) { newAuthCode = cookie.split('=')[1] }
                 
             }
             
-            sendEvent(name: "authCode", value : newAuthCode)
-            debugLog("setAuthCode: New authentication code value has been set")
+            if (newAuthCode != "") {
+                sendEvent(name: "authCode", value : newAuthCode)
+                debugLog("setAuthCode: New authentication code value has been set")
+            }
+            else {debugLog("setAuthCode: New authentication code was NOT set")}
         }
             
 	}
