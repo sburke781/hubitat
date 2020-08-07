@@ -1,5 +1,5 @@
 /**
- *  Mitsubishi Electric MELCloud AC Unit Child Driver
+ *  Mitsubishi Electric MELView AC Unit Child Driver
  *
  *  Copyright 2019 Simon Burke
  *
@@ -28,10 +28,12 @@
  *                               Split out setHeating and setCoolingSetpoint methods to put code to change state / attributes
  *                                    in "adjust" methods, while set methods call these adjust methods and call the setTemperature
  *                                    method to execute the command on the a/c
+ *    2020-08-08  Simon Burke    Adjusted name of driver to MELView AC Unit, MELCloud is actually the European version I am about
+ *                                    to implement
  * 
  */
 metadata {
-	definition (name: "MELCloud AC Unit", namespace: "simnet", author: "Simon Burke") {
+	definition (name: "MELView AC Unit", namespace: "simnet", author: "Simon Burke") {
         capability "Refresh"
         capability "Thermostat"
         
@@ -56,14 +58,14 @@ metadata {
         
         attribute "lastRunningMode",                "STRING"
         
-        //MELCloud specific commands:
+        //MELView specific commands:
         command "on"
         
         //Thermostat capability commands
         /*
         command "auto"
         command "cool"
-        command "emergencyHeat" //Unsupported in MELCloud
+        command "emergencyHeat" //Unsupported in MELView
         command "fanAuto"
         command "fanCirculate"
         command "fanOn"
@@ -77,7 +79,7 @@ metadata {
         command "setSchedule", [[name:"JSON_OBJECT", type: "JSON_OBJECT", description: "Enter the JSON for the schedule" ] ]
             // JSON_OBJECT (JSON_OBJECT) - JSON_OBJECT
 */
-        //Providing command with fan modes supported by MELCloud
+        //Providing command with fan modes supported by MELView
         //command "setThermostatFanMode", [[name:"fanmode*", type: "ENUM", description: "Pick a Fan Mode", constraints: ["Low", "Mid", "High", "Auto"] ] ]
                 // fanmode required (ENUM) - Fan mode to set
         
@@ -90,7 +92,7 @@ metadata {
 
 
 def refresh() {
-  // Retrieve current state information from MEL Cloud Service   
+  // Retrieve current state information from MELView Service   
   getRooms()
   initialize()
 }
@@ -182,12 +184,12 @@ def getRooms() {
             }
     }   
 	catch (Exception e) {
-        parent.errorLog("GetRooms : Unable to query Mitsubishi Electric cloud: ${e}")
+        parent.errorLog("GetRooms : Unable to query Mitsubishi Electric MELView: ${e}")
 	}
 }
 
 def unitCommand(command) {
-    // Re-usable method that submits a command to the MEL Cloud Service, based on the command text passed in
+    // Re-usable method that submits a command to the MELView Service, based on the command text passed in
     // See https://github.com/NovaGL/diy-melview for more details on commands and this API more generally
  
     def bodyJson = "{ \"unitid\": \"${device.currentValue("unitId", true)}\", \"v\": 2, \"commands\": \"${command}\", \"lc\": 1 }"
@@ -214,7 +216,7 @@ def unitCommand(command) {
 
 
 //Unsupported commands from Thermostat capability
-def emergencyHeat() { parent.debugLog("Emergency Heat Command not supported by MELCloud") }
+def emergencyHeat() { parent.debugLog("Emergency Heat Command not supported by MELView") }
 
 
 //Fan Adjustments
@@ -232,7 +234,7 @@ def fanCirculate() {
 //fanOn - see modes section
 
 //Scheduling Adjustments - Unsupported at present
-def setSchedule(JSON_OBJECT) {parent.debugLog("setSchedule not currently supported by MELCloud")}
+def setSchedule(JSON_OBJECT) {parent.debugLog("setSchedule not currently supported by MELView")}
 
 
 
