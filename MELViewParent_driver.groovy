@@ -1,5 +1,5 @@
 /**
- *  Mitsubishi Electric MELCloud Parent Driver
+ *  Mitsubishi Electric MELView Parent Driver
  *
  *  Copyright 2020 Simon Burke
  *
@@ -18,10 +18,11 @@
  *    ----        ---            ----
  *    2020-02-09  Simon Burke    Created Parent Driver
  *    2020-02-16  Simon Burke    Added Debug, Info and Error Logging settings and methods
+ *    2020-08-08  Simon Burke    Changed name to MELView instead of MELCloud, which is the Eurpoean version
  * 
  */
 metadata {
-	definition (name: "MELCloud Parent Driver", namespace: "simnet", author: "Simon Burke") {
+	definition (name: "MELView Parent Driver", namespace: "simnet", author: "Simon Burke") {
         
         capability "Refresh"
         
@@ -29,9 +30,9 @@ metadata {
 	}
 
 	preferences {
-		input(name: "BaseURL", type: "string", title:"MELCloud Base URL", description: "Enter the base URL for the Mitsubishi Electric Cloud Service (MELCloud)", defaultValue: "https://api.melview.net/api/", required: true, displayDuringSetup: true)
-		input(name: "UserName", type: "string", title:"MELCloud Username / Email", description: "Username / Email used to authenticate on Mitsubishi Electric cloud", displayDuringSetup: true)
-		input(name: "Password", type: "password", title:"MELCloud Account Password", description: "Password for authenticating on Mitsubishi Electric cloud", displayDuringSetup: true)
+		input(name: "BaseURL", type: "string", title:"MELView Base URL", description: "Enter the base URL for the Mitsubishi Electric MELView Service (MELCloud)", defaultValue: "https://api.melview.net/api/", required: true, displayDuringSetup: true)
+		input(name: "UserName", type: "string", title:"MELView Username / Email", description: "Username / Email used to authenticate on Mitsubishi Electric MELView", displayDuringSetup: true)
+		input(name: "Password", type: "password", title:"MELView Account Password", description: "Password for authenticating on Mitsubishi Electric MELView", displayDuringSetup: true)
         input(name: "DebugLogging", type: "bool", title:"Enable Debug Logging", displayDuringSetup: true, defaultValue: false)
         input(name: "ErrorLogging", type: "bool", title:"Enable Error Logging", displayDuringSetup: true, defaultValue: true)
         input(name: "InfoLogging", type: "bool", title:"Enable Description Text (Info) Logging", displayDuringSetup: true, defaultValue: false)
@@ -42,7 +43,7 @@ metadata {
 
 def refresh() {
   debugLog("refresh: Refresh process called")
-  // Authenticate with MEL Cloud Service and
+  // Authenticate with MELView Service and
   //   record Authentication Code for use in future communications  
   setAuthCode()
   
@@ -98,7 +99,7 @@ def createChildACUnits() {
                            }
     }   
 	catch (Exception e) {
-        log.error "GetRooms : Unable to query Mitsubishi Electric cloud: ${e}"
+        log.error "GetRooms : Unable to query Mitsubishi Electric MELView: ${e}"
 	}
 }
 
@@ -145,7 +146,7 @@ def setAuthCode() {
             
 	}
 	catch (Exception e) {
-        errorLog("setAuthCode: Unable to query Mitsubishi Electric cloud: ${e}")
+        errorLog("setAuthCode: Unable to query Mitsubishi Electric MELView: ${e}")
 	}
 
 }
@@ -167,7 +168,7 @@ def createChildDevice(childDeviceId, childDeviceName, childDeviceType) {
 	def childDevice = findChildDevice(childDeviceId, childDeviceType)
     
     if (childDevice == null) {
-        childDevice = addChildDevice("simnet", "MELCloud AC Unit", deriveChildDNI(childDeviceId, childDeviceType), [label: "${device.displayName} - ${childDeviceName}"])
+        childDevice = addChildDevice("simnet", "MELView AC Unit", deriveChildDNI(childDeviceId, childDeviceType), [label: "${device.displayName} - ${childDeviceName}"])
         infoLog("createChildDevice: New MEL Air Conditioning Child Device created -  ${device.displayName} - ${childDeviceName}")
 	}
     else {
