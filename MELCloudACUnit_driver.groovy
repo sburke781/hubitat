@@ -357,7 +357,7 @@ def applyResponseStatus(statusInfo) {
     def setTemp = statusInfo.settemp
     def setTempValue = convertTemperatureIfNeeded(statusInfo.settemp.toFloat(),"c",1)
     
-    //adjustSetTemperature(setTempValue)
+    adjustSetTemperature(setTempValue)
     //sendEvent(name: "coolingSetpoint" , value: setTempValue, unit: tempscaleUnit)
     //sendEvent(name: "heatingSetpoint" , value: setTempValue, unit: tempscaleUnit)
     //sendEvent(name: "thermostatSetpoint" , value: setTempValue, unit: tempscaleUnit)
@@ -495,12 +495,16 @@ def setThermostatMode(thermostatmodeX) { }
 
 def adjustSetTemperature(temperature) {
     
+    parent.debugLog("adjustSetTemperature: Adjusting Set Temperature to ${temperature}")
+    parent.debugLog("adjustSetTemperature: Checking if we are heating...")
     if (device.currentValue("thermostatOperatingState") == 'heating') {
         adjustHeatingSetpoint(temperature)
     }
+    parent.debugLog("adjustSetTemperature: Checking if we are cooling...")
     if (device.currentValue("thermostatOperatingState") == 'cooling') {
         adjustCoolingSetpoint(temperature)
     }
+    parent.debugLog("adjustSetTemperature: Changing set temperature attribute")
     sendEvent(name: "setTemperature", value: temperature.toBigDecimal())
 }
 
