@@ -82,7 +82,7 @@ metadata {
 
 def refresh() {
   // Retrieve current state information from MELCloud Service   
-  getRooms()
+  getStatusInfo()
   initialize()
 }
 
@@ -121,7 +121,7 @@ def getModeMap() {
 }
 
 
-def getRooms() {
+def getStatusInfo() {
     //retrieves current status information for the ac unit
     def statusInfo = [:]
     def bodyJson = "{ }"
@@ -140,12 +140,12 @@ def getRooms() {
         contentType: "application/json; charset=UTF-8",
         body : bodyJson
 	]
-    parent.debugLog("getRooms: Body = ${bodyJson}, Headers = ${headers}")       
+    parent.debugLog("getStatusInfo: Body = ${bodyJson}, Headers = ${headers}")       
 	try {
         
         httpGet(getParams) { resp ->
             
-            parent.debugLog("GetRooms: Initial data returned from ListDevices: ${resp.data}")
+            parent.debugLog("getStatusInfo: Initial data returned from ListDevices: ${resp.data}")
             
             statusInfo.unitid = "${resp?.data?.Structure?.Devices?.Device.DeviceID}".replace("[","").replace("]","")
             statusInfo.power = "${resp?.data?.Structure?.Devices?.Device.Power}".replace("[","").replace("]","")
@@ -303,7 +303,7 @@ Offline:false
         }
     }   
 	catch (Exception e) {
-        parent.errorLog "getRooms : Unable to query Mitsubishi Electric MELCloud: ${e}"
+        parent.errorLog "getStatusInfo : Unable to query Mitsubishi Electric MELCloud: ${e}"
 	}
 }
 
