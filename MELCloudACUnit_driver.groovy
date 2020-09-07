@@ -153,7 +153,7 @@ def getStatusInfo() {
             statusInfo.roomtemp = "${resp?.data?.Structure?.Devices?.Device.RoomTemperature}".replace("[","").replace("]","")
             statusInfo.settemp = "${resp?.data?.Structure?.Devices?.Device.SetTemperature}".replace("[","").replace("]","")
             
-            parent.debugLog("updating ${statusInfo.unitId}")  
+            parent.debugLog("updating ${statusInfo.unitid}")  
             applyResponseStatus(statusInfo)
             
             /*
@@ -448,7 +448,9 @@ def adjustSetTemperature(temperature) {
         adjustCoolingSetpoint(setTempValue)
     }
     parent.debugLog("adjustSetTemperature: Changing set temperature attribute")
-    sendEvent(name: "setTemperature", value: setTempValue)
+    if (device.currentValue("setTemperature") != setTempValue) {
+    	sendEvent(name: "setTemperature", value: setTempValue)
+    }
 }
 
 def setTemperature(temperature) {
@@ -475,7 +477,9 @@ def adjustRoomTemperature(temperature) {
   def roomtempValue = convertTemperatureIfNeeded(temperature.toFloat(),"c",1)	
   
   parent.debugLog("adjustRoomTemperature: Temperature provided = ${temperature}, Units = ${tempscaleunit}, Converted Value = ${roomtempvalue}")
-  sendEvent(name: "temperature", value: roomtempValue)
+  if (device.currentValue("temperature") != roomtempValue) {
+  	sendEvent(name: "temperature", value: roomtempValue)
+  }
 }
 
 //Power and State Adjustments
@@ -485,7 +489,9 @@ def adjustThermostatFanMode(fanmode) {
     parent.debugLog("adjustThermostatFanMode: Adjusting Fan Mode to ${fanmode}")
     if (fanmode != null) {
         def fanModeValue = fanModeMap[fanmode]
-    	sendEvent(name: "thermostatFanMode", value: fanModeValue)
+	if (device.currentValue("thermostatFanMode") != fanModeValue) {
+    		sendEvent(name: "thermostatFanMode", value: fanModeValue)
+	}
     }
 }
 
@@ -506,8 +512,9 @@ def adjustThermostatMode(thermostatmodeX, power) {
     }
 
     parent.debugLog("adjustThermostatMode: Parsed mode: ${vModeDesc}")
-    sendEvent(name: "thermostatMode", value: vModeDesc)
-	
+    if (device.currentValue("thermostatMode") != vModeDesc) {
+    	sendEvent(name: "thermostatMode", value: vModeDesc)
+    }
 }
 
 def setThermostatMode(thermostatmodeX) {
@@ -530,10 +537,10 @@ def adjustThermostatOperatingState(thermostatModeX) {
     }
     
     parent.debugLog("adjustThermostatOperatingState: OperatingState: ${operatingState}")
-    if (operatingState != null) {
+    if (operatingState != null && device.currentValue("adjustThermostatOperatingState") != operatingState) {
         sendEvent(name: "adjustThermostatOperatingState", value: operatingState)
-        if (operatingState != "idle") {
-            sendEvent(name: "adjustLastRunningMode", value: thermostatModeX)
+        if (operatingState != "idle" && device.currentValue("lastRunningMode") != thermostatModeX) {
+            sendEvent(name: "lastRunningMode", value: thermostatModeX)
         }
     }
 	
