@@ -472,7 +472,7 @@ def setTemperature(temperature) {
 def adjustRoomTemperature(temperature) {
 
   def tempscaleUnit = "°${location.temperatureScale}"
-  def roomtempValue = convertTemperatureIfNeeded(roomtempValue.toFloat(),"c",1)	
+  def roomtempValue = convertTemperatureIfNeeded(temperature.toFloat(),"c",1)	
   
   parent.debugLog("adjustRoomTemperature: Temperature provided = ${temperature}, Units = ${tempscaleunit}, Converted Value = ${roomtempvalue}")
   sendEvent(name: "temperature", value: roomtempValue)
