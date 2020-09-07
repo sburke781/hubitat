@@ -496,11 +496,12 @@ def setThermostatMode(thermostatmodeX) { }
 def adjustSetTemperature(temperature) {
     
     if (device.currentValue("thermostatOperatingState") == 'heating') {
-        setHeatingSetpoint(temperature)
+        adjustHeatingSetpoint(temperature)
     }
     if (device.currentValue("thermostatOperatingState") == 'cooling') {
-        setCoolingSetpoint(temperature)
+        adjustCoolingSetpoint(temperature)
     }
+    sendEvent(name: "setTemperature", value: temperature.toBigDecimal())
 }
 
 def setTemperature(temperature) {
@@ -519,6 +520,8 @@ def setTemperature(temperature) {
         parent.debugLog("setTemperature: No change required for temperature")
     
     }
+	
+    //adjustSetTemperature will be called as a result of calling the unitCommand and applying the status updates that comes back
 }
 
 
