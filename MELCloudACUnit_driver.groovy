@@ -311,64 +311,14 @@ Offline:false
 
 
 def applyResponseStatus(statusInfo) {
-
     
     parent.debugLog("applyResponseStatus: Status Info: ${statusInfo}")
     
-    parent.debugLog("applyResponseStatus: incoming mode: ${statusInfo.setmode}")
-    def vModeDesc = ""
-    if (statusInfo.power == "q" || statusInfo.power == 0) {vModeDesc = "off"}
-    else {
-        vModeDesc = modeMap[statusInfo.setmode]
-    }
+    adjustThermostatMode(statusInfo.setmode, statusInfo.power)
+    adjustRoomTemperature(statusInfo.roomtemp)
+    adjustSetTemperature(statusInfo.settemp)
+    adjustThermostatFanMode(statusInfo.setfan)
 
-    parent.debugLog("applyResponseStatus: Parsed mode: ${vModeDesc}")
-    
-    
-    def tempscaleUnit = "°${location.temperatureScale}"
-    def roomtempValue = convertTemperatureIfNeeded(statusInfo.roomtemp.toFloat(),"c",1)
-    
-    sendEvent(name: "temperature", value: roomtempValue, unit: tempscaleUnit)
-    sendEvent(name: "thermostatMode", value: "${vModeDesc}")
-    
-    def operatingState
-    if (vModeDesc == "off") {
-        operatingState = "idle"
-    } else if (vModeDesc == "heat") {
-        operatingState = "heating"
-    } else if (vModeDesc == "cool") {
-        operatingState = "cooling"
-    } else if (vModeDesc == "auto") {
-        operatingState = "cooling"
-    }
-    
-    parent.debugLog("applyResponseStatus: OperatingState: ${operatingState}")
-    if (operatingState != null) {
-        sendEvent(name: "thermostatOperatingState", value: operatingState)
-        if (operatingState != "idle") {
-            sendEvent(name: "lastRunningMode", value: "${vModeDesc}")
-        }
-    }
-
-
-
-    parent.debugLog("applyResponseStatus: Checking settemp: ${statusInfo.settemp}")
-    
-    def setTemp = statusInfo.settemp
-    def setTempValue = convertTemperatureIfNeeded(statusInfo.settemp.toFloat(),"c",1)
-    
-    adjustSetTemperature(setTempValue)
-    //sendEvent(name: "coolingSetpoint" , value: setTempValue, unit: tempscaleUnit)
-    //sendEvent(name: "heatingSetpoint" , value: setTempValue, unit: tempscaleUnit)
-    //sendEvent(name: "thermostatSetpoint" , value: setTempValue, unit: tempscaleUnit)
-    /*
-    debugLog("checking setfan: ${statusInfo.setfan}")
-    if (statusInfo.setfan != null) {
-        def fanMode = fanModeMap[statusInfo.setfan]
-        sendEvent(name: "thermostatFanMode" , value: fanMode)
-    }
-
-*/
 }
 
 
@@ -440,9 +390,6 @@ def setSchedule(JSON_OBJECT) { parent.debugLog("setSchedule not currently suppor
 
 //Temperature Adjustments
 
-
-
-
 def adjustCoolingSetpoint(temperature) {
  
     if (device.currentValue("coolingSetpoint") != temperature) {
@@ -487,31 +434,25 @@ def setHeatingSetpoint(temperature) {
     }
 }
 
-def setThermostatFanMode(fanmode) { }
-
-
-def setThermostatMode(thermostatmodeX) { }
-
-
 def adjustSetTemperature(temperature) {
-    
-    parent.debugLog("adjustSetTemperature: Adjusting Set Temperature to ${temperature}")
+
+    def setTempValue = convertTemperatureIfNeeded(statusInfo.settemp.toFloat(),"c",1)
+	
+    parent.debugLog("adjustSetTemperature: Temperature passed in was ${temperature}, adjusting Set Temperature to converted value ${setTempValue}")
     parent.debugLog("adjustSetTemperature: Checking if we are heating...")
     if (device.currentValue("thermostatOperatingState") == 'heating') {
-        adjustHeatingSetpoint(temperature)
+        adjustHeatingSetpoint(setTempValue)
     }
     parent.debugLog("adjustSetTemperature: Checking if we are cooling...")
     if (device.currentValue("thermostatOperatingState") == 'cooling') {
-        adjustCoolingSetpoint(temperature)
+        adjustCoolingSetpoint(setTempValue)
     }
     parent.debugLog("adjustSetTemperature: Changing set temperature attribute")
-    sendEvent(name: "setTemperature", value: temperature.toBigDecimal())
+    sendEvent(name: "setTemperature", value: setTempValue)
 }
 
 def setTemperature(temperature) {
 
-    
-    
     if(device.currentValue("setTemperature") != temperature) {
         bodyJson = "{ \"SetTemperature\" : \"${temperature}\", \"EffectiveFlags\" : \"4\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
     
@@ -528,8 +469,75 @@ def setTemperature(temperature) {
     //adjustSetTemperature will be called as a result of calling the unitCommand and applying the status updates that comes back
 }
 
+def adjustRoomTemperature(temperature) {
+
+  def tempscaleUnit = "°${location.temperatureScale}"
+  def roomtempValue = convertTemperatureIfNeeded(roomtempValue.toFloat(),"c",1)	
+  
+  parent.debugLog("adjustRoomTemperature: Temperature provided = ${temperature}, Units = ${tempscaleunit}, Converted Value = ${roomtempvalue}")
+  sendEvent(name: "temperature", value: roomtempValue)
+}
 
 //Power and State Adjustments
+
+def adjustThermostatFanMode(fanmode) {
+
+    parent.debugLog("adjustThermostatFanMode: Adjusting Fan Mode to ${fanmode}")
+    if (fanmode != null) {
+        def fanModeValue = fanModeMap[fanmode]
+    	sendEvent(name: "thermostatFanMode", value: fanModeValue)
+    }
+}
+
+def setThermostatFanMode(fanmode) {
+  
+  // adjustThermostatFanMode will be called by the apply status info method, called by the unit command method
+
+}
+
+def adjustThermostatMode(thermostatmodeX, power) {
+
+    parent.debugLog("adjustThermostatMode: Adjusting Thermostat Mode to ${thermostatmodeX}, power passed in is ${power}")
+	
+    def vModeDesc = ""
+    if (power == "q" || power == 0) {vModeDesc = "off"}
+    else {
+        vModeDesc = modeMap[thermostatmodeX]
+    }
+
+    parent.debugLog("adjustThermostatMode: Parsed mode: ${vModeDesc}")
+    sendEvent(name: "thermostatMode", value: vModeDesc)
+	
+}
+
+def setThermostatMode(thermostatmodeX) {
+
+  //adjustThermostatMode will be called by the apply status info method, called by the unit command method
+
+}
+
+def adjustThermostatOperatingState(thermostatModeX) {
+	
+    def operatingState
+    if (thermostatModeX == "off") {
+        operatingState = "idle"
+    } else if (thermostatModeX == "heat") {
+        operatingState = "heating"
+    } else if (thermostatModeX == "cool") {
+        operatingState = "cooling"
+    } else if (thermostatModeX == "auto") {
+        operatingState = "cooling"
+    }
+    
+    parent.debugLog("adjustThermostatOperatingState: OperatingState: ${operatingState}")
+    if (operatingState != null) {
+        sendEvent(name: "adjustThermostatOperatingState", value: operatingState)
+        if (operatingState != "idle") {
+            sendEvent(name: "adjustLastRunningMode", value: thermostatModeX)
+        }
+    }
+	
+}
 
 def on() { }
 
