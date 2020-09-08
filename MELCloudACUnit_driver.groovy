@@ -469,7 +469,8 @@ def setTemperature(temperature) {
         parent.debugLog("setTemperature: No change required for temperature")
     
     }
-	
+
+    
     //adjustSetTemperature will be called as a result of calling the unitCommand and applying the status updates that comes back
 }
 
@@ -499,7 +500,20 @@ def adjustThermostatFanMode(fanmode) {
 }
 
 def setThermostatFanMode(fanmode) {
-  
+
+    if(device.currentValue("thermostatFanMode") == null || device.currentValue("thermostatFanMode") != fanmode) {
+        bodyJson = "{ \"SetFanSpeed\" : \"${fanmode}\", \"EffectiveFlags\" : \"8\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
+    
+        parent.debugLog("setThermostatFanMode: Adjusting Fan Mode to ${fanmode} for ${device.label}")
+    
+        unitCommand("${bodyJson}")
+        parent.infoLog("setThermostatFanMode: Fan Mode adjusted to ${fanmode} for ${device.label} (${device.currentValue("unitId")})")
+    }
+    else {
+        parent.debugLog("setThermostatFanMode: No change required for Fan Mode")
+    
+    }
+    
   // adjustThermostatFanMode will be called by the apply status info method, called by the unit command method
 
 }
