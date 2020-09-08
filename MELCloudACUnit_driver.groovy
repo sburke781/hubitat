@@ -89,14 +89,16 @@ def refresh() {
 
 def initialize() {
     // Adjust default enumerations setup as part of the Hubitat Thermostat capability
-    //sendEvent(name: 'supportedThermostatFanModes', value: ['Low', 'Mid', 'High', 'Auto'])
-    //sendEvent(name: 'supportedThermostatModes', value: ['heat', 'dry', 'cool', 'fan', 'auto', 'off'])
+    sendEvent(name: 'supportedThermostatFanModes', value: ['auto','low','low-medium','medium','medium-high','high'])
+    sendEvent(name: 'supportedThermostatModes', value: ['heat', 'dry', 'cool', 'fan', 'auto', 'off'])
     
-    //if ("${device.currentValue("coolingSetpoint")}" > 40)
-    //{ sendEvent(name: "coolingSetpoint", value: "23.0")}
+    if ("${device.currentValue("coolingSetpoint")}" > 40) {
+        sendEvent(name: "coolingSetpoint", value: "23.0")
+    }
     
-    //if ("${device.currentValue("heatingSetpoint")}" > 40)
-    //{ sendEvent(name: "heatingSetpoint", value: "23.0")}
+    if ("${device.currentValue("heatingSetpoint")}" > 40) {
+        sendEvent(name: "heatingSetpoint", value: "23.0")
+    }
     
 }
 
@@ -147,16 +149,23 @@ def getStatusInfo() {
         httpGet(getParams) { resp ->
             
             parent.debugLog("getStatusInfo: Initial data returned from ListDevices: ${resp.data}")
+            if ("${resp?.data?.Structure?.Devices?.Device.HasPendingCommand}".replace("[","").replace("]","") != null
+               && "${resp?.data?.Structure?.Devices?.Device.HasPendingCommand}".replace("[","").replace("]","") != "true") {
+                parent.debugLog("updating ${statusInfo.unitid}")
+                
+                statusInfo.unitid   = "${resp?.data?.Structure?.Devices?.Device.DeviceID}".replace("[","").replace("]","")
+                statusInfo.power    = "${resp?.data?.Structure?.Devices?.Device.Power}".replace("[","").replace("]","")
+                statusInfo.setmode  = "${resp?.data?.Structure?.Devices?.Device.OperationMode}".replace("[","").replace("]","").toInteger()
+                statusInfo.roomtemp = "${resp?.data?.Structure?.Devices?.Device.RoomTemperature}".replace("[","").replace("]","")
+                statusInfo.settemp  = "${resp?.data?.Structure?.Devices?.Device.SetTemperature}".replace("[","").replace("]","")
+                statusInfo.setfan   = "${resp?.data?.Structure?.Devices?.Device.ActualFanSpeed}".replace("[","").replace("]","").toInteger()
             
-            statusInfo.unitid   = "${resp?.data?.Structure?.Devices?.Device.DeviceID}".replace("[","").replace("]","")
-            statusInfo.power    = "${resp?.data?.Structure?.Devices?.Device.Power}".replace("[","").replace("]","")
-            statusInfo.setmode  = "${resp?.data?.Structure?.Devices?.Device.OperationMode}".replace("[","").replace("]","").toInteger()
-            statusInfo.roomtemp = "${resp?.data?.Structure?.Devices?.Device.RoomTemperature}".replace("[","").replace("]","")
-            statusInfo.settemp  = "${resp?.data?.Structure?.Devices?.Device.SetTemperature}".replace("[","").replace("]","")
-            statusInfo.setfan   = "${resp?.data?.Structure?.Devices?.Device.ActualFanSpeed}".replace("[","").replace("]","").toInteger()
-            parent.debugLog("updating ${statusInfo.unitid}")  
-            applyResponseStatus(statusInfo)
+                applyResponseStatus(statusInfo)
             
+            }
+            else {
+                parent.debugLog("getStatusInfo: There are pending commands, status will be updated when there are no pending commands.")
+            }
             /*
 
 Device Detail
@@ -355,16 +364,21 @@ def unitCommand(command) {
             
             parent.debugLog("unitCommand: Initial data returned from SetAta: ${resp.data}")
             
-            statusInfo.unitid = "${resp?.data?.DeviceID}"
-            statusInfo.power = "${resp?.data?.Power}"
-            statusInfo.setmode = "${resp?.data?.OperationMode}".toInteger()
-            statusInfo.roomtemp = "${resp?.data?.RoomTemperature}"
-            statusInfo.settemp = "${resp?.data?.SetTemperature}"
+            if ("${resp?.data?.HasPendingCommand}" != null && "${resp?.data?.HasPendingCommand}" != "true") {
+             
+                statusInfo.unitid = "${resp?.data?.DeviceID}"
+                statusInfo.power = "${resp?.data?.Power}"
+                statusInfo.setmode = "${resp?.data?.OperationMode}".toInteger()
+                statusInfo.roomtemp = "${resp?.data?.RoomTemperature}"
+                statusInfo.settemp = "${resp?.data?.SetTemperature}"
             
-            parent.debugLog("unitCommand: updating ${statusInfo.unitid}")  
+                parent.debugLog("unitCommand: updating ${statusInfo.unitid}")  
             
-            applyResponseStatus(statusInfo)            
-            
+                applyResponseStatus(statusInfo)            
+            }
+            else {
+                parent.debugLog("unitCommand: There are pending commands, status will be updated when there are no pending commands.")
+            }
           }
     }   
 	catch (Exception e) {
@@ -501,13 +515,41 @@ def adjustThermostatFanMode(fanmode) {
 
 def setThermostatFanMode(fanmode) {
 
-    if(device.currentValue("thermostatFanMode") == null || device.currentValue("thermostatFanMode") != fanmode) {
-        bodyJson = "{ \"SetFanSpeed\" : \"${fanmode}\", \"EffectiveFlags\" : \"8\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
+    /*parent.debugLog("setThermostatFanMode: ${fanmode}")
+    def myFanMode = "low-medium"
+    def vfanModeValue = fanModeMap.find {it.value == myFanMode}?.key
+    parent.debugLog("setThermostatFanMode: ${fanmode}, ${vfanModeValue}")
+
+
+    def getFanModeMap() {
+    [
+        0:"auto",
+        1:"low",
+        2:"low-medium",
+        3:"medium",
+        5:"medium-high",
+        6:"high"
+    ]
+}
+
+    */
+    def fanModeKey = null
+    if(fanmode.trim() == "auto")          fanModeKey = 0
+    if(fanmode.trim() == "low")           fanModeKey = 1
+    if(fanmode.trim() == "low-medium")    fanModeKey = 2
+    if(fanmode.trim() == "medium")        fanModeKey = 3
+    if(fanmode.trim() == "medium-high")   fanModeKey = 5
+    if(fanmode.trim() == "high")          fanModeKey = 6
+    parent.debugLog("setThermostatFanMode: X${fanmode.trim()}, ${fanModeKey}")
+    if(    fanModeKey != null &&
+           (device.currentValue("thermostatFanMode") == null || device.currentValue("thermostatFanMode") != fanmode.trim())
+      ) {
+        bodyJson = "{ \"SetFanSpeed\" : \"${fanModeKey}\", \"EffectiveFlags\" : \"8\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
     
-        parent.debugLog("setThermostatFanMode: Adjusting Fan Mode to ${fanmode} for ${device.label}")
+        parent.debugLog("setThermostatFanMode: Adjusting Fan Mode to ${fanmode.trim()} for ${device.label}")
     
         unitCommand("${bodyJson}")
-        parent.infoLog("setThermostatFanMode: Fan Mode adjusted to ${fanmode} for ${device.label} (${device.currentValue("unitId")})")
+        parent.infoLog("setThermostatFanMode: Fan Mode adjusted to ${fanmode.trim()} for ${device.label} (${device.currentValue("unitId")})")
     }
     else {
         parent.debugLog("setThermostatFanMode: No change required for Fan Mode")
