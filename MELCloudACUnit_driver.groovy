@@ -81,6 +81,7 @@ metadata {
 
 
 def refresh() {
+  parent.debugLog("refresh: Refresh process called")
   // Retrieve current state information from MELCloud Service   
   getStatusInfo()
   initialize()
@@ -436,7 +437,7 @@ def setHeatingSetpoint(temperature) {
 
 def adjustSetTemperature(temperature) {
 
-    def setTempValue = convertTemperatureIfNeeded(statusInfo.settemp.toFloat(),"c",1)
+    def setTempValue = convertTemperatureIfNeeded(temperature.toFloat(),"c",1)
 	
     parent.debugLog("adjustSetTemperature: Temperature passed in was ${temperature}, adjusting Set Temperature to converted value ${setTempValue}")
     parent.debugLog("adjustSetTemperature: Checking if we are heating...")
@@ -447,8 +448,9 @@ def adjustSetTemperature(temperature) {
     if (device.currentValue("thermostatOperatingState") == 'cooling') {
         adjustCoolingSetpoint(setTempValue)
     }
-    parent.debugLog("adjustSetTemperature: Changing set temperature attribute")
-    if (device.currentValue("setTemperature") != setTempValue) {
+    
+    if (device.currentValue("setTemperature") == null || device.currentValue("setTemperature") != setTempValue) {
+        parent.debugLog("adjustSetTemperature: Changing set temperature attribute from ${device.currentValue("setTemperature")} to ${setTempValue}")
     	sendEvent(name: "setTemperature", value: setTempValue)
     }
 }
@@ -476,9 +478,10 @@ def adjustRoomTemperature(temperature) {
   def tempscaleUnit = "°${location.temperatureScale}"
   def roomtempValue = convertTemperatureIfNeeded(temperature.toFloat(),"c",1)	
   
-  parent.debugLog("adjustRoomTemperature: Temperature provided = ${temperature}, Units = ${tempscaleunit}, Converted Value = ${roomtempvalue}")
-  if (device.currentValue("temperature") != roomtempValue) {
-  	sendEvent(name: "temperature", value: roomtempValue)
+  parent.debugLog("adjustRoomTemperature: Temperature provided = ${temperature}, Units = ${tempscaleUnit}, Converted Value = ${roomtempValue}")
+  if (device.currentValue("temperature") == null || device.currentValue("temperature") != roomtempValue) {
+      parent.debugLog("adjustRoomTemperature: updating room temperature from ${device.currentValue("temperature")} to ${roomtempValue}")
+      sendEvent(name: "temperature", value: roomtempValue)
   }
 }
 
@@ -512,9 +515,10 @@ def adjustThermostatMode(thermostatmodeX, power) {
     }
 
     parent.debugLog("adjustThermostatMode: Parsed mode: ${vModeDesc}")
-    if (device.currentValue("thermostatMode") != vModeDesc) {
+    if (device.currentValue("thermostatMode") == null || device.currentValue("thermostatMode") != vModeDesc) {
     	sendEvent(name: "thermostatMode", value: vModeDesc)
     }
+    adjustThermostatOperatingState(vModeDesc)
 }
 
 def setThermostatMode(thermostatmodeX) {
@@ -536,10 +540,10 @@ def adjustThermostatOperatingState(thermostatModeX) {
         operatingState = "cooling"
     }
     
-    parent.debugLog("adjustThermostatOperatingState: OperatingState: ${operatingState}")
-    if (operatingState != null && device.currentValue("adjustThermostatOperatingState") != operatingState) {
-        sendEvent(name: "adjustThermostatOperatingState", value: operatingState)
-        if (operatingState != "idle" && device.currentValue("lastRunningMode") != thermostatModeX) {
+    parent.debugLog("adjustThermostatOperatingState: Thermostat Mode passed in = ${thermostatModeX}, OperatingState: ${operatingState}")
+    if (operatingState != null && (device.currentValue("thermostatOperatingState") == null || device.currentValue("thermostatOperatingState") != operatingState)) {
+        sendEvent(name: "thermostatOperatingState", value: operatingState)
+        if (operatingState != "idle" && (device.currentValue("lastRunningMode") == null || device.currentValue("lastRunningMode") != thermostatModeX)) {
             sendEvent(name: "lastRunningMode", value: thermostatModeX)
         }
     }
@@ -559,7 +563,6 @@ def cool() { }
 def dry() { }
 
 def heat() { }
-
 
 
 
