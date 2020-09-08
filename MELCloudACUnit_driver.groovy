@@ -83,7 +83,7 @@ metadata {
 def refresh() {
   parent.debugLog("refresh: Refresh process called")
   // Retrieve current state information from MELCloud Service   
-  getStatusInfo()
+    getStatusInfo()
   initialize()
 }
 
@@ -148,12 +148,12 @@ def getStatusInfo() {
             
             parent.debugLog("getStatusInfo: Initial data returned from ListDevices: ${resp.data}")
             
-            statusInfo.unitid = "${resp?.data?.Structure?.Devices?.Device.DeviceID}".replace("[","").replace("]","")
-            statusInfo.power = "${resp?.data?.Structure?.Devices?.Device.Power}".replace("[","").replace("]","")
-            statusInfo.setmode = "${resp?.data?.Structure?.Devices?.Device.OperationMode}".replace("[","").replace("]","").toInteger()
+            statusInfo.unitid   = "${resp?.data?.Structure?.Devices?.Device.DeviceID}".replace("[","").replace("]","")
+            statusInfo.power    = "${resp?.data?.Structure?.Devices?.Device.Power}".replace("[","").replace("]","")
+            statusInfo.setmode  = "${resp?.data?.Structure?.Devices?.Device.OperationMode}".replace("[","").replace("]","").toInteger()
             statusInfo.roomtemp = "${resp?.data?.Structure?.Devices?.Device.RoomTemperature}".replace("[","").replace("]","")
-            statusInfo.settemp = "${resp?.data?.Structure?.Devices?.Device.SetTemperature}".replace("[","").replace("]","")
-            
+            statusInfo.settemp  = "${resp?.data?.Structure?.Devices?.Device.SetTemperature}".replace("[","").replace("]","")
+            statusInfo.setfan   = "${resp?.data?.Structure?.Devices?.Device.ActualFanSpeed}".replace("[","").replace("]","").toInteger()
             parent.debugLog("updating ${statusInfo.unitid}")  
             applyResponseStatus(statusInfo)
             
@@ -492,7 +492,7 @@ def adjustThermostatFanMode(fanmode) {
     parent.debugLog("adjustThermostatFanMode: Adjusting Fan Mode to ${fanmode}")
     if (fanmode != null) {
         def fanModeValue = fanModeMap[fanmode]
-	if (device.currentValue("thermostatFanMode") != fanModeValue) {
+	if (device.currentValue("thermostatFanMode") == null || device.currentValue("thermostatFanMode") != fanModeValue) {
     		sendEvent(name: "thermostatFanMode", value: fanModeValue)
 	}
     }
