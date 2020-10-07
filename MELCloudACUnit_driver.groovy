@@ -28,6 +28,7 @@ metadata {
         
         attribute "authCode", "string"
         attribute "unitId", "number"
+        attribute "setTemperature", "number"
         
         //Thermostat capability attributes - showing default values from HE documentation
         /*
@@ -151,15 +152,15 @@ def getStatusInfo() {
             parent.debugLog("getStatusInfo: Initial data returned from ListDevices: ${resp.data}")
             if ("${resp?.data?.Structure?.Devices?.Device.HasPendingCommand}".replace("[","").replace("]","") != null
                && "${resp?.data?.Structure?.Devices?.Device.HasPendingCommand}".replace("[","").replace("]","") != "true") {
-                parent.debugLog("updating ${statusInfo.unitid}")
                 
                 statusInfo.unitid   = "${resp?.data?.Structure?.Devices?.Device.DeviceID}".replace("[","").replace("]","")
                 statusInfo.power    = "${resp?.data?.Structure?.Devices?.Device.Power}".replace("[","").replace("]","")
                 statusInfo.setmode  = "${resp?.data?.Structure?.Devices?.Device.OperationMode}".replace("[","").replace("]","").toInteger()
                 statusInfo.roomtemp = "${resp?.data?.Structure?.Devices?.Device.RoomTemperature}".replace("[","").replace("]","")
                 statusInfo.settemp  = "${resp?.data?.Structure?.Devices?.Device.SetTemperature}".replace("[","").replace("]","")
-                statusInfo.setfan   = "${resp?.data?.Structure?.Devices?.Device.ActualFanSpeed}".replace("[","").replace("]","").toInteger()
+                statusInfo.setfan   = "${resp?.data?.Structure?.Devices?.Device.FanSpeed}".replace("[","").replace("]","").toInteger()
             
+                parent.debugLog("updating ${statusInfo.unitid}")
                 applyResponseStatus(statusInfo)
             
             }
@@ -407,36 +408,47 @@ def setSchedule(JSON_OBJECT) { parent.debugLog("setSchedule not currently suppor
 
 def adjustCoolingSetpoint(temperature) {
  
-    if (device.currentValue("coolingSetpoint") != temperature) {
-        sendEvent(name: "coolingSetpoint", value : temperature)
-        parent.infoLog("adjustCoolingSetpoint:  Cooling Set Point adjusted to ${temperature} for ${device.label}")
+    def coolingSetTempValue = convertTemperatureIfNeeded(temperature.toFloat(),"c",1)
+	def currCoolingSetTempValue = convertTemperatureIfNeeded(device.currentValue("coolingSetpoint").toFloat(),"c",1)
+    def currThermSetTempValue = convertTemperatureIfNeeded(device.currentValue("thermostatSetpoint").toFloat(),"c",1)
+    
+    parent.debugLog("adjustCoolingSetpoint: Current coolingSetpoint ${currCoolingSetTempValue}, Current ThermostatSetpoint = ${currThermSetTempValue}, New heatingSetpoint = ${coolingSetTempValue}")
+    
+    if (currCoolingSetTempValue != coolingSetTempValue) {
+        sendEvent(name: "coolingSetpoint", value : coolingSetTempValue)
+        parent.infoLog("Cooling Set Point adjusted to ${coolingSetTempValue} for ${device.label}")
     }
     
-    if (device.currentValue("thermostatSetpoint") != temperature) {
-        sendEvent(name: "thermostatSetpoint", value: temperature)
-        parent.infoLog("adjustCoolingSetpoint: Thermostat Set Point adjusted to ${temperature} for ${device.label}")
+    if (currThermSetTempValue != coolingSetTempValue) {
+        sendEvent(name: "thermostatSetpoint", value: coolingSetTempValue)
+        parent.infoLog("Thermostat Set Point adjusted to ${coolingSetTempValue} for ${device.label}")
     }
+    
 }
 
 def setCoolingSetpoint(temperature) {
 
     adjustCoolingSetpoint(temperature)
-    if (device.currentValue("thermostatOperatingState") == 'cooling') {
+    if (device.currentValue("thermostatOperatingState") == "cooling") {
         setTemperature(temperature.toBigDecimal())
     }
 }
 
 def adjustHeatingSetpoint(temperature) {
+    def heatingSetTempValue = convertTemperatureIfNeeded(temperature.toFloat(),"c",1)
+	def currHeatingSetTempValue = convertTemperatureIfNeeded(device.currentValue("heatingSetpoint").toFloat(),"c",1)
+    def currThermSetTempValue = convertTemperatureIfNeeded(device.currentValue("thermostatSetpoint").toFloat(),"c",1)
     
+    parent.debugLog("adjustHeatingSetpoint: Current heatingSetpoint ${currHeatingSetTempValue}, Current ThermostatSetpoint = ${currThermSetTempValue}, New heatingSetpoint = ${heatingSetTempValue}")
     
-    if (device.currentValue("heatingSetpoint") != temperature.toBigDecimal()) {
-        sendEvent(name: "heatingSetpoint", value : temperature.toBigDecimal())
-        parent.infoLog("adjustHeatingSetpoint:  Heating Set Point adjusted to ${temperature.toBigDecimal()} for ${device.label}")
+    if (currHeatingSetTempValue != heatingSetTempValue) {
+        sendEvent(name: "heatingSetpoint", value : heatingSetTempValue)
+        parent.infoLog("Heating Set Point adjusted to ${heatingSetTempValue} for ${device.label}")
     }
     
-    if (device.currentValue("thermostatSetpoint") != temperature.toBigDecimal()) {
-        sendEvent(name: "thermostatSetpoint", value: temperature.toBigDecimal())
-        parent.infoLog("adjustHeatingSetpoint: Thermostat Set Point adjusted to ${temperature.toBigDecimal()} for ${device.label}")
+    if (currThermSetTempValue != heatingSetTempValue) {
+        sendEvent(name: "thermostatSetpoint", value: heatingSetTempValue)
+        parent.infoLog("Thermostat Set Point adjusted to ${heatingSetTempValue} for ${device.label}")
     }
     
 }
@@ -444,7 +456,7 @@ def adjustHeatingSetpoint(temperature) {
 def setHeatingSetpoint(temperature) {
 
     adjustHeatingSetpoint(temperature)
-    if (device.currentValue("thermostatOperatingState") == 'heating') {
+    if (device.currentValue("thermostatOperatingState") == "heating") {
         setTemperature(temperature.toBigDecimal())
     }
 }
@@ -452,35 +464,42 @@ def setHeatingSetpoint(temperature) {
 def adjustSetTemperature(temperature) {
 
     def setTempValue = convertTemperatureIfNeeded(temperature.toFloat(),"c",1)
-	
-    parent.debugLog("adjustSetTemperature: Temperature passed in was ${temperature}, adjusting Set Temperature to converted value ${setTempValue}")
-    parent.debugLog("adjustSetTemperature: Checking if we are heating...")
-    if (device.currentValue("thermostatOperatingState") == 'heating') {
-        adjustHeatingSetpoint(setTempValue)
-    }
-    parent.debugLog("adjustSetTemperature: Checking if we are cooling...")
-    if (device.currentValue("thermostatOperatingState") == 'cooling') {
-        adjustCoolingSetpoint(setTempValue)
-    }
+	def currentSetTempValue = convertTemperatureIfNeeded(device.currentValue("setTemperature").toFloat(),"c",1)
+    def currentOperatingState = device.currentValue("thermostatOperatingState")
     
-    if (device.currentValue("setTemperature") == null || device.currentValue("setTemperature") != setTempValue) {
-        parent.debugLog("adjustSetTemperature: Changing set temperature attribute from ${device.currentValue("setTemperature")} to ${setTempValue}")
+    parent.debugLog("adjustSetTemperature: Temperature passed in was ${temperature}, current set temperature is ${currentSetTempValue} and Operating State is ${currentOperatingState}")
+    if (currentSetTempValue == null || currentSetTempValue != setTempValue) {
+        parent.debugLog("adjustSetTemperature: Changing Set Temperature from ${currentSetTempValue} to ${setTempValue}")
     	sendEvent(name: "setTemperature", value: setTempValue)
+        
+        parent.debugLog("adjustSetTemperature: Checking if we are heating...")
+        if (currentOperatingState == "heating") {
+            parent.debugLog("adjustSetTemperature: Heating detected")
+            adjustHeatingSetpoint(setTempValue)
+        }
+        
+        parent.debugLog("adjustSetTemperature: Checking if we are cooling...")
+        if (currentOperatingState == "cooling") {
+            parent.debugLog("adjustSetTemperature: Cooling detected")
+            adjustCoolingSetpoint(setTempValue)
+        }
+        
     }
+    else { parent.debugLog("adjustSetTemperature: No action taken") }
 }
 
 def setTemperature(temperature) {
-
+    
     if(device.currentValue("setTemperature") != temperature) {
         bodyJson = "{ \"SetTemperature\" : \"${temperature}\", \"EffectiveFlags\" : \"4\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
     
-        parent.debugLog("setTemperature: Adjusting Temperature to ${temperature} for ${device.label}")
+        parent.debugLog("setTemperature: Setting Temperature to ${temperature} for ${device.label}")
     
         unitCommand("${bodyJson}")
         parent.infoLog("setTemperature: Temperature adjusted to ${temperature} for ${device.label} (${device.currentValue("unitId")})")
     }
     else {
-        parent.debugLog("setTemperature: No change required for temperature")
+        parent.debugLog("setTemperature: No action taken")
     
     }
 
@@ -498,6 +517,7 @@ def adjustRoomTemperature(temperature) {
       parent.debugLog("adjustRoomTemperature: updating room temperature from ${device.currentValue("temperature")} to ${roomtempValue}")
       sendEvent(name: "temperature", value: roomtempValue)
   }
+  else { parent.debugLog("adjustRoomTemperature: No action taken") }
 }
 
 //Power and State Adjustments
@@ -507,32 +527,17 @@ def adjustThermostatFanMode(fanmode) {
     parent.debugLog("adjustThermostatFanMode: Adjusting Fan Mode to ${fanmode}")
     if (fanmode != null) {
         def fanModeValue = fanModeMap[fanmode]
-	if (device.currentValue("thermostatFanMode") == null || device.currentValue("thermostatFanMode") != fanModeValue) {
+        parent.debugLog("adjustThermostatFanMode: fanModeValue = ${fanModeValue}")
+	    if (device.currentValue("thermostatFanMode") == null || device.currentValue("thermostatFanMode") != fanModeValue) {
     		sendEvent(name: "thermostatFanMode", value: fanModeValue)
-	}
+            parent.infoLog("Fan Mode adjusted to ${fanModeValue}")
+	    }
+        else { parent.debugLog("adjustThermostatFanMode: No action taken") }
     }
 }
 
 def setThermostatFanMode(fanmode) {
 
-    /*parent.debugLog("setThermostatFanMode: ${fanmode}")
-    def myFanMode = "low-medium"
-    def vfanModeValue = fanModeMap.find {it.value == myFanMode}?.key
-    parent.debugLog("setThermostatFanMode: ${fanmode}, ${vfanModeValue}")
-
-
-    def getFanModeMap() {
-    [
-        0:"auto",
-        1:"low",
-        2:"low-medium",
-        3:"medium",
-        5:"medium-high",
-        6:"high"
-    ]
-}
-
-    */
     def fanModeKey = null
     if(fanmode.trim() == "auto")          fanModeKey = 0
     if(fanmode.trim() == "low")           fanModeKey = 1
@@ -540,24 +545,25 @@ def setThermostatFanMode(fanmode) {
     if(fanmode.trim() == "medium")        fanModeKey = 3
     if(fanmode.trim() == "medium-high")   fanModeKey = 5
     if(fanmode.trim() == "high")          fanModeKey = 6
-    parent.debugLog("setThermostatFanMode: X${fanmode.trim()}, ${fanModeKey}")
+    
+    adjustThermostatFanMode(fanModeKey)
+    
+    parent.debugLog("setThermostatFanMode: ${fanmode.trim()}, ${fanModeKey}")
     if(    fanModeKey != null &&
            (device.currentValue("thermostatFanMode") == null || device.currentValue("thermostatFanMode") != fanmode.trim())
       ) {
         bodyJson = "{ \"SetFanSpeed\" : \"${fanModeKey}\", \"EffectiveFlags\" : \"8\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
     
-        parent.debugLog("setThermostatFanMode: Adjusting Fan Mode to ${fanmode.trim()} for ${device.label}")
-    
+        parent.debugLog("setThermostatFanMode: Setting Fan Mode to ${fanmode.trim()} for ${device.label}")
+        parent.debugLog("setThermostatFanMode: body = ${bodyJson}")
         unitCommand("${bodyJson}")
-        parent.infoLog("setThermostatFanMode: Fan Mode adjusted to ${fanmode.trim()} for ${device.label} (${device.currentValue("unitId")})")
+        parent.debugLog("setThermostatFanMode: Fan Mode set to ${fanmode.trim()} for ${device.label} (${device.currentValue("unitId")})")
+        parent.infoLog("Fan Mode set to ${fanmode.trim()} for ${device.label} (${device.currentValue("unitId")})")
     }
     else {
         parent.debugLog("setThermostatFanMode: No change required for Fan Mode")
     
     }
-    
-  // adjustThermostatFanMode will be called by the apply status info method, called by the unit command method
-
 }
 
 def adjustThermostatMode(thermostatmodeX, power) {
@@ -565,7 +571,7 @@ def adjustThermostatMode(thermostatmodeX, power) {
     parent.debugLog("adjustThermostatMode: Adjusting Thermostat Mode to ${thermostatmodeX}, power passed in is ${power}")
 	
     def vModeDesc = ""
-    if (power == "q" || power == 0) {vModeDesc = "off"}
+    if (power == "q" || power == 0 || power == "false") {vModeDesc = "off"}
     else {
         vModeDesc = modeMap[thermostatmodeX]
     }
@@ -579,14 +585,35 @@ def adjustThermostatMode(thermostatmodeX, power) {
 
 def setThermostatMode(thermostatmodeX) {
 
-  //adjustThermostatMode will be called by the apply status info method, called by the unit command method
-
+  parent.debugLog("setThermostatMode: Thermostat Mode passed in = ${thermostatmodeX}")
+    
+  def modeKey = null
+    if(thermostatmodeX.trim() == "heat")   modeKey = 1
+    if(thermostatmodeX.trim() == "dry")    modeKey = 2
+    if(thermostatmodeX.trim() == "cool")   modeKey = 3
+    if(thermostatmodeX.trim() == "fan")    modeKey = 7
+    if(thermostatmodeX.trim() == "auto")   modeKey = 8
+  
+  def power = null
+  if(thermostatmodeX.trim() == "off") power = 0
+  else power = 1
+  adjustThermostatMode(modeKey, power)
+  
+  if (thermostatmodeX == "off") { off() }
+  else if (thermostatmodeX == "heat") { heat() }
+  else if (thermostatmodeX == "dry") { dry() }
+  else if (thermostatmodeX == "cool") { cool() }
+  else if (thermostatmodeX == "fan") { fan() }
+  else if (thermostatmodeX == "auto") { auto() }
+  
+  parent.debugLog("setThermostatMode: Thermostat Mode set")
+  
 }
 
 def adjustThermostatOperatingState(thermostatModeX) {
 	
     def operatingState
-    if (thermostatModeX == "off") {
+    if (thermostatModeX == "off" ) {
         operatingState = "idle"
     } else if (thermostatModeX == "heat") {
         operatingState = "heating"
@@ -606,19 +633,68 @@ def adjustThermostatOperatingState(thermostatModeX) {
 	
 }
 
-def on() { }
+def on() {
 
-def off() { }
+    bodyJson = "{ \"Power\" : \"true\", \"EffectiveFlags\" : \"1\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
+    
+    parent.debugLog("on: Turning ON device ${device.label} (${device.currentValue("unitId")})")
+    unitCommand("${bodyJson}")
+    parent.infoLog("Power turned ON for ${device.label} (${device.currentValue("unitId")})")
 
-def auto() { }
+}
+
+def off() {
+
+    bodyJson = "{ \"Power\" : \"false\", \"EffectiveFlags\" : \"1\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
+    
+    parent.debugLog("off: Turning OFF device ${device.label} (${device.currentValue("unitId")})")
+    unitCommand("${bodyJson}")
+    parent.infoLog("Power turned OFF for ${device.label} (${device.currentValue("unitId")})")
+
+}
+
+def auto() {
+
+    bodyJson = "{ \"Power\" : \"true\", \"operationMode\" : \"8\", \"EffectiveFlags\" : \"3\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
+    
+    parent.debugLog("auto: Changing operating mode to AUTO for ${device.label} (${device.currentValue("unitId")})")
+    unitCommand("${bodyJson}")
+    parent.infoLog("Operating mode changed to AUTO for ${device.label} (${device.currentValue("unitId")})")
+
+}
 
 def fanOn() { }
 
-def cool() { }
+def cool() {
 
-def dry() { }
+    bodyJson = "{ \"Power\" : \"true\", \"operationMode\" : \"3\", \"EffectiveFlags\" : \"3\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
+    
+    parent.debugLog("cool: Changing operating mode to COOL for ${device.label} (${device.currentValue("unitId")})")
+    unitCommand("${bodyJson}")
+    parent.infoLog("Operating mode changed to COOL for ${device.label} (${device.currentValue("unitId")})")
 
-def heat() { }
+}
+
+def dry() {
+
+    bodyJson = "{ \"Power\" : \"true\", \"operationMode\" : \"2\", \"EffectiveFlags\" : \"3\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
+    
+    parent.debugLog("dry: Changing operating mode to DRY for ${device.label} (${device.currentValue("unitId")})")
+    unitCommand("${bodyJson}")
+    parent.infoLog("Operating mode changed to DRY for ${device.label} (${device.currentValue("unitId")})")
+
+
+}
+
+def heat() {
+
+    bodyJson = "{ \"Power\" : \"true\", \"operationMode\" : \"1\", \"EffectiveFlags\" : \"3\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
+    
+    parent.debugLog("heat: Changing operating mode to HEAT for ${device.label} (${device.currentValue("unitId")})")
+    unitCommand("${bodyJson}")
+    parent.infoLog("heat: Operating mode changed to HEAT for ${device.label} (${device.currentValue("unitId")})")
+
+}
 
 
 
