@@ -32,6 +32,7 @@ metadata {
 		input(name: "UserName", type: "string", title:"MELCloud Username / Email", description: "Username / Email used to authenticate on Mitsubishi Electric MELCloud", displayDuringSetup: true)
 		input(name: "Password", type: "password", title:"MELCloud Account Password", description: "Password for authenticating on Mitsubishi Electric MELCloud", displayDuringSetup: true)
         input(name: "DebugLogging", type: "bool", title:"Enable Debug Logging", displayDuringSetup: true, defaultValue: false)
+        input(name: "WarnLogging", type: "bool", title:"Enable Warning Logging", displayDuringSetup: true, defaultValue: true)
         input(name: "ErrorLogging", type: "bool", title:"Enable Error Logging", displayDuringSetup: true, defaultValue: true)
         input(name: "InfoLogging", type: "bool", title:"Enable Description Text (Info) Logging", displayDuringSetup: true, defaultValue: false)
     }
@@ -69,7 +70,7 @@ def createChildACUnits() {
     headers.put("Referer", "${BaseURL}/")
     headers.put("X-Requested-With","XMLHttpRequest")
     headers.put("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36")
-    headers.put("X-MitsContextKey","${device.currentValue("authCode", true)}")
+    headers.put("X-MitsContextKey","${state.authCode}")
     
     def getParams = [
         uri: "${BaseURL}/Mitsubishi.Wifi.Client/User/ListDevices",
@@ -141,7 +142,8 @@ def setAuthCode() {
             newAuthCode = "${resp?.data?.LoginData?.ContextKey?.value}";
             
             if (newAuthCode != "") {
-                sendEvent(name: "authCode", value : newAuthCode)
+                //sendEvent(name: "authCode", value : newAuthCode)
+                state.authCode = newAuthCode
                 debugLog("setAuthCode: New authentication code value has been set")
             }
             else {debugLog("setAuthCode: New authentication code was NOT set")}
@@ -154,7 +156,7 @@ def setAuthCode() {
 
 }
 
-
+def getAuthCode() { return state.authCode }
 
 def deriveChildDNI(childDeviceId, childDeviceType) {
 
@@ -192,4 +194,8 @@ def errorLog(errorMessage) {
 
 def infoLog(infoMessage) {
     if(InfoLogging == true) {log.info(infoMessage)}    
+}
+
+def warnLog(warnMessage) {
+    if(WarnLogging == true) {log.warn(warnMessage)}    
 }
