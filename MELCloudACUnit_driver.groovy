@@ -432,8 +432,8 @@ def adjustSetTempRanges(statusInfo) {
     sendEvent(name: "MaxTempDry", value: maxTempCoolDryValue)
     sendEvent(name: "MinTempHeat", value: minTempHeatValue)
     sendEvent(name: "MaxTempHeat", value: maxTempHeatValue)
-    sendEvent(name: "MinTempAutomatic", value: minTempAutomaticValue)
-    sendEvent(name: "MaxTempAutomatic", value: maxTempAutomaticValue)
+    sendEvent(name: "MinTempAuto", value: minTempAutomaticValue)
+    sendEvent(name: "MaxTempAuto", value: maxTempAutomaticValue)
     
     parent.debugLog("adjustSetTempRanges: Temperature ranges updated")
 }
