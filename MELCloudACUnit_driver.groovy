@@ -117,20 +117,20 @@ def initialize() {
     
     if(device.currentValue("HasAutomaticFanSpeed") == "true") { fanModes.add('auto') }
     if(device.currentValue("NumberOfFanSpeeds").toInteger() == 5) {
-        fanModes.add('low')
-        fanModes.add('low-medium')
-        fanModes.add('medium')
-        fanModes.add('medium-high')
-        fanModes.add('high')
+        fanModes.add('1')
+        fanModes.add('2')
+        fanModes.add('3')
+        fanModes.add('4')
+        fanModes.add('5')
     }
     if(device.currentValue("NumberOfFanSpeeds").toInteger() == 3) {
-        fanModes.add('low')
-        fanModes.add('medium')
-        fanModes.add('high')
+        fanModes.add('1')
+        fanModes.add('2')
+        fanModes.add('3')
     }
     if(device.currentValue("NumberOfFanSpeeds").toInteger() == 2) {
-        fanModes.add('low')
-        fanModes.add('high')
+        fanModes.add('1')
+        fanModes.add('2')
     }
     
     if(device.currentValue("CanHeat") == "true") { thermostatModes.add('heat') }
@@ -160,11 +160,11 @@ def initialize() {
 def getFanModeMap() {
     [
         0:"auto",
-        1:"low",
-        2:"low-medium",
-        3:"medium",
-        5:"medium-high",
-        6:"high"
+        1:"1",
+        2:"2",
+        3:"3",
+        4:"4",
+        5:"5"
     ]
 }
 
@@ -711,12 +711,13 @@ def adjustThermostatFanMode(fanmode) {
 def setThermostatFanMode(fanmode) {
 
     def fanModeKey = null
-    if(fanmode.trim() == "auto")          fanModeKey = 0
-    if(fanmode.trim() == "low")           fanModeKey = 1
-    if(fanmode.trim() == "low-medium")    fanModeKey = 2
-    if(fanmode.trim() == "medium")        fanModeKey = 3
-    if(fanmode.trim() == "medium-high")   fanModeKey = 5
-    if(fanmode.trim() == "high")          fanModeKey = 6
+    
+    if(fanmode.trim() == "auto") fanModeKey = 0
+    if(fanmode.trim() == "1")    fanModeKey = 1
+    if(fanmode.trim() == "2")    fanModeKey = 2
+    if(fanmode.trim() == "3")    fanModeKey = 3
+    if(fanmode.trim() == "4")    fanModeKey = 4
+    if(fanmode.trim() == "5")    fanModeKey = 5
     
     adjustThermostatFanMode(fanModeKey)
     
