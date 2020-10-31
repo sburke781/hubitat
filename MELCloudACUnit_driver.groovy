@@ -572,27 +572,27 @@ def setCoolingSetpoint(temperature) {
     
     //Check allowable cooling temperature range and correct where necessary
     //Minimum
-    if (temperature.toBigDecimal() < device.currentValue("MinTempCool").toBigDecimal()) {
+    if (temperature < device.currentValue("MinTempCool")) {
         correctedTemp = device.currentValue("MinTempCool")
         parent.debugLog("setCoolingSetpoint: Temperature selected = ${temperature}, corrected to minimum cooling set point ${correctedTemp}")
     }
     
     //Maximum
-    if (temperature.toBigDecimal() > device.currentValue("MaxTempCool").toBigDecimal()) {
+    if (temperature > device.currentValue("MaxTempCool")) {
         correctedTemp = device.currentValue("MaxTempCool")
         parent.debugLog("setCoolingSetpoint: Temperature selected = ${temperature}, corrected to maximum cooling set point ${correctedTemp}")
     }
         
     adjustCoolingSetpoint(correctedTemp)
     if (device.currentValue("thermostatOperatingState") == "cooling") {
-        setTemperature(correctedTemp.toBigDecimal())
+        setTemperature(correctedTemp)
     }
 }
 
 def adjustHeatingSetpoint(temperature) {
     def heatingSetTempValue = convertTemperatureIfNeeded(temperature.toFloat(),"c",1)
-	def currHeatingSetTempValue = convertTemperatureIfNeeded(device.currentValue("heatingSetpoint").toFloat(),"c",1)
-    def currThermSetTempValue = convertTemperatureIfNeeded(device.currentValue("thermostatSetpoint").toFloat(),"c",1)
+	def currHeatingSetTempValue = convertTemperatureIfNeeded(device.currentValue("heatingSetpoint"),"c",1)
+    def currThermSetTempValue = convertTemperatureIfNeeded(device.currentValue("thermostatSetpoint"),"c",1)
     
     parent.debugLog("adjustHeatingSetpoint: Current heatingSetpoint ${currHeatingSetTempValue}, Current ThermostatSetpoint = ${currThermSetTempValue}, New heatingSetpoint = ${heatingSetTempValue}")
     
@@ -616,27 +616,27 @@ def setHeatingSetpoint(temperature) {
     
     //Check allowable heating temperature range and correct where necessary
     //Minimum
-    if (temperature.toBigDecimal() < device.currentValue("MinTempHeat").toBigDecimal()) {
+    if (temperature < device.currentValue("MinTempHeat")) {
         correctedTemp = device.currentValue("MinTempHeat")
         parent.debugLog("setHeatingSetpoint: Temperature selected = ${temperature}, corrected to minimum heating set point ${correctedTemp}")
     }
     
     //Maximum
-    if (temperature.toBigDecimal() > device.currentValue("MaxTempHeat").toBigDecimal()) {
+    if (temperature > device.currentValue("MaxTempHeat")) {
         correctedTemp = device.currentValue("MaxTempHeat")
         parent.debugLog("setHeatingSetpoint: Temperature selected = ${temperature}, corrected to maximum heating set point ${correctedTemp}")
     }
         
     adjustHeatingSetpoint(correctedTemp)
     if (device.currentValue("thermostatOperatingState") == "heating") {
-        setTemperature(correctedTemp.toBigDecimal())
+        setTemperature(correctedTemp)
     }
 }
 
 def adjustSetTemperature(temperature) {
 
-    def setTempValue = convertTemperatureIfNeeded(temperature.toFloat(),"c",1)
-	def currentSetTempValue = convertTemperatureIfNeeded(device.currentValue("setTemperature").toFloat(),"c",1)
+    def setTempValue = convertTemperatureIfNeeded(temperature,"c",1)
+	def currentSetTempValue = convertTemperatureIfNeeded(device.currentValue("setTemperature"),"c",1)
     def currentOperatingState = device.currentValue("thermostatOperatingState")
     
     parent.debugLog("adjustSetTemperature: Temperature passed in was ${temperature}, current set temperature is ${currentSetTempValue} and Operating State is ${currentOperatingState}")
@@ -792,8 +792,10 @@ def adjustThermostatOperatingState(thermostatModeX) {
         operatingState = "heating"
     } else if (thermostatModeX == "cool") {
         operatingState = "cooling"
+    } else if (thermostatModeX == "fan") {
+    operatingState = "fan"
     } else if (thermostatModeX == "auto") {
-        operatingState = "cooling"
+    operatingState = "auto"
     }
     
     parent.debugLog("adjustThermostatOperatingState: Thermostat Mode passed in = ${thermostatModeX}, OperatingState: ${operatingState}")
@@ -802,8 +804,8 @@ def adjustThermostatOperatingState(thermostatModeX) {
         if (operatingState != "idle" && (device.currentValue("lastRunningMode") == null || device.currentValue("lastRunningMode") != thermostatModeX)) {
             sendEvent(name: "lastRunningMode", value: thermostatModeX)
         }
-    }
-	
+    }    
+    
 }
 
 def on() {
@@ -837,6 +839,16 @@ def auto() {
 }
 
 def fanOn() { parent.debugLog("fanOn: Not currently supported by MELCloud driver") }
+
+def fan() {
+    
+ bodyJson = "{ \"Power\" : \"true\", \"operationMode\" : \"7\", \"EffectiveFlags\" : \"3\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
+
+parent.debugLog("fan: Changing operating mode to FAN for ${device.label} (${device.currentValue("unitId")})")
+unitCommand("${bodyJson}")
+parent.infoLog("fan: Operating mode changed to FAN for ${device.label} (${device.currentValue("unitId")})")   
+    
+}
 
 def cool() {
 
