@@ -591,8 +591,8 @@ def setCoolingSetpoint(temperature) {
 
 def adjustHeatingSetpoint(temperature) {
     def heatingSetTempValue = convertTemperatureIfNeeded(temperature.toFloat(),"c",1)
-	def currHeatingSetTempValue = convertTemperatureIfNeeded(device.currentValue("heatingSetpoint"),"c",1)
-    def currThermSetTempValue = convertTemperatureIfNeeded(device.currentValue("thermostatSetpoint"),"c",1)
+	def currHeatingSetTempValue = convertTemperatureIfNeeded(device.currentValue("heatingSetpoint").toFloat(),"c",1)
+    def currThermSetTempValue = convertTemperatureIfNeeded(device.currentValue("thermostatSetpoint").toFloat(),"c",1)
     
     parent.debugLog("adjustHeatingSetpoint: Current heatingSetpoint ${currHeatingSetTempValue}, Current ThermostatSetpoint = ${currThermSetTempValue}, New heatingSetpoint = ${heatingSetTempValue}")
     
@@ -635,8 +635,8 @@ def setHeatingSetpoint(temperature) {
 
 def adjustSetTemperature(temperature) {
 
-    def setTempValue = convertTemperatureIfNeeded(temperature,"c",1)
-	def currentSetTempValue = convertTemperatureIfNeeded(device.currentValue("setTemperature"),"c",1)
+    def setTempValue = convertTemperatureIfNeeded(temperature.toFloat(),"c",1)
+	def currentSetTempValue = convertTemperatureIfNeeded(device.currentValue("setTemperature").toFloat(),"c",1)
     def currentOperatingState = device.currentValue("thermostatOperatingState")
     
     parent.debugLog("adjustSetTemperature: Temperature passed in was ${temperature}, current set temperature is ${currentSetTempValue} and Operating State is ${currentOperatingState}")
@@ -662,7 +662,7 @@ def adjustSetTemperature(temperature) {
 
 def setTemperature(temperature) {
     
-    if(device.currentValue("setTemperature") != temperature) {
+    if(device.currentValue("setTemperature").toFloat() != temperature) {
         bodyJson = "{ \"SetTemperature\" : \"${temperature}\", \"EffectiveFlags\" : \"4\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
     
         parent.debugLog("setTemperature: Setting Temperature to ${temperature} for ${device.label}")
@@ -881,5 +881,10 @@ def heat() {
 
 }
 
-
+def checkNull(value, alternative) {
+ 
+    if(value == null) { return alternative }
+    return value
+    
+}
 
