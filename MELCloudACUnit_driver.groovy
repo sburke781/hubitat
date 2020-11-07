@@ -650,7 +650,7 @@ def setHeatingSetpoint(temperature) {
 def adjustSetTemperature(temperature) {
 
     def setTempValue = convertTemperatureIfNeeded(temperature.toFloat(),"c",1)
-	def currentSetTempValue = convertTemperatureIfNeeded(device.currentValue("setTemperature").toFloat(),"c",1)
+	def currentSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("setTemperature"),"23.0").toFloat(),"c",1)
     def currentOperatingState = device.currentValue("thermostatOperatingState")
     
     parent.debugLog("adjustSetTemperature: Temperature passed in was ${temperature}, current set temperature is ${currentSetTempValue} and Operating State is ${currentOperatingState}")
