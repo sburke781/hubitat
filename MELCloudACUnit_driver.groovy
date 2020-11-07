@@ -25,6 +25,14 @@ metadata {
 	definition (name: "MELCloud AC Unit", namespace: "simnet", author: "Simon Burke") {
         capability "Refresh"
         capability "Thermostat"
+
+preferences {
+		input(name: "AutoStatusPolling", type: "bool", title:"Automatic Status Polling", description: "Enable / Disable automatic polling of unit status from MelCloud", defaultValue: true, required: true, displayDuringSetup: true)
+        input(name: "StatusPollingInterval", type: "ENUM", multiple: false, options: ["20", "30", "60", "300"], title:"Status Polling Interval", description: "Number of seconds between automatic status updates", defaultValue: 30, required: true, displayDuringSetup: true)		
+		
+        
+    }
+        
         
         attribute "unitId",                 "number"
         attribute "setTemperature",         "number"
@@ -106,6 +114,12 @@ def refresh() {
   // Retrieve current state information from MELCloud Service   
     getStatusInfo()
   initialize()
+}
+
+def updated() {
+
+    parent.debugLog("updated: AutoStatusPolling = ${AutoStatusPolling}, StatusPollingInterval = ${StatusPollingInterval}")
+    updateStatusPolling()    
 }
 
 def initialize() {
@@ -880,6 +894,34 @@ def heat() {
     parent.infoLog("heat: Operating mode changed to HEAT for ${device.label} (${device.currentValue("unitId")})")
 
 }
+
+def getSchedule() { }
+
+def updateStatusPolling() {
+
+   def sched
+   parent.debugLog("updateStatusPolling: Updating Status Polling called, about to unschedule refresh")
+   unschedule("refresh")
+   parent.debugLog("updateStatusPolling: Unscheduleing refresh complete")
+   
+   if(AutoStatusPolling == true) {
+       
+       sched = "2/${StatusPollingInterval} * * ? * * *"
+       parent.debugLog("updateStatusPolling: Setting up schedule with settings: schedule(\"${sched}\",refresh)")
+       try{
+           
+           schedule("${sched}","refresh")
+       }
+       catch(Exception e) {
+           parent.debugLog("updateStatusPolling: Error - " + e)
+       }
+       
+       parent.debugLog("updateStatusPolling: Scheduled refresh set")
+   }
+   else { parent.debugLog("updateStatusPolling: Automatic status polling disabled")  }
+}
+
+
 
 def checkNull(value, alternative) {
  
