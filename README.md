@@ -26,7 +26,7 @@ The device edit screen for the MELCloud device should now be displayed
 
 Step 2 - Configuration of the MELCloud Service Device
 
-1. Locate the MELCloud parent device from within the HE device listing, i.e. http://~HE-Hub-IP~/device/list, left clicking on the device to open the device edit screen
+1. Locate the MELCloud parent device from within the HE device listing, i.e. http:// *** HE-Hub-IP *** /device/list, left clicking on the device to open the device edit screen
 2. In the device preferences, enter the MELCloud Username / Email and MELCloud Account Password used to login to the MELCloud service
 3. Click Save Preferences
 
