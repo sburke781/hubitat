@@ -16,7 +16,7 @@ Installation Instructions
 
 Step 1 - Create Parent MELCloud Device
 
-1. Open the devices page on your HE hub, e.g. http:// <HE-Hub-IP> /device/list
+1. Open the devices page on your HE hub, e.g. http:// *** HE-Hub-IP *** /device/list
 2. Click the Add Virtual Device button
 3. In the Device Information section, enter a Device Name, e.g. "MELCloud".  Note, this can be changed at a later point if necessary
 4. In the Type drop-down list select the MelCloud Parent Driver - Note, user drivers are listed towards the end of the drop-down list.
