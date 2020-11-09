@@ -9,7 +9,7 @@ Description
 The MELCloud mobile application and web-based interface is offered to customers of Mitsubishi Electric who purchase wi-fi adaptors for their air conditioners and heat pumps across Europe.  In addition to their own user interface, Mitsubishi Electric have also made a REST API available for third-party developers to connect and interact with Mitsubishi Electric devices that have registered with this service.
 
 The MELCloud Parent and Child drivers in this repository allow owners of a HE hub to
-* view the status of their Mitsubishi Eletric devices
+* View the status of their Mitsubishi Eletric devices
 * Control their devices through the HE platform, including within the Rule Machine engine and HE dashboards
 
 Installation Instructions
