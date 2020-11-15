@@ -25,11 +25,12 @@ metadata {
 	definition (name: "MELCloud AC Unit", namespace: "simnet", author: "Simon Burke") {
         capability "Refresh"
         capability "Thermostat"
+        capability "FanControl"
 
 preferences {
 		input(name: "AutoStatusPolling", type: "bool", title:"Automatic Status Polling", description: "Enable / Disable automatic polling of unit status from MelCloud", defaultValue: true, required: true, displayDuringSetup: true)
         input(name: "StatusPollingInterval", type: "ENUM", multiple: false, options: ["20", "30", "60", "300"], title:"Status Polling Interval", description: "Number of seconds between automatic status updates", defaultValue: 30, required: true, displayDuringSetup: true)		
-		
+		input(name: "FansTextOrNumbers", type: "bool", title: "Famode Modes: Text or Numbers?", description: "Use HE Text Fan Modes or Numbers?", defaultValue: true, required: true, displayDuringSetup: true)
         
     }
         
@@ -73,6 +74,11 @@ preferences {
         attribute "thermostatSetpoint",             "NUMBER"
         */
         
+        //FanControl capability attributes - showing default values from HE documentation
+        /*
+        speed - ENUM ["low","medium-low","medium","medium-high","high","on","off","auto"]
+        */
+        
         attribute "lastRunningMode",                "STRING"
         
         //MELCloud specific commands:
@@ -104,6 +110,13 @@ preferences {
         //command "setThermostatMode", [[name:"thermostatmode*", type: "ENUM", description: "Pick a Thermostat Mode", constraints: ['Heat', 'Dry', 'Cool', 'Fan', 'Auto'] ] ]
                 // thermostatmode required (ENUM) - Thermostat mode to set
         
+        
+        //FanControl capability commands
+        /*
+        setSpeed(fanspeed)
+            fanspeed required (ENUM) - Fan speed to set
+
+        */
 	}
 
 }
@@ -112,54 +125,102 @@ preferences {
 def refresh() {
   parent.debugLog("refresh: Refresh process called")
   // Retrieve current state information from MELCloud Service   
-    getStatusInfo()
+  getStatusInfo()
   initialize()
 }
 
 def updated() {
 
+    setFanModes()
+    setThermostatModes()
     parent.debugLog("updated: AutoStatusPolling = ${AutoStatusPolling}, StatusPollingInterval = ${StatusPollingInterval}")
     updateStatusPolling()    
 }
 
-def initialize() {
-    
+def setFanModes()
+{
     def fanModes = []
+    
+    fanModes.add('off')
+    
+    //Text or Numbers?
+    if (FansTextOrNumbers == true) {
+        parent.debugLog("setFanModes:Text-based Fan Modes")
+        if(device.currentValue("NumberOfFanSpeeds").toInteger() == 3) {
+            fanModes.add('low')
+            fanModes.add('medium')
+            fanModes.add('high')
+        }
+        else if(device.currentValue("NumberOfFanSpeeds").toInteger() == 2) {
+            fanModes.add('low')
+            fanModes.add('high')
+        }
+        else
+        {
+        //if(device.currentValue("NumberOfFanSpeeds").toInteger() == 5) {
+            fanModes.add('low')
+            fanModes.add('medium low')
+            fanModes.add('medium')
+            fanModes.add('medium high')
+            fanModes.add('high')
+        }
+
+    }
+    else {
+        parent.debugLog("setFanModes:Number-based Fan Modes")
+        if(device.currentValue("NumberOfFanSpeeds").toInteger() == 3) {
+            fanModes.add('1')
+            fanModes.add('2')
+            fanModes.add('3')
+        }
+        else if(device.currentValue("NumberOfFanSpeeds").toInteger() == 2) {
+            fanModes.add('1')
+            fanModes.add('2')
+        }
+        else
+        {
+        //if(device.currentValue("NumberOfFanSpeeds").toInteger() == 5) {
+            fanModes.add('1')
+            fanModes.add('2')
+            fanModes.add('3')
+            fanModes.add('4')
+            fanModes.add('5')
+        }
+    }
+    
+    if(device.currentValue("HasAutomaticFanSpeed") == "true") {
+        fanModes.add('auto')
+    }
+    
+    fanModes.add('on')
+    
+    parent.debugLog("setThermostatModes: fanModes detected are ${fanModes}")
+    //Apply settings
+    sendEvent(name: 'supportedThermostatFanModes', value: fanModes)
+}
+
+def setThermostatModes()
+{
     def thermostatModes = []
-    
-    // Adjust default enumerations setup as part of the Hubitat Thermostat capability
-    
-    if(device.currentValue("HasAutomaticFanSpeed") == "true") { fanModes.add('auto') }
-    if(device.currentValue("NumberOfFanSpeeds").toInteger() == 5) {
-        fanModes.add('1')
-        fanModes.add('2')
-        fanModes.add('3')
-        fanModes.add('4')
-        fanModes.add('5')
-    }
-    if(device.currentValue("NumberOfFanSpeeds").toInteger() == 3) {
-        fanModes.add('1')
-        fanModes.add('2')
-        fanModes.add('3')
-    }
-    if(device.currentValue("NumberOfFanSpeeds").toInteger() == 2) {
-        fanModes.add('1')
-        fanModes.add('2')
-    }
     
     if(device.currentValue("CanHeat") == "true") { thermostatModes.add('heat') }
     if(device.currentValue("CanDry") == "true") { thermostatModes.add('dry') }
     if(device.currentValue("CanCool") == "true") { thermostatModes.add('cool') }
+    
     thermostatModes.add('fan')
     thermostatModes.add('auto')
     thermostatModes.add('off')
     
-    parent.debugLog("initialize: thermostatModes detected are ${thermostatModes}")
-    parent.debugLog("initialize: fanModes detected are ${fanModes}")
-    
+    parent.debugLog("setThermostatModes: thermostatModes detected are ${thermostatModes}")
     sendEvent(name: 'supportedThermostatModes', value: thermostatModes)
-    sendEvent(name: 'supportedThermostatFanModes', value: fanModes)
     
+        
+}
+
+def initialize() {
+    
+    setFanModes()
+    setThermostatModes()
     
     if ("${device.currentValue("coolingSetpoint")}" > 40) {
         sendEvent(name: "coolingSetpoint", value: "23.0")
@@ -168,18 +229,30 @@ def initialize() {
     if ("${device.currentValue("heatingSetpoint")}" > 40) {
         sendEvent(name: "heatingSetpoint", value: "23.0")
     }
-    
 }
 
 def getFanModeMap() {
-    [
-        0:"auto",
-        1:"1",
-        2:"2",
-        3:"3",
-        4:"4",
-        5:"5"
-    ]
+    
+    if (FansTextOrNumbers == true) {
+        [
+            0:"auto",
+            1:"low",
+            2:"medium low",
+            3:"medium",
+            4:"medium high",
+            5:"high"
+        ]
+    }
+    else {
+        [
+            0:"auto",
+            1:"1",
+            2:"2",
+            3:"3",
+            4:"4",
+            5:"5"
+        ]
+    }
 }
 
 def getModeMap() {
@@ -716,7 +789,8 @@ def adjustThermostatFanMode(fanmode) {
         parent.debugLog("adjustThermostatFanMode: fanModeValue = ${fanModeValue}")
 	    if (device.currentValue("thermostatFanMode") == null || device.currentValue("thermostatFanMode") != fanModeValue) {
     		sendEvent(name: "thermostatFanMode", value: fanModeValue)
-            parent.infoLog("Fan Mode adjusted to ${fanModeValue}")
+            sendEvent(name: "speed", value: fanModeValue)
+            parent.infoLog("Fan Mode / Speed adjusted to ${fanModeValue}")
 	    }
         else { parent.debugLog("adjustThermostatFanMode: No action taken") }
     }
@@ -726,32 +800,38 @@ def setThermostatFanMode(fanmode) {
 
     def fanModeKey = null
     
-    if(fanmode.trim() == "auto") fanModeKey = 0
-    if(fanmode.trim() == "1")    fanModeKey = 1
-    if(fanmode.trim() == "2")    fanModeKey = 2
-    if(fanmode.trim() == "3")    fanModeKey = 3
-    if(fanmode.trim() == "4")    fanModeKey = 4
-    if(fanmode.trim() == "5")    fanModeKey = 5
-    
-    adjustThermostatFanMode(fanModeKey)
+    //Convert Fan Mode selected, accounting for number or text based fan modes
+    if(fanmode.trim() == "auto")                                    fanModeKey = 0
+    if(fanmode.trim() == "1" || fanmode.trim() == "low")            fanModeKey = 1
+    if(fanmode.trim() == "2" || fanmode.trim() == "medium low")     fanModeKey = 2
+    if(fanmode.trim() == "3" || fanmode.trim() == "medium")         fanModeKey = 3
+    if(fanmode.trim() == "4" || fanmode.trim() == "medium high")    fanModeKey = 4
+    if(fanmode.trim() == "5" || fanmode.trim() == "high")           fanModeKey = 5
     
     parent.debugLog("setThermostatFanMode: ${fanmode.trim()}, ${fanModeKey}")
-    if(    fanModeKey != null &&
-           (device.currentValue("thermostatFanMode") == null || device.currentValue("thermostatFanMode") != fanmode.trim())
-      ) {
-        bodyJson = "{ \"SetFanSpeed\" : \"${fanModeKey}\", \"EffectiveFlags\" : \"8\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
     
-        parent.debugLog("setThermostatFanMode: Setting Fan Mode to ${fanmode.trim()} for ${device.label}")
-        parent.debugLog("setThermostatFanMode: body = ${bodyJson}")
-        unitCommand("${bodyJson}")
-        parent.debugLog("setThermostatFanMode: Fan Mode set to ${fanmode.trim()} for ${device.label} (${device.currentValue("unitId")})")
-        parent.infoLog("Fan Mode set to ${fanmode.trim()} for ${device.label} (${device.currentValue("unitId")})")
-    }
-    else {
-        parent.debugLog("setThermostatFanMode: No change required for Fan Mode")
+    if (fanModeKey != null) {
+        adjustThermostatFanMode(fanModeKey)
     
-    }
+        if(    device.currentValue("thermostatFanMode") == null || device.currentValue("thermostatFanMode") != fanmode.trim())
+           {
+            bodyJson = "{ \"Power\" : \"true\", \"SetFanSpeed\" : \"${fanModeKey}\", \"EffectiveFlags\" : \"8\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
+    
+            parent.debugLog("setThermostatFanMode: Setting Fan Mode to ${fanmode.trim()} for ${device.label}")
+            parent.debugLog("setThermostatFanMode: body = ${bodyJson}")
+            unitCommand("${bodyJson}")
+            parent.debugLog("setThermostatFanMode: Fan Mode set to ${fanmode.trim()} for ${device.label} (${device.currentValue("unitId")})")
+            parent.infoLog("Fan Mode set to ${fanmode.trim()} for ${device.label} (${device.currentValue("unitId")})")
+        }
+        
+    
+        }
+    else { parent.warnLog("setThermostatFanMode: Warning - Fan Mode not identified") }
 }
+
+//Fan Speed method from the Fan Control capability
+//  Simply calling the Fan Mode method that is part of the Thermostat capability 
+def setSpeed(fanspeed) { setThermostatFanMode(fanspeed) }
 
 def adjustThermostatMode(thermostatmodeX, power) {
 
