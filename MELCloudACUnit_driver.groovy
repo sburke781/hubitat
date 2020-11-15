@@ -141,28 +141,28 @@ def setFanModes()
 {
     def fanModes = []
     
-    fanModes.add('off')
+    fanModes.add('Off')
     
     //Text or Numbers?
     if (FansTextOrNumbers == true) {
         parent.debugLog("setFanModes:Text-based Fan Modes")
         if(device.currentValue("NumberOfFanSpeeds").toInteger() == 3) {
-            fanModes.add('low')
-            fanModes.add('medium')
-            fanModes.add('high')
+            fanModes.add('Low')
+            fanModes.add('Medium')
+            fanModes.add('High')
         }
         else if(device.currentValue("NumberOfFanSpeeds").toInteger() == 2) {
-            fanModes.add('low')
-            fanModes.add('high')
+            fanModes.add('Low')
+            fanModes.add('High')
         }
         else
         {
         //if(device.currentValue("NumberOfFanSpeeds").toInteger() == 5) {
-            fanModes.add('low')
-            fanModes.add('medium low')
-            fanModes.add('medium')
-            fanModes.add('medium high')
-            fanModes.add('high')
+            fanModes.add('Low')
+            fanModes.add('Medium Low')
+            fanModes.add('Medium')
+            fanModes.add('Medium High')
+            fanModes.add('High')
         }
 
     }
@@ -189,12 +189,12 @@ def setFanModes()
     }
     
     if(device.currentValue("HasAutomaticFanSpeed") == "true") {
-        fanModes.add('auto')
+        fanModes.add('Auto')
     }
     
-    fanModes.add('on')
+    fanModes.add('On')
     
-    parent.debugLog("setThermostatModes: fanModes detected are ${fanModes}")
+    parent.debugLog("setFanModes: fanModes detected are ${fanModes}")
     //Apply settings
     sendEvent(name: 'supportedThermostatFanModes', value: fanModes)
 }
@@ -235,12 +235,12 @@ def getFanModeMap() {
     
     if (FansTextOrNumbers == true) {
         [
-            0:"auto",
-            1:"low",
-            2:"medium low",
-            3:"medium",
-            4:"medium high",
-            5:"high"
+            0:"Auto",
+            1:"Low",
+            2:"Medium  Low",
+            3:"Medium",
+            4:"Medium High",
+            5:"High"
         ]
     }
     else {
@@ -634,8 +634,8 @@ def setSchedule(JSON_OBJECT) { parent.debugLog("setSchedule: Not currently suppo
 def adjustCoolingSetpoint(temperature) {
  
     def coolingSetTempValue = convertTemperatureIfNeeded(temperature.toFloat(),"c",1)
-	def currCoolingSetTempValue = convertTemperatureIfNeeded(device.currentValue("coolingSetpoint").toFloat(),"c",1)
-    def currThermSetTempValue = convertTemperatureIfNeeded(device.currentValue("thermostatSetpoint").toFloat(),"c",1)
+	def currCoolingSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("coolingSetpoint"),"23.0").toFloat(),"c",1)
+    def currThermSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("thermostatSetpoint"),"23.0").toFloat(),"c",1)
     
     parent.debugLog("adjustCoolingSetpoint: Current coolingSetpoint ${currCoolingSetTempValue}, Current ThermostatSetpoint = ${currThermSetTempValue}, New coolingSetpoint = ${coolingSetTempValue}")
     
@@ -678,8 +678,8 @@ def setCoolingSetpoint(temperature) {
 
 def adjustHeatingSetpoint(temperature) {
     def heatingSetTempValue = convertTemperatureIfNeeded(temperature.toFloat(),"c",1)
-	def currHeatingSetTempValue = convertTemperatureIfNeeded(device.currentValue("heatingSetpoint").toFloat(),"c",1)
-    def currThermSetTempValue = convertTemperatureIfNeeded(device.currentValue("thermostatSetpoint").toFloat(),"c",1)
+	def currHeatingSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("heatingSetpoint"),"23.0").toFloat(),"c",1)
+    def currThermSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("thermostatSetpoint"),"23.0").toFloat(),"c",1)
     
     parent.debugLog("adjustHeatingSetpoint: Current heatingSetpoint ${currHeatingSetTempValue}, Current ThermostatSetpoint = ${currThermSetTempValue}, New heatingSetpoint = ${heatingSetTempValue}")
     
@@ -789,8 +789,17 @@ def adjustThermostatFanMode(fanmode) {
         parent.debugLog("adjustThermostatFanMode: fanModeValue = ${fanModeValue}")
 	    if (device.currentValue("thermostatFanMode") == null || device.currentValue("thermostatFanMode") != fanModeValue) {
     		sendEvent(name: "thermostatFanMode", value: fanModeValue)
-            sendEvent(name: "speed", value: fanModeValue)
-            parent.infoLog("Fan Mode / Speed adjusted to ${fanModeValue}")
+            def fanControlSpeed = fanModeValue
+            
+            if(fanControlSpeed == "Auto")          fanControlSpeed = "auto"
+            if(fanControlSpeed == "Low")           fanControlSpeed = "low"
+            if(fanControlSpeed == "Medium Low")    fanControlSpeed = "medium-low"
+            if(fanControlSpeed == "Medium")        fanControlSpeed = "medium"
+            if(fanControlSpeed == "Medium High")   fanControlSpeed = "medium-high"
+            if(fanControlSpeed == "High")          fanControlSpeed = "high"
+            
+            sendEvent(name: "speed", value: fanControlSpeed)
+            parent.infoLog("Fan Mode / Speed adjusted to ${fanControlSpeed}")
 	    }
         else { parent.debugLog("adjustThermostatFanMode: No action taken") }
     }
@@ -800,13 +809,14 @@ def setThermostatFanMode(fanmode) {
 
     def fanModeKey = null
     
-    //Convert Fan Mode selected, accounting for number or text based fan modes
-    if(fanmode.trim() == "auto")                                    fanModeKey = 0
-    if(fanmode.trim() == "1" || fanmode.trim() == "low")            fanModeKey = 1
-    if(fanmode.trim() == "2" || fanmode.trim() == "medium low")     fanModeKey = 2
-    if(fanmode.trim() == "3" || fanmode.trim() == "medium")         fanModeKey = 3
-    if(fanmode.trim() == "4" || fanmode.trim() == "medium high")    fanModeKey = 4
-    if(fanmode.trim() == "5" || fanmode.trim() == "high")           fanModeKey = 5
+    //Convert Fan Mode selected, accounting for number / text based fan modes and differences in case of text-based 
+    //   modes passed back from Thermostat tile vs Fan tile.
+    if(fanmode.trim() == "auto"                                  || fanmode.trim() == "Auto")         fanModeKey = 0
+    if(fanmode.trim() == "1" || fanmode.trim() == "low"          || fanmode.trim() == "Low")          fanModeKey = 1
+    if(fanmode.trim() == "2" || fanmode.trim() == "medium-low"   || fanmode.trim() == "Medium Low")   fanModeKey = 2
+    if(fanmode.trim() == "3" || fanmode.trim() == "medium"       || fanmode.trim() == "Medium")       fanModeKey = 3
+    if(fanmode.trim() == "4" || fanmode.trim() == "medium-high"  || fanmode.trim() == "Medium High")  fanModeKey = 4
+    if(fanmode.trim() == "5" || fanmode.trim() == "high"         || fanmode.trim() == "High")         fanModeKey = 5
     
     parent.debugLog("setThermostatFanMode: ${fanmode.trim()}, ${fanModeKey}")
     
@@ -823,6 +833,7 @@ def setThermostatFanMode(fanmode) {
             parent.debugLog("setThermostatFanMode: Fan Mode set to ${fanmode.trim()} for ${device.label} (${device.currentValue("unitId")})")
             parent.infoLog("Fan Mode set to ${fanmode.trim()} for ${device.label} (${device.currentValue("unitId")})")
         }
+        else { parent.debugLog("setThermostatFanMode: No action taken")  }
         
     
         }
