@@ -749,11 +749,34 @@ def adjustSetTemperature(givenSetTemp) {
 
 def setTemperature(givenSetTemp) {
     
+    /*
+       #EffectiveFlags:
+        #Power:                0x01
+        #OperationMode:        0x02
+        #Temperature:        0x04
+        #FanSpeed:            0x08
+        #VaneVertical:        0x10
+        #VaneHorizontal:    0x100
+    */
+    
+    def fanModeKey = convertFanModeToKey(device.currentValue("thermostatFanMode"))
+    def fanModeText
+    
+    if (fanModeKey != null) {fanModeText = "\"SetFanSpeed\" : \"${fanModeKey}\"," }
+    else {fanModeText = ""}
+    
+    def modeKey = convertThermostatModeToKey(device.currentValue("thermostatMode"))
+    def modeText
+    
+    if (modeKey != null) {modeText = "\"OperationMode\" : \"${modeKey}\"," }
+    else {modeText = ""}
+    
     if(device.currentValue("setTemperature").toFloat() != givenSetTemp) {
-        bodyJson = "{ \"SetTemperature\" : \"${givenSetTemp}\", \"EffectiveFlags\" : \"4\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
+        //bodyJson = "{ \"SetTemperature\" : \"${givenSetTemp}\", \"EffectiveFlags\" : \"4\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
+        bodyJson = "{ \"SetTemperature\" : \"${givenSetTemp}\", \"Power\" : \"true\", ${fanModeText} ${modeText} \"EffectiveFlags\" : \"15\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
     
         parent.debugLog("setTemperature: Setting Temperature to ${givenSetTemp} for ${device.label}")
-    
+        parent.debugLog("setTemperature: Body JSON = ${bodyJson}")
         unitCommand("${bodyJson}")
         parent.infoLog("setTemperature: Temperature adjusted to ${givenSetTemp} for ${device.label} (${device.currentValue("unitId")})")
     }
@@ -800,6 +823,22 @@ def adjustThermostatFanMode(fanmode) {
 	    }
         else { parent.debugLog("adjustThermostatFanMode: No action taken") }
     }
+}
+
+def convertFanModeToKey(fanmode) {
+ 
+    def fanModeKey = null
+    
+    //Convert Fan Mode selected, accounting for number / text based fan modes and differences in case of text-based 
+    //   modes passed back from Thermostat tile vs Fan tile.
+    if(fanmode.trim() == "auto"                                  || fanmode.trim() == "Auto")         fanModeKey = 0
+    if(fanmode.trim() == "1" || fanmode.trim() == "low"          || fanmode.trim() == "Low")          fanModeKey = 1
+    if(fanmode.trim() == "2" || fanmode.trim() == "medium-low"   || fanmode.trim() == "Medium Low")   fanModeKey = 2
+    if(fanmode.trim() == "3" || fanmode.trim() == "medium"       || fanmode.trim() == "Medium")       fanModeKey = 3
+    if(fanmode.trim() == "4" || fanmode.trim() == "medium-high"  || fanmode.trim() == "Medium High")  fanModeKey = 4
+    if(fanmode.trim() == "5" || fanmode.trim() == "high"         || fanmode.trim() == "High")         fanModeKey = 5
+    
+    return fanModeKey
 }
 
 def setThermostatFanMode(fanmode) {
@@ -857,6 +896,19 @@ def adjustThermostatMode(thermostatmodeX, power) {
     }
     adjustThermostatOperatingState(vModeDesc)
 }
+
+def convertThermostatModeToKey(thermostatmodeX) {
+    
+    def modeKey = null
+    if(thermostatmodeX.trim() == "heat")   modeKey = 1
+    if(thermostatmodeX.trim() == "dry")    modeKey = 2
+    if(thermostatmodeX.trim() == "cool")   modeKey = 3
+    if(thermostatmodeX.trim() == "fan")    modeKey = 7
+    if(thermostatmodeX.trim() == "auto")   modeKey = 8
+    
+    return modeKey
+}
+
 
 def setThermostatMode(thermostatmodeX) {
 
