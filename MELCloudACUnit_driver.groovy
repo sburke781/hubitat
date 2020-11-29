@@ -631,9 +631,9 @@ def setSchedule(JSON_OBJECT) { parent.debugLog("setSchedule: Not currently suppo
 
 //Temperature Adjustments
 
-def adjustCoolingSetpoint(temperature) {
+def adjustCoolingSetpoint(givenTemp) {
  
-    def coolingSetTempValue = convertTemperatureIfNeeded(temperature.toFloat(),"c",1)
+    def coolingSetTempValue = convertTemperatureIfNeeded(givenTemp.toFloat(),"c",1)
 	def currCoolingSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("coolingSetpoint"),"23.0").toFloat(),"c",1)
     def currThermSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("thermostatSetpoint"),"23.0").toFloat(),"c",1)
     
@@ -651,23 +651,23 @@ def adjustCoolingSetpoint(temperature) {
     
 }
 
-def setCoolingSetpoint(temperature) {
+def setCoolingSetpoint(givenTemp) {
 
-    def correctedTemp = temperature
+    def correctedTemp = givenTemp
     
-    parent.debugLog("setCoolingSetpoint: Setting Cooling Set Point to ${temperature}, current minimum ${device.currentValue("MinTempCool")}, current maximum ${device.currentValue("MaxTempCool")}")
+    parent.debugLog("setCoolingSetpoint: Setting Cooling Set Point to ${givenTemp}, current minimum ${device.currentValue("MinTempCool")}, current maximum ${device.currentValue("MaxTempCool")}")
     
     //Check allowable cooling temperature range and correct where necessary
     //Minimum
-    if (temperature < device.currentValue("MinTempCool")) {
+    if (givenTemp < device.currentValue("MinTempCool")) {
         correctedTemp = device.currentValue("MinTempCool")
-        parent.debugLog("setCoolingSetpoint: Temperature selected = ${temperature}, corrected to minimum cooling set point ${correctedTemp}")
+        parent.debugLog("setCoolingSetpoint: Temperature selected = ${givenTemp}, corrected to minimum cooling set point ${correctedTemp}")
     }
     
     //Maximum
-    if (temperature > device.currentValue("MaxTempCool")) {
+    if (givenTemp > device.currentValue("MaxTempCool")) {
         correctedTemp = device.currentValue("MaxTempCool")
-        parent.debugLog("setCoolingSetpoint: Temperature selected = ${temperature}, corrected to maximum cooling set point ${correctedTemp}")
+        parent.debugLog("setCoolingSetpoint: Temperature selected = ${givenTemp}, corrected to maximum cooling set point ${correctedTemp}")
     }
         
     adjustCoolingSetpoint(correctedTemp)
@@ -676,8 +676,8 @@ def setCoolingSetpoint(temperature) {
     }
 }
 
-def adjustHeatingSetpoint(temperature) {
-    def heatingSetTempValue = convertTemperatureIfNeeded(temperature.toFloat(),"c",1)
+def adjustHeatingSetpoint(givenTemp) {
+    def heatingSetTempValue = convertTemperatureIfNeeded(givenTemp.toFloat(),"c",1)
 	def currHeatingSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("heatingSetpoint"),"23.0").toFloat(),"c",1)
     def currThermSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("thermostatSetpoint"),"23.0").toFloat(),"c",1)
     
@@ -695,23 +695,23 @@ def adjustHeatingSetpoint(temperature) {
     
 }
 
-def setHeatingSetpoint(temperature) {
+def setHeatingSetpoint(givenTemp) {
 
-    def correctedTemp = temperature
+    def correctedTemp = givenTemp
     
-    parent.debugLog("setHeatingSetpoint: Setting Heating Set Point to ${temperature}, current minimum ${device.currentValue("MinTempHeat")}, current maximum ${device.currentValue("MaxTempHeat")}")
+    parent.debugLog("setHeatingSetpoint: Setting Heating Set Point to ${givenTemp}, current minimum ${device.currentValue("MinTempHeat")}, current maximum ${device.currentValue("MaxTempHeat")}")
     
     //Check allowable heating temperature range and correct where necessary
     //Minimum
-    if (temperature < device.currentValue("MinTempHeat")) {
+    if (givenTemp < device.currentValue("MinTempHeat")) {
         correctedTemp = device.currentValue("MinTempHeat")
-        parent.debugLog("setHeatingSetpoint: Temperature selected = ${temperature}, corrected to minimum heating set point ${correctedTemp}")
+        parent.debugLog("setHeatingSetpoint: Temperature selected = ${givenTemp}, corrected to minimum heating set point ${correctedTemp}")
     }
     
     //Maximum
-    if (temperature > device.currentValue("MaxTempHeat")) {
+    if (givenTemp > device.currentValue("MaxTempHeat")) {
         correctedTemp = device.currentValue("MaxTempHeat")
-        parent.debugLog("setHeatingSetpoint: Temperature selected = ${temperature}, corrected to maximum heating set point ${correctedTemp}")
+        parent.debugLog("setHeatingSetpoint: Temperature selected = ${givenTemp}, corrected to maximum heating set point ${correctedTemp}")
     }
         
     adjustHeatingSetpoint(correctedTemp)
@@ -720,13 +720,13 @@ def setHeatingSetpoint(temperature) {
     }
 }
 
-def adjustSetTemperature(temperature) {
+def adjustSetTemperature(givenSetTemp) {
 
-    def setTempValue = convertTemperatureIfNeeded(temperature.toFloat(),"c",1)
+    def setTempValue = convertTemperatureIfNeeded(givenSetTemp.toFloat(),"c",1)
 	def currentSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("setTemperature"),"23.0").toFloat(),"c",1)
     def currentOperatingState = device.currentValue("thermostatOperatingState")
     
-    parent.debugLog("adjustSetTemperature: Temperature passed in was ${temperature}, current set temperature is ${currentSetTempValue} and Operating State is ${currentOperatingState}")
+    parent.debugLog("adjustSetTemperature: Temperature passed in was ${givenSetTemp}, current set temperature is ${currentSetTempValue} and Operating State is ${currentOperatingState}")
     if (currentSetTempValue == null || currentSetTempValue != setTempValue) {
         parent.debugLog("adjustSetTemperature: Changing Set Temperature from ${currentSetTempValue} to ${setTempValue}")
     	sendEvent(name: "setTemperature", value: setTempValue)
@@ -747,31 +747,28 @@ def adjustSetTemperature(temperature) {
     else { parent.debugLog("adjustSetTemperature: No action taken") }
 }
 
-def setTemperature(temperature) {
+def setTemperature(givenSetTemp) {
     
-    if(device.currentValue("setTemperature").toFloat() != temperature) {
-        bodyJson = "{ \"SetTemperature\" : \"${temperature}\", \"EffectiveFlags\" : \"4\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
+    if(device.currentValue("setTemperature").toFloat() != givenSetTemp) {
+        bodyJson = "{ \"SetTemperature\" : \"${givenSetTemp}\", \"EffectiveFlags\" : \"4\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
     
-        parent.debugLog("setTemperature: Setting Temperature to ${temperature} for ${device.label}")
+        parent.debugLog("setTemperature: Setting Temperature to ${givenSetTemp} for ${device.label}")
     
         unitCommand("${bodyJson}")
-        parent.infoLog("setTemperature: Temperature adjusted to ${temperature} for ${device.label} (${device.currentValue("unitId")})")
+        parent.infoLog("setTemperature: Temperature adjusted to ${givenSetTemp} for ${device.label} (${device.currentValue("unitId")})")
     }
     else {
         parent.debugLog("setTemperature: No action taken")
     
     }
-
-    
-    //adjustSetTemperature will be called as a result of calling the unitCommand and applying the status updates that comes back
 }
 
-def adjustRoomTemperature(temperature) {
+def adjustRoomTemperature(givenTemp) {
 
   def tempscaleUnit = "°${location.temperatureScale}"
-  def roomtempValue = convertTemperatureIfNeeded(temperature.toFloat(),"c",1)	
+  def roomtempValue = convertTemperatureIfNeeded(givenTemp.toFloat(),"c",1)	
   
-  parent.debugLog("adjustRoomTemperature: Temperature provided = ${temperature}, Units = ${tempscaleUnit}, Converted Value = ${roomtempValue}")
+  parent.debugLog("adjustRoomTemperature: Temperature provided = ${givenTemp}, Units = ${tempscaleUnit}, Converted Value = ${roomtempValue}")
   if (device.currentValue("temperature") == null || device.currentValue("temperature") != roomtempValue) {
       parent.debugLog("adjustRoomTemperature: updating room temperature from ${device.currentValue("temperature")} to ${roomtempValue}")
       sendEvent(name: "temperature", value: roomtempValue)
