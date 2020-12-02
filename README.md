@@ -37,3 +37,17 @@ Step 3 - Creation of Child AC and Heat Pump Units
 3. Towards the botton of the Device edit screen, review the Device Details table, in particular the Component Devices entry, ensuring a child device appears representing each air conditioner or heat pummp configured in the MELCloud mobile application and web UI.
 
 You are now setup in terms of the devices. You can open the device edit screen for the child device and start adjusting modes, temperature, etc. You can also add the child device to a dashboard as a tile with the thermostat template.
+
+Additional Settings
+
+Logging
+
+TBA
+
+Scheduling of Status Updates
+
+Air conditioners can typically be updated uing methods that are not visible to Hubitat, such as wall mounted controllers and remotes.  The Mitsubishi Electric drivers support an automatic polling mechanism that contacts the Mitsubishi services periodically and retrieves the current settings for each Air Conditioning Unit, including the current Set Temperature, Room Temperature, Operating Mode, Fan Mode and Power settings.  This polling can be turned on or off through a Preference setting called Automatic Status Polling, a  switch to turn this on or off.
+
+Fan Modes
+
+TBA
