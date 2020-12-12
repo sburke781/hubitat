@@ -1,0 +1,23 @@
+{
+  "packageName": "Mitsubishi Electric Unified Thermostat",
+  "author": "Simon Burke",
+  "version": "1.0",
+  "minimumHEVersion": "2.2.4",
+  "dateReleased": "2020-12-12",
+  "drivers": [
+    {
+      "id": "38b426d1-54af-40d6-b7cc-53c4bcfd9b19",
+      "name": "MELCloud Parent Driver",
+      "namespace": "simnet",
+      "location": "https://github.com/sburke781/hubitat/raw/master/MelUnifiedThermostat/MELCloudParent_driver.groovy",
+      "required": true
+    },
+    {
+      "id": "d18a466c-1050-477b-a50a-79fc13ae7eb9",
+      "name": "MELCloud AC Unit",
+      "namespace": "simnet",
+      "location": "https://github.com/sburke781/hubitat/raw/master/MelUnifiedThermostat/MELCloudACUnit_driver.groovy",
+      "required": true
+    }
+  ]
+}
