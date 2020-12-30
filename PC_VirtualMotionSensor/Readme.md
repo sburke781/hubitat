@@ -2,12 +2,12 @@
 
 ## Description
 
-When working at a desk in a room with Motion Lighting, the traditional motion sensors are not always going to be triggered.  The aim of this script is to capture activity on a PC as a way to keep motion lighting rules active, i.e. lights remaining turned on whilst a user works at their desk.
+When working at a desk in a room with Motion Lighting, the traditional motion sensors are not always going to be triggered.  The aim of this script is to capture activity on a PC as a way to keep motion lighting rules active, i.e. lights remaining turned on, while someone is working on the PC.
 
 ## How Does it Work
-The PC Virtual Motion Sensor PowerShell script can be run periodically on the PC, e.g. once every minute, looking for number of seconds since the last user input occurred, e.g. mouse movement or keyboard strokes.  A threshold setting and the idle time reading are both used to determine whether a status of active or inactive should be recorded in a Virtual Motion Sensor device on the nominated Hubitat hub using the Maker API.
+The PC Virtual Motion Sensor is essentially a Windows PowerShell script that can be configured to run periodically on the PC being monitored, detecting the number of seconds since the last user input was recorded, e.g. mouse movement or keyboard strokes.  This reading is compared to a threshold resulting in a status of active or inactive being recorded in a Virtual Motion Sensor device made available through the Maker API.
 
-Once the Virtual Motion Sensor device is being updated on a regular basis, it can be used like any other motion sensor and however a user wishes.  The intention was that it be used in either the Motion Lighting app on the Hubitat hub to keep a motion lighting rule active, or in a Rule Machine rule.
+Once the Virtual Motion Sensor device is being updated on a regular basis, it can be used like any other motion sensor, incluiding in the built-in Motion Lighting app to keep a motion lighting rule active, or in a Rule Machine rule.
 
 ## Installation and Configuration
 
