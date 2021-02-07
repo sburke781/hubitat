@@ -30,7 +30,7 @@ metadata {
 preferences {
 		input(name: "AutoStatusPolling", type: "bool", title:"Automatic Status Polling", description: "Enable / Disable automatic polling of unit status from MelCloud", defaultValue: true, required: true, displayDuringSetup: true)
         input(name: "StatusPollingInterval", type: "ENUM", multiple: false, options: ["20", "30", "60", "300"], title:"Status Polling Interval", description: "Number of seconds between automatic status updates", defaultValue: 30, required: true, displayDuringSetup: true)		
-		input(name: "FansTextOrNumbers", type: "bool", title: "Famode Modes: Text or Numbers?", description: "Use HE Text Fan Modes or Numbers?", defaultValue: true, required: true, displayDuringSetup: true)
+		input(name: "FansTextOrNumbers", type: "bool", title: "Famode Mode Settings: Text or Numbers?", description: "Turn ON to use Text or OFF to use Numbers", defaultValue: true, required: true, displayDuringSetup: true)
         
     }
         
@@ -237,7 +237,7 @@ def getFanModeMap() {
         [
             0:"Auto",
             1:"Low",
-            2:"Medium  Low",
+            2:"Medium Low",
             3:"Medium",
             4:"Medium High",
             5:"High"
@@ -823,12 +823,12 @@ def adjustThermostatFanMode(givenFanModeKey) {
     		sendEvent(name: "thermostatFanMode", value: fanModeValue)
             def fanControlSpeed = fanModeValue
             
-            if(fanControlSpeed == "Auto")          fanControlSpeed = "auto"
-            if(fanControlSpeed == "Low")           fanControlSpeed = "low"
-            if(fanControlSpeed == "Medium Low")    fanControlSpeed = "medium-low"
-            if(fanControlSpeed == "Medium")        fanControlSpeed = "medium"
-            if(fanControlSpeed == "Medium High")   fanControlSpeed = "medium-high"
-            if(fanControlSpeed == "High")          fanControlSpeed = "high"
+            if(fanControlSpeed.trim() == "Auto")                                           fanControlSpeed = "auto"
+            if(fanControlSpeed.trim() == "Low"         || fanControlSpeed.trim() == "1")   fanControlSpeed = "low"
+            if(fanControlSpeed.trim() == "Medium Low"  || fanControlSpeed.trim() == "2")   fanControlSpeed = "medium-low"
+            if(fanControlSpeed.trim() == "Medium"      || fanControlSpeed.trim() == "3")   fanControlSpeed = "medium"
+            if(fanControlSpeed.trim() == "Medium High" || fanControlSpeed.trim() == "4")   fanControlSpeed = "medium-high"
+            if(fanControlSpeed.trim() == "High"        || fanControlSpeed.trim() == "5")   fanControlSpeed = "high"
             
             sendEvent(name: "speed", value: fanControlSpeed)
             parent.infoLog("Fan Mode / Speed adjusted to ${fanControlSpeed}")
