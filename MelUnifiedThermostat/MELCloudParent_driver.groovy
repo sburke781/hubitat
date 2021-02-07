@@ -113,7 +113,7 @@ def createChildACUnits() {
 
 def setAuthCode() {
       
-    def bodyJson = "{ \"Email\": \"${UserName}\", \"Password\": \"${Password}\", \"Language\": 0, \"AppVersion\": \"1.18.5.1\", \"Persist\": \"True\", \"CaptchaResponse\": \"\" }"
+    def bodyJson = "{ \"Email\": \"${UserName}\", \"Password\": \"${Password}\",  \"AppVersion\": \"1.18.5.1\", \"Persist\": \"True\", \"CaptchaResponse\": \"\" }"
     def headers = [:] 
 
     headers.put("Content-Type", "application/json; charset=UTF-8")
