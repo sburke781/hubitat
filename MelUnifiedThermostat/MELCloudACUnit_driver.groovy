@@ -30,7 +30,7 @@ metadata {
 preferences {
 		input(name: "AutoStatusPolling", type: "bool", title:"Automatic Status Polling", description: "Enable / Disable automatic polling of unit status from MelCloud", defaultValue: true, required: true, displayDuringSetup: true)
         input(name: "StatusPollingInterval", type: "ENUM", multiple: false, options: ["20", "30", "60", "300"], title:"Status Polling Interval", description: "Number of seconds between automatic status updates", defaultValue: 30, required: true, displayDuringSetup: true)		
-		input(name: "FansTextOrNumbers", type: "bool", title: "Famode Modes: Text or Numbers?", description: "Use HE Text Fan Modes or Numbers?", defaultValue: true, required: true, displayDuringSetup: true)
+		input(name: "FansTextOrNumbers", type: "bool", title: "Famode Mode Settings: Text or Numbers?", description: "Turn ON to use Text or OFF for Numbers", defaultValue: true, required: true, displayDuringSetup: true)
         
     }
         
