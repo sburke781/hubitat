@@ -17,6 +17,7 @@
  *    Date        Who            What
  *    ----        ---            ----
  *    2020-04-18  Simon Burke    Original Creation
+ *    2021-02-10  Simon Burke	 Additional of Scheduling
  * 
  */
 metadata {
@@ -29,9 +30,10 @@ metadata {
 	preferences {
 		input(name: "dateFormat", type: "string", title:"Date Format", description: "Enter the date format to apply for display purposes", defaultValue: "EEEE d MMMM, yyyy", required: true, displayDuringSetup: true)
 		input(name: "timeFormat", type: "string", title:"Time Format", description: "Enter the time format to apply for display purposes", defaultValue: "HH:mm", required: false, displayDuringSetup: true)
+		input(name: "AutoUpdate", type: "bool", title:"Automatic Update", description: "Enable / Disable automatic update to date", defaultValue: true, required: true, displayDuringSetup: true)
+        	input(name: "AutoUpdateInterval", type: "ENUM", multiple: false, options: ["20", "30", "60", "300"], title:"Auto Update Interval", description: "Number of seconds between automatic updates", defaultValue: 30, required: true, displayDuringSetup: true)		
+        
     }
-    
-    
 
 }
 
