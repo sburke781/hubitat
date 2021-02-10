@@ -43,7 +43,7 @@ def refresh() {
 
 def updated() {
 
-    debug.Log("updated: AutoPolling = ${AutoUpdate}, StatusPollingInterval = ${AutoUpdateInterval}")
+    debug("updated: AutoPolling = ${AutoUpdate}, StatusPollingInterval = ${AutoUpdateInterval}")
     updatePolling()    
 }
 
@@ -61,23 +61,23 @@ def getSchedule() { }
 def updatePolling() {
 
    def sched
-   debug.Log("updatePolling: Updating Automatic Polling called, about to unschedule refresh")
+   debug("updatePolling: Updating Automatic Polling called, about to unschedule refresh")
    unschedule("refresh")
-   debug.Log("updatePolling: Unscheduleing refresh complete")
+   debug("updatePolling: Unscheduleing refresh complete")
    
    if(AutoUpdate == true) {
        
        sched = "2/${AutoUpdateInterval} * * ? * * *"
-       debug.Log("updatePolling: Setting up schedule with settings: schedule(\"${sched}\",refresh)")
+       debug("updatePolling: Setting up schedule with settings: schedule(\"${sched}\",refresh)")
        try{
            
            schedule("${sched}","refresh")
        }
        catch(Exception e) {
-           debug.Log("updatePolling: Error - " + e)
+           debug("updatePolling: Error - " + e)
        }
        
-       debug.Log("updatePolling: Scheduled refresh set")
+       debug("updatePolling: Scheduled refresh set")
    }
-   else { debug.Log("updatePolling: Automatic status polling disabled")  }
+   else { debug("updatePolling: Automatic status polling disabled")  }
 }
