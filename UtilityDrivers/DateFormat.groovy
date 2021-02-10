@@ -17,7 +17,7 @@
  *    Date        Who            What
  *    ----        ---            ----
  *    2020-04-18  Simon Burke    Original Creation
- *    2021-02-10  Simon Burke	 Additional of Scheduling
+ *    2021-02-10  Simon Burke	 Addition of Scheduling
  * 
  */
 metadata {
@@ -48,4 +48,30 @@ def runCmd() {
     //HH:mm
     sendEvent(name: "formattedDate", value : new Date().format("${dateFormat}"));
     sendEvent(name: "formattedTime", value : new Date().format("${timeFormat}"));
+}
+
+def getSchedule() { }
+
+def updatePolling() {
+
+   def sched
+   parent.debugLog("updatePolling: Updating Automatic Polling called, about to unschedule refresh")
+   unschedule("refresh")
+   parent.debugLog("updatePolling: Unscheduleing refresh complete")
+   
+   if(AutoStatusPolling == true) {
+       
+       sched = "2/${StatusPollingInterval} * * ? * * *"
+       parent.debugLog("updatePolling: Setting up schedule with settings: schedule(\"${sched}\",refresh)")
+       try{
+           
+           schedule("${sched}","refresh")
+       }
+       catch(Exception e) {
+           parent.debugLog("updatePolling: Error - " + e)
+       }
+       
+       parent.debugLog("updatePolling: Scheduled refresh set")
+   }
+   else { parent.debugLog("updatePolling: Automatic status polling disabled")  }
 }
