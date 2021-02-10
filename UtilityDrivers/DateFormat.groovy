@@ -17,6 +17,7 @@
  *    Date        Who            What
  *    ----        ---            ----
  *    2020-04-18  Simon Burke    Original Creation
+ *    2021-02-10  Simon Burke	 Addition of Scheduling
  * 
  */
 metadata {
@@ -29,14 +30,21 @@ metadata {
 	preferences {
 		input(name: "dateFormat", type: "string", title:"Date Format", description: "Enter the date format to apply for display purposes", defaultValue: "EEEE d MMMM, yyyy", required: true, displayDuringSetup: true)
 		input(name: "timeFormat", type: "string", title:"Time Format", description: "Enter the time format to apply for display purposes", defaultValue: "HH:mm", required: false, displayDuringSetup: true)
+		input(name: "AutoUpdate", type: "bool", title:"Automatic Update", description: "Enable / Disable automatic update to date", defaultValue: true, required: true, displayDuringSetup: true)
+        	input(name: "AutoUpdateInterval", type: "ENUM", multiple: false, options: ["20", "30", "60", "300"], title:"Auto Update Interval", description: "Number of seconds between automatic updates", defaultValue: 30, required: true, displayDuringSetup: true)		
+        
     }
-    
-    
 
 }
 
 def refresh() {
  runCmd()   
+}
+
+def updated() {
+
+    log.debug("updated: AutoPolling = ${AutoUpdate}, StatusPollingInterval = ${AutoUpdateInterval}")
+    updatePolling()    
 }
 
 def runCmd() {
@@ -46,4 +54,30 @@ def runCmd() {
     //HH:mm
     sendEvent(name: "formattedDate", value : new Date().format("${dateFormat}"));
     sendEvent(name: "formattedTime", value : new Date().format("${timeFormat}"));
+}
+
+def getSchedule() { }
+
+def updatePolling() {
+
+   def sched
+   log.debug("updatePolling: Updating Automatic Polling called, about to unschedule refresh")
+   unschedule("refresh")
+   log.debug("updatePolling: Unscheduleing refresh complete")
+   
+   if(AutoUpdate == true) {
+       
+       sched = "2/${AutoUpdateInterval} * * ? * * *"
+       log.debug("updatePolling: Setting up schedule with settings: schedule(\"${sched}\",refresh)")
+       try{
+           
+           schedule("${sched}","refresh")
+       }
+       catch(Exception e) {
+           log.error("updatePolling: Error - " + e)
+       }
+       
+       log.debug("updatePolling: Scheduled refresh set")
+   }
+   else { log.debug("updatePolling: Automatic status polling disabled")  }
 }
