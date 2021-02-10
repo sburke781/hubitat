@@ -41,6 +41,12 @@ def refresh() {
  runCmd()   
 }
 
+def updated() {
+
+    parent.debugLog("updated: AutoPolling = ${AutoUpdate}, StatusPollingInterval = ${AutoUpdateInterval}")
+    updatePolling()    
+}
+
 def runCmd() {
     
     
