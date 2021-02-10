@@ -43,7 +43,7 @@ def refresh() {
 
 def updated() {
 
-    parent.debugLog("updated: AutoPolling = ${AutoUpdate}, StatusPollingInterval = ${AutoUpdateInterval}")
+    debug.Log("updated: AutoPolling = ${AutoUpdate}, StatusPollingInterval = ${AutoUpdateInterval}")
     updatePolling()    
 }
 
