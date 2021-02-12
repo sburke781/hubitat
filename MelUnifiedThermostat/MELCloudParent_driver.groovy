@@ -31,6 +31,33 @@ metadata {
 		input(name: "BaseURL", type: "string", title:"MELCloud Base URL", description: "Enter the base URL for the Mitsubishi Electric MELCloud Service", defaultValue: "https://app.melcloud.com", required: true, displayDuringSetup: true)
 		input(name: "UserName", type: "string", title:"MELCloud Username / Email", description: "Username / Email used to authenticate on Mitsubishi Electric MELCloud", displayDuringSetup: true)
 		input(name: "Password", type: "password", title:"MELCloud Account Password", description: "Password for authenticating on Mitsubishi Electric MELCloud", displayDuringSetup: true)
+		input(name: "Language", type: "ENUM", options: [["2"] : ["Čeština"]
+["3"] : ["Dansk"]
+["4"] : ["Deutsch"]
+["22"] : ["Ελληνικά"]
+["5"] : ["Eesti"]
+["6"] : ["Español"]
+["0"] : ["English"]
+["7"] : ["Français"]
+["23"] : ["Hrvatski - Srpski"]
+["8"] : ["Հայերեն"]
+["19"] : ["Italiano"]
+["9"] : ["Latviešu"]
+["10"] : ["Lietuvių"]
+["11"] : ["Magyar"]
+["12"] : ["Nederlands"]
+["13"] : ["Norsk"]
+["14"] : ["Polski"]
+["15"] : ["Português"]
+["16"] : ["Русский"]
+["24"] : ["Română"]
+["26"] : ["Shqip"]
+["25"] : ["Slovenščina"]
+["17"] : ["Suomi"]
+["18"] : ["Svenska"]
+["21"] : ["Türkçe"]
+["1" ]: ["Български"]
+["20"] : ["Українська"]], title:"Language", description: "Select a language", displayDuringSetup: true)
         input(name: "DebugLogging", type: "bool", title:"Enable Debug Logging", displayDuringSetup: true, defaultValue: false)
         input(name: "WarnLogging", type: "bool", title:"Enable Warning Logging", displayDuringSetup: true, defaultValue: true)
         input(name: "ErrorLogging", type: "bool", title:"Enable Error Logging", displayDuringSetup: true, defaultValue: true)
