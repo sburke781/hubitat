@@ -28,9 +28,40 @@ metadata {
 	}
 
 	preferences {
-		input(name: "BaseURL", type: "string", title:"MELCloud Base URL", description: "Enter the base URL for the Mitsubishi Electric MELCloud Service", defaultValue: "https://app.melcloud.com", required: true, displayDuringSetup: true)
-		input(name: "UserName", type: "string", title:"MELCloud Username / Email", description: "Username / Email used to authenticate on Mitsubishi Electric MELCloud", displayDuringSetup: true)
-		input(name: "Password", type: "password", title:"MELCloud Account Password", description: "Password for authenticating on Mitsubishi Electric MELCloud", displayDuringSetup: true)
+		input name: "BaseURL", type: "string", title:"MELCloud Base URL", description: "Enter the base URL for the Mitsubishi Electric MELCloud Service", defaultValue: "https://app.melcloud.com", required: true, displayDuringSetup: true
+		input name: "UserName", type: "string", title:"MELCloud Username / Email", description: "Username / Email used to authenticate on Mitsubishi Electric MELCloud", displayDuringSetup: true
+		input name: "Password", type: "password", title:"MELCloud Account Password", description: "Password for authenticating on Mitsubishi Electric MELCloud", displayDuringSetup: true
+		def languageSelected = []
+            languageSelected << ["2" : "Čeština (2)"]
+            languageSelected << ["3" : "Dansk (3)"]
+            languageSelected << ["4" : "Deutsch (4)"]
+            languageSelected << ["22" : "Ελληνικά (22)"]
+            languageSelected << ["5" : "Eesti (5)"]
+            languageSelected << ["6" : "Español (6)"]
+            languageSelected << ["0" : "English (0)"]
+            languageSelected << ["7" : "Français (7)"]
+            languageSelected << ["23" : "Hrvatski - Srpski (23)"]
+            languageSelected << ["8" : "Հայերեն (8)"]
+            languageSelected << ["19" : "Italiano (19)"]
+            languageSelected << ["9" : "Latviešu (9)"]
+            languageSelected << ["10" : "Lietuvių (10)"]
+            languageSelected << ["11" : "Magyar (11)"]
+            languageSelected << ["12" : "Nederlands (12)"]
+            languageSelected << ["13" : "Norsk (13)"]
+            languageSelected << ["14" : "Polski (14)"]
+            languageSelected << ["15" : "Português (15)"]
+            languageSelected << ["16" : "Русский (16)"]
+            languageSelected << ["24" : "Română (24)"]
+            languageSelected << ["26" : "Shqip (26)"]
+            languageSelected << ["25" : "Slovenščina (25)"]
+            languageSelected << ["17" : "Suomi (17)"]
+            languageSelected << ["18" : "Svenska (18)"]
+            languageSelected << ["21" : "Türkçe (21)"]
+            languageSelected << ["1" : "Български (1)"]
+            languageSelected << ["20" : "Українська (20)"]
+        
+        input name: "Language", type: "enum", title:"Language", options: languageSelected, defaultValue: 0, description: "Select a language", displayDuringSetup: true
+        
         input(name: "DebugLogging", type: "bool", title:"Enable Debug Logging", displayDuringSetup: true, defaultValue: false)
         input(name: "WarnLogging", type: "bool", title:"Enable Warning Logging", displayDuringSetup: true, defaultValue: true)
         input(name: "ErrorLogging", type: "bool", title:"Enable Error Logging", displayDuringSetup: true, defaultValue: true)
@@ -113,7 +144,9 @@ def createChildACUnits() {
 
 def setAuthCode() {
       
-    def bodyJson = "{ \"Email\": \"${UserName}\", \"Password\": \"${Password}\", \"Language\": \"13\", \"AppVersion\": \"1.18.5.1\", \"Persist\": \"True\", \"CaptchaResponse\": \"\" }"
+    //def bodyJson = "{ \"Email\": \"${UserName}\", \"Password\": \"${Password}\", \"Language\": \"13\", \"AppVersion\": \"1.18.5.1\", \"Persist\": \"True\", \"CaptchaResponse\": \"\" }"
+    def bodyJson = "{ \"Email\": \"${UserName}\", \"Password\": \"${Password}\", \"Language\": \"${Language}\", \"AppVersion\": \"1.18.5.1\", \"Persist\": \"True\", \"CaptchaResponse\": \"\" }"
+    //debugLog(bodyJsonAlt)
     def headers = [:] 
 
     headers.put("Content-Type", "application/json; charset=UTF-8")
