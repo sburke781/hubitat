@@ -17,6 +17,18 @@
  *    Date        Who            What
  *    ----        ---            ----
  *    2019-12-04  Simon Burke    Original Creation
+ *    2020-03-29  Simon Burke    Adjusted logging
+ *                                Commented out some logging to remove noise
+ *                                Adjusted some error logging to report as errors instead of debug logs
+ *                                Intention is to eventually include logging preference switches
+ *    2021-02-20  Simon Burke    Split runCmd method to reduce the number of API calls and consumption of CPU:
+ *                                getAuthToken - Retrieves Authorisation token from SensorPush
+ *                                getAccessToken - Retrieves Access token from SensorPush
+ *                                sensors - Calls getAccessToken, retrieves the list of sensors
+ *                                            and creates new child devices if required
+ *                                samples - Calls getAccessToken, retrieves latest sample for each sensor
+ *                                            , calls sensors if new sensor is detected
+ *                                            , updates each child sensor device with latest reading
  *
  * 
  */
@@ -31,6 +43,7 @@ metadata {
         attribute "spAuthCode", "string"
         attribute "spAccessToken", "string"
         
+        command "getAuthToken"
 	}
 
 	preferences {
@@ -39,6 +52,13 @@ metadata {
 		input(name: "UserName", type: "string", title:"SensorPush Username / Email", description: "Username / Email used to authenticate on SensorPush cloud", displayDuringSetup: true)
 		input(name: "Password", type: "password", title:"SensorPush Account Password", description: "Password for authenticating on SensorPush cloud", displayDuringSetup: true)
         
+        input(name: "AutoSensorPolling", type: "bool", title:"Automatic Sensor Polling", description: "Enable / Disable automatic polling of sensors from SensorPush", defaultValue: true, required: true, displayDuringSetup: true)
+        input(name: "SensorPollingInterval", type: "string", title:"Sensor Polling Interval", description: "Number of minutes between automatic sensor updates", defaultValue: 1, required: true, displayDuringSetup: true)		
+        
+        input(name: "DebugLogging", type: "bool", title:"Enable Debug Logging", displayDuringSetup: true, defaultValue: false)
+        input(name: "WarnLogging", type: "bool", title:"Enable Warning Logging", displayDuringSetup: true, defaultValue: true)
+        input(name: "ErrorLogging", type: "bool", title:"Enable Error Logging", displayDuringSetup: true, defaultValue: true)
+        input(name: "InfoLogging", type: "bool", title:"Enable Description Text (Info) Logging", displayDuringSetup: true, defaultValue: false)
     }
     
     
@@ -46,18 +66,130 @@ metadata {
 }
 
 
-def refresh() {
- runCmd()   
+def updated() {
+
+    debugLog("updated: AutoStatusPolling = ${AutoSensorPolling}, StatusPollingInterval = ${SensorPollingInterval}")
+    updateSensorPolling()    
 }
 
-def runCmd() {
+def getSchedule() { }
 
-    def bodyJson = "{ \"email\": \"${UserName}\", \"password\": \"${Password}\" }"
-    def headers = [:] 
+def updateSensorPolling() {
 
+   def sched
+   debugLog("updateSensorPolling: Updating Sensor Polling called, about to unschedule refresh")
+   unschedule("refresh")
+   debugLog("updateSensorPolling: Unscheduleing refresh complete")
+   
+   if(AutoSensorPolling == true) {
+       
+       sched = "${SensorPollingInterval} * * ? * * *"
+       debugLog("updateSensorPolling: Setting up schedule with settings: schedule(\"${sched}\",refresh)")
+       try{
+           
+           schedule("${sched}","refresh")
+       }
+       catch(Exception e) {
+           errorLog("updateSensorPolling: Error - " + e)
+       }
+       
+       infoLog("updateSensorPolling: Scheduled refresh set")
+   }
+   else { infoLog("updateSensorPolling: Automatic sensor polling disabled")  }
+}
+
+
+
+
+def refresh() {
+ samples()   
+}
+
+def samples() {
+
+    def bodyJson = ""
+    def postParams = [:]
+    def headers = [:]
+    getAccessToken()
     headers.put("accept", "application/json")
-    //log.debug(spBaseURL)
-    def postParams = [
+    headers.put("Authorization", device.currentValue("spAccessToken", true))
+    bodyJson = "{ \"limit\": 1 }"
+    postParams = [
+		uri: "${spBaseURL}/samples",
+        headers: headers,
+        contentType: "application/json",
+        requestContentType: "application/json",
+		body : bodyJson
+	]
+           
+	try {
+        httpPost(postParams)
+        { resp -> 
+            //log.debug("samplesTest: resp = ${resp.data}")
+            resp?.data?.sensors?.each { sensor ->
+                                        
+                        def tempStr = (String)(sensor.value.temperature)
+                        tempStr = tempStr.replace("[","").replace("]","")
+                        def temperature = (Double.parseDouble(tempStr) - 32) * 5 / 9
+                        
+                        def childTempDevice = findChildDevice(sensor.key, "Temperature")
+    
+                        if (childTempDevice == null) {
+                            //Could not find sensor, run the sensors method to create any new sensor child devices
+                            sensors()
+                            //Attempt to do the lookup again
+                            childTempDevice = findChildDevice(sensor.key, "Temperature")
+                        }
+                        
+                        if (childTempDevice == null) {
+                            //Still could not find the device
+                            errorLog("Lookup of newly created sensor failed... ${sensor.key}, Temperature")                         
+                        }
+                        else {
+                            childTempDevice.sendEvent(name: "temperature", value: String.format("%.2f",temperature))
+                        }
+                        
+                        def humidity = (String)(sensor.value.humidity)
+                        humidity = humidity.replace("[","").replace("]","")
+                        
+                        def childHumDevice = findChildDevice(sensor.key, "Humidity")
+    
+                        if (childHumDevice == null) {
+                            //Could not find sensor, run the sensors method to create any new sensor child devices
+                            sensors()
+                            //Attempt to do the lookup again
+                            childHumDevice = findChildDevice(it.value.id, "Humidity")
+                        }
+                        
+                        if (childHumDevice == null) {
+                            //Still could not find the device
+                            errorLog("Lookup of newly created sensor failed... ${sensor.key}, Humidity")                         
+                        }
+                        else {
+                            childHumDevice.sendEvent(name: "humidity", value: humidity)
+                        }
+                       
+            
+            }
+        }
+    }
+    catch(Exception e)
+    {
+        errorLog("samplestest: Exception ${e}")   
+    }
+    
+}
+
+def getAuthToken() {
+ 
+    def bodyJson = ""
+    def headers = [:] 
+    def postParams = [:]
+        
+    headers.put("accept", "application/json")
+    
+    bodyJson = "{ \"email\": \"${UserName}\", \"password\": \"${Password}\" }"
+    postParams = [
         uri: "${spBaseURL}/oauth/authorize",
         headers: headers,
         contentType: "application/json",
@@ -66,22 +198,32 @@ def runCmd() {
 	]
            
 	try {
-        //log.debug("Requesting SensorPush Authorization Code")
+        
         
         httpPost(postParams)
         { resp -> 
 
             sendEvent(name: "spAuthCode", value : resp.data.authorization)
-            //log.debug(resp.data)
+            
         }
         
                 
 	}
 	catch (Exception e) {
-        log.debug "Unable to query sensorpush cloud: ${e}"
+        errorLog("Unable to query sensorpush cloud: ${e}")
 	}
     
+}
+
+
+def getAccessToken(){
     
+    def bodyJson = ""
+    def headers = [:] 
+    def postParams = [:]
+        
+    headers.put("accept", "application/json")
+        
     bodyJson = "{ \"authorization\": \"${device.currentValue("spAuthCode", true)}\" }"
     postParams = [
 		uri: "${spBaseURL}/oauth/accesstoken",
@@ -98,15 +240,26 @@ def runCmd() {
         { resp -> 
 
             sendEvent(name: "spAccessToken", value : resp.data.accesstoken)
-            //log.debug(resp.data)
+            //log.debug("getAccessToken: Access Token = ${resp.data.accesstoken}")
         }
         
                 
 	}
 	catch (Exception e) {
-        log.debug "Unable to query sensorpush cloud: ${e}"
+        errorLog("Unable to query sensorpush cloud: ${e}")
 	}
     
+}
+
+def sensors() {
+
+    
+    
+    def bodyJson = ""
+    def postParams = [:]
+    def headers = [:]
+    getAccessToken()
+    headers.put("accept", "application/json")
     headers.put("Authorization", device.currentValue("spAccessToken", true))
     bodyJson = "{ }"
     postParams = [
@@ -124,58 +277,22 @@ def runCmd() {
             //sendEvent(name: "spAccessToken", value : resp.data.accesstoken)
             resp?.data?.each { it ->
             
-                def samplesBodyJson = "{ \"sensors\": [\"${it.value.id}\"], \"limit\": 1 }"
-                def samplesPostParams = [
-		            uri: "${spBaseURL}/samples",
-                    headers: headers,
-                    contentType: "application/json",
-                    requestContentType: "application/json",
-		            body : samplesBodyJson
-	                ]
-                
-                httpPost(samplesPostParams)
-                { samples ->
-                    samples?.data?.sensors?.each { it2 ->
-                        
-                        def tempStr = (String)(it2.value.temperature)
-                        tempStr = tempStr.replace("[","").replace("]","")
-                        def temperature = (Double.parseDouble(tempStr) - 32) * 5 / 9
-                        
-                        def childTempDevice = findChildDevice(it.value.id, "Temperature")
+                def childTempDevice = findChildDevice(it.value.id, "Temperature")
     
-                        if (childTempDevice == null) {
-                            createSensor(it.value.id, it.value.name, "Temperature")
-                            childTempDevice = findChildDevice(it.value.id, "Temperature")
-                        }
+                if (childTempDevice == null) {
+                    createSensor(it.value.id, it.value.name, "Temperature")
+                    childTempDevice = findChildDevice(it.value.id, "Temperature")
+                }
                         
-                        if (childTempDevice == null) {
-                            log.debug("Lookup of newly created sensor failed... ${it.value.id}, ${it.value.name}, Temperature")                         
-                        }
-                        else {
-                            childTempDevice.sendEvent(name: "temperature", value: String.format("%.2f",temperature))
-                        }
-                        
-                        def humidity = (String)(it2.value.humidity)
-                        humidity = humidity.replace("[","").replace("]","")
-                        
-                        def childHumDevice = findChildDevice(it.value.id, "Humidity")
-    
-                        if (childHumDevice == null) {
-                            createSensor(it.value.id, it.value.name, "Humidity")
-                            childHumDevice = findChildDevice(it.value.id, "Humidity")
-                        }
-                        
-                        if (childHumDevice == null) {
-                            log.debug("Lookup of newly created sensor failed... ${it.value.id}, ${it.value.name}, Humidity")                         
-                        }
-                        else {
-                            childHumDevice.sendEvent(name: "humidity", value: humidity)
-                        }
-                        
-                        log.debug("SensorPush Gateway: ${it.value.name} - Temperature: ${String.format("%.2f",temperature)}, Humidity: ${humidity}")
+                if (childTempDevice == null) {
+                    errorLog("Lookup of newly created sensor failed... ${it.value.id}, ${it.value.name}, Temperature")                         
+                }
                 
-                        
-                    }
+                def childHumDevice = findChildDevice(it.value.id, "Humidity")
+    
+                if (childHumDevice == null) {
+                    createSensor(it.value.id, it.value.name, "Humidity")
+                    childHumDevice = findChildDevice(it.value.id, "Humidity")
                 }
             }
             
@@ -184,7 +301,7 @@ def runCmd() {
                 
 	}
 	catch (Exception e) {
-        log.debug "Unable to query sensorpush cloud: ${e}"
+        errorLog("runCmd: Unable to query sensorpush cloud whilst getting sensor data: ${e}")
 	}
     
     
@@ -200,7 +317,7 @@ def findChildDevice(sensorId, sensorType) {
 }
 
 def createSensor(sensorId, sensorName, sensorType) {
-    log.debug("createSensor: Creating SensorPush Sensor: ${sensorId}, ${sensorName}, ${sensorType}")
+    debugLog("createSensor: Creating SensorPush Sensor: ${sensorId}, ${sensorName}, ${sensorType}")
     
 	def childDevice = findChildDevice(sensorId, sensorType)
     
@@ -208,7 +325,25 @@ def createSensor(sensorId, sensorName, sensorType) {
         childDevice = addChildDevice("hubitat", "Virtual ${sensorType} Sensor", deriveSensorDNI(sensorId, sensorType), [label: "${device.displayName} (${sensorType} Sensor - ${sensorName})", isComponent: false])
 	}
     else {
-      log.debug("createSensor: child device ${childDevice.deviceNetworkId} already exists")
+      debugLog("createSensor: child device ${childDevice.deviceNetworkId} already exists")
 	}
 	
+}
+
+
+//Utility methods
+def debugLog(debugMessage) {
+	if (DebugLogging == true) {log.debug(debugMessage)}	
+}
+
+def errorLog(errorMessage) {
+    if (ErrorLogging == true) { log.error(errorMessage)}  
+}
+
+def infoLog(infoMessage) {
+    if(InfoLogging == true) {log.info(infoMessage)}    
+}
+
+def warnLog(warnMessage) {
+    if(WarnLogging == true) {log.warn(warnMessage)}    
 }
