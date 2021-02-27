@@ -29,6 +29,13 @@
  *                                samples - Calls getAccessToken, retrieves latest sample for each sensor
  *                                            , calls sensors if new sensor is detected
  *                                            , updates each child sensor device with latest reading
+ *   2021-02-27  Simon Burke	Updated samples method, replacing code to always convert to degrees C with
+ *					a call to convertTemperatureIfNeeded to convert temperature readings
+ *					based on HE hub temperature scale setting, including before and after
+ *					debug logging for the temperature conversion
+ *				Minor adjustments to some logging to include correct method references
+ *				Adjusted notes on HE Community thread to include step to accept terms and
+ *					conditions on SensorPuish Dashboard web page - thanks @minardisucks-insteon
  *
  * 
  */
@@ -47,7 +54,7 @@ metadata {
 	}
 
 	preferences {
-		input(name: "spBaseURL", type: "string", title:"SensorPush Base URL", description: "Enter the base URL for the SensorPush Cloud Service", required: true, displayDuringSetup: true)
+		input(name: "spBaseURL", type: "string", title:"SensorPush Base URL", description: "Enter the base URL for the SensorPush Cloud Service", defaultValue: "https://api.sensorpush.com/api/v1", required: true, displayDuringSetup: true)
 		
 		input(name: "UserName", type: "string", title:"SensorPush Username / Email", description: "Username / Email used to authenticate on SensorPush cloud", displayDuringSetup: true)
 		input(name: "Password", type: "password", title:"SensorPush Account Password", description: "Password for authenticating on SensorPush cloud", displayDuringSetup: true)
@@ -130,7 +137,9 @@ def samples() {
                                         
                         def tempStr = (String)(sensor.value.temperature)
                         tempStr = tempStr.replace("[","").replace("]","")
-                        def temperature = (Double.parseDouble(tempStr) - 32) * 5 / 9
+                        debugLog("samples: Temp String = ${tempStr}")
+                        def temperature = convertTemperatureIfNeeded(tempStr.toFloat(),"F",1)
+                        debugLog("samples: Converted Temperature = ${temperature}")
                         
                         def childTempDevice = findChildDevice(sensor.key, "Temperature")
     
@@ -143,10 +152,10 @@ def samples() {
                         
                         if (childTempDevice == null) {
                             //Still could not find the device
-                            errorLog("Lookup of newly created sensor failed... ${sensor.key}, Temperature")                         
+                            errorLog("samples: Lookup of newly created sensor failed... ${sensor.key}, Temperature")                         
                         }
                         else {
-                            childTempDevice.sendEvent(name: "temperature", value: String.format("%.2f",temperature))
+                            childTempDevice.sendEvent(name: "temperature", value: temperature.toString())
                         }
                         
                         def humidity = (String)(sensor.value.humidity)
@@ -163,7 +172,7 @@ def samples() {
                         
                         if (childHumDevice == null) {
                             //Still could not find the device
-                            errorLog("Lookup of newly created sensor failed... ${sensor.key}, Humidity")                         
+                            errorLog("samples: Lookup of newly created sensor failed... ${sensor.key}, Humidity")                         
                         }
                         else {
                             childHumDevice.sendEvent(name: "humidity", value: humidity)
@@ -175,7 +184,7 @@ def samples() {
     }
     catch(Exception e)
     {
-        errorLog("samplestest: Exception ${e}")   
+        errorLog("samples: Exception ${e}")   
     }
     
 }
@@ -210,7 +219,7 @@ def getAuthToken() {
                 
 	}
 	catch (Exception e) {
-        errorLog("Unable to query sensorpush cloud: ${e}")
+        errorLog("getAuthToken: Unable to query sensorpush cloud: ${e}")
 	}
     
 }
@@ -246,7 +255,7 @@ def getAccessToken(){
                 
 	}
 	catch (Exception e) {
-        errorLog("Unable to query sensorpush cloud: ${e}")
+        errorLog("getAccessToken: Unable to query sensorpush cloud: ${e}")
 	}
     
 }
@@ -285,7 +294,7 @@ def sensors() {
                 }
                         
                 if (childTempDevice == null) {
-                    errorLog("Lookup of newly created sensor failed... ${it.value.id}, ${it.value.name}, Temperature")                         
+                    errorLog("sensors: Lookup of newly created sensor failed... ${it.value.id}, ${it.value.name}, Temperature")                         
                 }
                 
                 def childHumDevice = findChildDevice(it.value.id, "Humidity")
@@ -301,7 +310,7 @@ def sensors() {
                 
 	}
 	catch (Exception e) {
-        errorLog("runCmd: Unable to query sensorpush cloud whilst getting sensor data: ${e}")
+        errorLog("sensors: Unable to query sensorpush cloud whilst getting sensor data: ${e}")
 	}
     
     
