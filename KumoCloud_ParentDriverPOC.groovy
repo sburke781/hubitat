@@ -17,8 +17,13 @@
  *    Date        Who            What
  *    ----        ---            ----
  *    2021-02-07  Simon Burke    Created Parent Driver
+ *    2021-02-28  Simon Burke    Added Authentication and logging of some status info as part of POC
  * 
  */
+import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
+//import groovy.json.JsonParserType
+
 metadata {
 	definition (name: "KumoCloud Parent Driver", namespace: "simnet", author: "Simon Burke") {
         
@@ -85,24 +90,39 @@ def setAuthCode() {
 	try {
         
         httpPost(postParams)
-        { resp -> 
-            debugLog("setAuthCode: ${resp.data}")
-            def newAuthCode = "";
-            
-            debugLog("setAuthCode: ContextKey - ${resp?.data?.login?.value}");
-            newAuthCode = "${resp?.data?.login?.value}";
+        { resp ->
+            debugLog("${resp?.data}")
+            def newAuthCode = "${resp?.data[0].token}";
             
             if (newAuthCode != "") {
-                //sendEvent(name: "authCode", value : newAuthCode)
                 state.authCode = newAuthCode
                 debugLog("setAuthCode: New authentication code value has been set")
             }
             else {debugLog("setAuthCode: New authentication code was NOT set")}
+            
+            resp?.data[2].children.each { child ->
+                    
+                    child.zoneTable.each { zone ->
+                        
+                        debugLog("setAuthCode: Unit (Serial / Label) - ${zone.value.serial} / ${zone.value.label}")
+                        
+                        debugLog("setAuthCode: Power - ${zone.value.reportedCondition?.power}")
+                        debugLog("setAuthCode: Operation Mode - ${zone.value.reportedCondition.more?.operation_mode_text?.value} (${zone.value.reportedCondition?.operation_mode})")
+                        debugLog("setAuthCode: Set Points (Cool / Heat / Current) - ${zone.value.reportedCondition?.sp_cool} / ${zone.value.reportedCondition?.sp_heat} / ${zone.value.reportedCondition?.set_temp}")
+                        debugLog("setAuthCode: Room Temperature - ${zone.value.reportedCondition?.room_temp}")
+                        debugLog("setAuthCode: Fan Speed - ${zone.value.reportedCondition?.fan_speed}")
+                        
+                    }
+                }
+                
+                
+            }
+                         
+            
         }
             
-	}
 	catch (Exception e) {
-        errorLog("setAuthCode: Unable to query Mitsubishi Electric MELCloud: ${e}")
+        errorLog("setAuthCode: Unable to query Mitsubishi Electric Kumo Cloud: ${e}")
 	}
 
 }
