@@ -17,10 +17,13 @@
  *    Date        Who            What
  *    ----        ---            ----
  *    2021-03-07  Simon Burke    Original Creation
+ *    2021-03-07  Simon Burke	 Added Refresh capability so that devices would appear in Maker API
  *
  */
 metadata {
 	definition (name: "Generic Attribute Storage Driver", namespace: "simnet", author: "Simon Burke") {
+        capability "Refresh"
+        
         attribute "stringAttribute", "string"
         attribute "integerAttribute", "integer"
         attribute "floatAttribute", "number"
@@ -36,7 +39,7 @@ metadata {
 
 }
 
-
+def refresh() {}
 def updated() {}
 
 def setStringAttribute(stringValue) {
