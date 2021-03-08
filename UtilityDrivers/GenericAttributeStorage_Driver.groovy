@@ -18,11 +18,12 @@
  *    ----        ---            ----
  *    2021-03-07  Simon Burke    Original Creation
  *    2021-03-07  Simon Burke	 Added Refresh capability so that devices would appear in Maker API
+ *    2021-03-08  Simon Burke    Change Refresh Capability to Actuator, which also allows for running custom commands
  *
  */
 metadata {
 	definition (name: "Generic Attribute Storage Driver", namespace: "simnet", author: "Simon Burke") {
-        capability "Refresh"
+        capability "Actuator"
         
         attribute "stringAttribute", "string"
         attribute "integerAttribute", "integer"
