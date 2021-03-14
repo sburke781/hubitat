@@ -295,27 +295,17 @@ def adjustFeatures(statusInfo) {
 
 def unitCommand(command) {
 
-    
     def statusInfo = [:]
     def bodyJson = "${command}"
     def headers = [:] 
 
-    headers.put("X-MitsContextKey","${parent.getAuthCode()}")
-    headers.put("Sec-Fetch-Site","same-origin")
-    headers.put("Origin","${parent.getBaseURL()}/")
-    headers.put("Accept-Encoding","gzip, deflate, br")
-    headers.put("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36")
-    headers.put("Sec-Fetch-Mode","cors")
-    headers.put("Accept", "application/json, text/javascript, */*; q=0.01")
-    headers.put("Referer", "${parent.getBaseURL()}/")
-    headers.put("X-Requested-With","XMLHttpRequest")
-    headers.put("Cookie","policyaccepted=true")
-    headers.put("Content-Type", "application/json; charset=UTF-8")
+    headers.put("Accept", "application/json, text/plain, */*")
+    headers.put("Content-Type", "application/json")
 
     def postParams = [
         uri: "${parent.getBaseURL()}/Mitsubishi.Wifi.Client/Device/SetAta",
         headers: headers,
-        contentType: "application/json; charset=UTF-8",
+        contentType: "application/json",
         body : bodyJson
 	]
     parent.debugLog("unitCommand: Body = ${bodyJson}, Headers = ${headers}")       
