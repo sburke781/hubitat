@@ -112,6 +112,7 @@ def setAuthCode() {
                         debugLog("setAuthCode: Room Temperature - ${zone.value.reportedCondition?.room_temp}")
                         debugLog("setAuthCode: Fan Speed - ${zone.value.reportedCondition?.fan_speed}")
                         
+			createChildDevice("${zone.value.serial}", "${zone.value.label}", "AC Unit") 
                     }
                 }
                 
@@ -146,8 +147,8 @@ def createChildDevice(childDeviceId, childDeviceName, childDeviceType) {
 	def childDevice = findChildDevice(childDeviceId, childDeviceType)
     
     if (childDevice == null) {
-        childDevice = addChildDevice("simnet", "MELCloud AC Unit", deriveChildDNI(childDeviceId, childDeviceType), [label: "${device.displayName} - ${childDeviceName}"])
-        infoLog("createChildDevice: New MEL Air Conditioning Child Device created -  ${device.displayName} - ${childDeviceName}")
+        childDevice = addChildDevice("simnet", "KumoCloud AC Unit", deriveChildDNI(childDeviceId, childDeviceType), [label: "${device.displayName} - ${childDeviceName}"])
+        infoLog("createChildDevice: New Kumo Air Conditioning Child Device created -  ${device.displayName} - ${childDeviceName}")
 	}
     else {
       debugLog("createChildDevice: child device ${childDevice.deviceNetworkId} already exists")
