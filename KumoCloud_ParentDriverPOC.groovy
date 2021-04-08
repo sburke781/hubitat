@@ -49,15 +49,15 @@ def refresh() {
   debugLog("refresh: Refresh process called")
 	
 	
-   const dict = {};
-   const command = {'power':1, 'operationMode':1};
-    dict['2456a456c4356']=command;
-	debugLog("${dict}");
+  // const dict = {};
+  // const command = {'power':1, 'operationMode':1};
+  //  dict['2456a456c4356']=command;
+//	debugLog("${dict}");
   // Authenticate with KumoCloud Service and
   //   record Authentication Code for use in future communications  
   setAuthCode()
   
-  //createChildACUnits()
+  createChildACUnits()
   
 }
 
