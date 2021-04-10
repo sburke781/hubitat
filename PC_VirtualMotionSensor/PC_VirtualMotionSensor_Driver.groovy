@@ -31,6 +31,7 @@ metadata {
         
         attribute "PollingPeriod", "number"
         attribute "ActivityThreshold", "number"
+                
         attribute "InfoLogging", "bool"
         attribute "DebugLogging", "bool"
         attribute "WarnLogging", "bool"
@@ -40,6 +41,17 @@ metadata {
 	preferences {
         input(name: "PollingPeriod", type: "number", title:"Polling Period (minutes)", displayDuringSetup: true, defaultValue: 1)
         input(name: "ActivityThreshold", type: "number", title:"Activity Threshold (seconds)", displayDuringSetup: true, defaultValue: 300)
+        
+        def autoInactiveList = []
+            autoInactiveList << ["-1" : "Disabled"]
+            autoInactiveList << ["5" : "5 seconds"]
+            autoInactiveList << ["15" : "15 seconds"]
+            autoInactiveList << ["30" : "30 seconds"]
+            autoInactiveList << ["45" : "45 seconds"]
+            autoInactiveList << ["60" : "1 minute"]
+            
+        
+        input(name: "AutoInactive", type: "enum", title:"Auto Inactive", options: autoInactiveList, displayDuringSetup: true, defaultValue: -1)
         input(name: "InfoLogging", type: "bool", title:"Enable Description Text (Info) Logging", displayDuringSetup: true, defaultValue: false)
         input(name: "DebugLogging", type: "bool", title:"Enable Debug Logging", displayDuringSetup: true, defaultValue: false)
         input(name: "WarnLogging", type: "bool", title:"Enable Warning Logging", displayDuringSetup: true, defaultValue: true)
@@ -67,7 +79,9 @@ def updated() {
     sendEvent(name: "DebugLogging", value: DebugLogging)
     sendEvent(name: "WarnLogging", value: WarnLogging)
     sendEvent(name: "ErrorLogging", value: ErrorLogging)
-
+    
+    //Schedule Auto Inactive
+    updateAutoInactiveSchedule()
 }
     
 
@@ -104,4 +118,36 @@ def infoLog(infoMessage) {
 
 def warnLog(warnMessage) {
     if(WarnLogging == true) {log.warn(warnMessage)}    
+}
+
+
+
+// Auto Inactive Scheduling
+
+def getSchedule() { }
+
+def updateAutoInactiveSchedule() {
+
+   def sched
+   debugLog("updateAutoInactiveSchedule: Updating Auto Inactive called, about to unschedule")
+   unschedule("inactive")
+   debugLog("updateAutoInactiveSchedule: Unscheduleing Auto Inactive complete")
+   
+    if(AutoInactive.toInteger() > 0) {
+       
+       if(AutoInactive.toInteger() == 60) { sched = "0 * * ? * * *" }
+       else { sched = "2/${AutoInactive.toInteger()} * * ? * * *" }
+       
+       debugLog("updateAutoInactiveSchedule: Setting up schedule with settings: schedule(\"${sched}\",inactive)")
+       try{
+           
+           schedule("${sched}","inactive")
+       }
+       catch(Exception e) {
+           debugLog("updateAutoInactiveSchedule: Error - " + e)
+       }
+       
+       debugLog("updateAutoInactiveSchedule: Scheduling Auto inactive complete")
+   }
+   else { debugLog("updateAutoInactiveSchedule: Auto Inactive disabled")  }
 }
