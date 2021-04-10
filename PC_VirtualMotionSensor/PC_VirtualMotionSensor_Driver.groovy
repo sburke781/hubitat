@@ -24,6 +24,9 @@ metadata {
         
         capability "MotionSensor"
         
+        command "active"
+        command "inactive"
+        
         attribute "motion", "ENUM", ['inactive', 'active']
         
         attribute "PollingPeriod", "number"
@@ -76,6 +79,15 @@ def initialize() {
     debugLog("initialize: initialize called")
 }
 
+def active() {
+    debugLog("active: active called")
+    sendEvent(name: "motion", value: "active")
+}
+
+def inactive() {
+    debugLog("inactive: inactive called")
+    sendEvent(name: "motion", value: "inactive")
+}
 
 //Utility methods
 def debugLog(debugMessage) {
