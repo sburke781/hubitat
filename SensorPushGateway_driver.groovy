@@ -91,8 +91,8 @@ def updateSensorPolling() {
    debugLog("updateSensorPolling: Unscheduleing refresh complete")
    
    if(AutoSensorPolling == true) {
-       sched = "0 2/${SensorPollingInterval} 0 ? * * *"
-       //sched = "* * * ${SensorPollingInterval} * * *"
+       
+	sched = "* */${SensorPollingInterval} * ? * * *"
        debugLog("updateSensorPolling: Setting up schedule with settings: schedule(\"${sched}\",refresh)")
        try{
            
