@@ -1,5 +1,5 @@
 /**
- *  SensorPush Temperature Sensor
+ *  SensorPush Gateway
  *
  *  Copyright 2019 Simon Burke
  *
@@ -36,6 +36,11 @@
  *				Minor adjustments to some logging to include correct method references
  *				Adjusted notes on HE Community thread to include step to accept terms and
  *					conditions on SensorPuish Dashboard web page - thanks @minardisucks-insteon
+ *  2021-04-17  Simon Burke	Updated automatic polling to correct the use of the polling interval preference
+ *					setting.  It was only impacting the second within the minute when the
+ *					polling occurred, now it correctly impacts the minute in the hour when
+ *					polling occurs
+ *				Removed redundant attributes lastUpdatedSource and lastUpdatedHE
  *
  * 
  */
@@ -44,9 +49,6 @@ metadata {
         capability "Temperature Measurement"
         capability "Sensor"
         capability "Refresh"
-        attribute "Temperature", "Number"
-        attribute "lastUpdatedSource", "string"
-        attribute "lastUpdatedHE", "string"
         attribute "spAuthCode", "string"
         attribute "spAccessToken", "string"
         
@@ -89,8 +91,8 @@ def updateSensorPolling() {
    debugLog("updateSensorPolling: Unscheduleing refresh complete")
    
    if(AutoSensorPolling == true) {
-       
-       sched = "${SensorPollingInterval} * * ? * * *"
+       sched = "0 2/${SensorPollingInterval} 0 ? * * *"
+       //sched = "* * * ${SensorPollingInterval} * * *"
        debugLog("updateSensorPolling: Setting up schedule with settings: schedule(\"${sched}\",refresh)")
        try{
            
