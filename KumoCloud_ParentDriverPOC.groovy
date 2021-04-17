@@ -57,7 +57,7 @@ def refresh() {
   //   record Authentication Code for use in future communications  
   setAuthCode()
   
-  createChildACUnits()
+  
   
 }
 
@@ -69,7 +69,7 @@ def initialize() {
 //Authentication
 
 def setAuthCode() {
-      
+    def childDevice
     def bodyJson = "{ \"username\": \"${UserName}\", \"password\": \"${Password}\", \"AppVersion\": \"2.2.0\" }"
     def headers = [:] 
 
@@ -109,7 +109,7 @@ def setAuthCode() {
             resp?.data[2].children.each { child ->
                     
                     child.zoneTable.each { zone ->
-                        
+                        childDevice = null
                         debugLog("setAuthCode: Unit (Serial / Label) - ${zone.value.serial} / ${zone.value.label}")
                         
                         debugLog("setAuthCode: Power - ${zone.value.reportedCondition?.power}")
@@ -118,7 +118,19 @@ def setAuthCode() {
                         debugLog("setAuthCode: Room Temperature - ${zone.value.reportedCondition?.room_temp}")
                         debugLog("setAuthCode: Fan Speed - ${zone.value.reportedCondition?.fan_speed}")
                         
-			createChildDevice("${zone.value.serial}", "${zone.value.label}", "AC Unit") 
+                        
+                        //createChildDevice("${zone.value.serial}", "${zone.value.label}", "AC Unit") 
+                        if (childDevice == null) {
+                            createChildDevice("${zone.value.serial}", "${zone.value.label}", "AC Unit")
+                            childDevice = findChildDevice("${zone.value.serial}", "AC Unit")
+                            if (childDevice != null) {
+                                childDevice.sendEvent(name: "unitId", value: "${zone.value.serial}")
+                            }
+                        }
+                        //childDevice.refresh()
+                        
+                        
+                        
                     }
                 }
                 
