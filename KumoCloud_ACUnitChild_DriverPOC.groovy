@@ -122,6 +122,17 @@ preferences {
 }
 
 
+/*
+URLs
+
+KUMO_LOGIN_URL = 'https://geo-c.kumocloud.com/login'
+KUMO_DEVICE_UPDATES_URL = 'https://geo-c.kumocloud.com/getDeviceUpdates'
+KUMO_DEVICE_INFREQUENT_UPDATES_URL = 'https://geo-c.kumocloud.com/getInfrequentDeviceUpdates'
+KUMO_DEVICE_EXECUTE_URL = 'https://geo-c.kumocloud.com/sendDeviceCommands/v2'
+*/
+
+
+
 def refresh() {
   parent.debugLog("refresh: Refresh process called")
   // Retrieve current state information from MELCloud Service   
@@ -295,33 +306,44 @@ def adjustFeatures(statusInfo) {
 
 def unitCommand(command) {
 
+    
     def statusInfo = [:]
     def bodyJson = "${command}"
     def headers = [:] 
 
-    headers.put("Accept", "application/json, text/plain, */*")
-    headers.put("Content-Type", "application/json")
+    headers.put("X-MitsContextKey","${parent.getAuthCode()}")
+    headers.put("Sec-Fetch-Site","same-origin")
+    headers.put("Origin","${parent.getBaseURL()}/")
+    headers.put("Accept-Encoding","gzip, deflate, br")
+    headers.put("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36")
+    headers.put("Sec-Fetch-Mode","cors")
+    headers.put("Accept", "application/json, text/javascript, */*; q=0.01")
+    headers.put("Referer", "${parent.getBaseURL()}/")
+    headers.put("X-Requested-With","XMLHttpRequest")
+    headers.put("Cookie","policyaccepted=true")
+    headers.put("Content-Type", "application/json; charset=UTF-8")
 
     def postParams = [
-        uri: "${parent.getBaseURL()}/Mitsubishi.Wifi.Client/Device/SetAta",
+        uri: "${parent.getBaseURL()}/sendDeviceCommands/v2",
         headers: headers,
-        contentType: "application/json",
+        contentType: "application/json; charset=UTF-8",
         body : bodyJson
 	]
     parent.debugLog("unitCommand: Body = ${bodyJson}, Headers = ${headers}")       
-	try {
+	
+    try {
         
         httpPost(postParams) { resp ->
             
             parent.debugLog("unitCommand: Status will be updated when there are no pending commands.")
-            parent.debugLog("unitCommand: Initial data returned from SetAta: ${resp.data}")
+            parent.debugLog("unitCommand: Initial data returned from unitCommand: ${resp.data}")
             
           }
     }   
 	catch (Exception e) {
-        parent.errorLog "unitCommand : Unable to query Mitsubishi Electric MELCloud: ${e}"
+        parent.errorLog "unitCommand : Unable to query Mitsubishi Electric Kumo Cloud: ${e}"
 	}
-
+    
 }
 
 
@@ -365,6 +387,7 @@ def setHeatingSetpoint(givenTemp) {
 
     //To be added for Kumo
     parent.debugLog("setHeatingSetpoint: method called, yet to be implemented.")
+    setTemperature(givenTemp)
 }
 
 def adjustSetTemperature(givenSetTemp) {
@@ -377,12 +400,13 @@ def setTemperature(givenSetTemp) {
     
     def setTempValue = givenSetTemp.toFloat()
         
-    def bodyJson = getUnitCommandBody( true //Power
+    /*def bodyJson = getUnitCommandBody( true //Power
                                       ,device.currentValue("thermostatFanMode")
                                       ,device.currentValue("thermostatMode")
                                       ,setTempValue
                                      )
-        
+    */
+    def bodyJson = "[\"${parent.getAuthCode()}\",{\"${device.currentValue("unitId")}\":{\"sp${device.currentValue("thermostatMode")}\":${setTempValue}}}]"
     parent.debugLog("setTemperature: Setting Temperature to ${setTempValue} for ${device.label}")
     parent.debugLog("setTemperature: Body JSON = ${bodyJson}")
         
@@ -499,8 +523,9 @@ def setSpeed(fanspeed) { setThermostatFanMode(fanspeed) }
 
 def adjustThermostatMode(thermostatmodeX, power) {
 
-    //To be added for Kumo
-    parent.debugLog("adjustThermostatMode: method called, yet to be implemented.")
+    sendEvent(name: 'thermostatMode', value: thermostatmodeX)
+    
+    parent.debugLog("adjustThermostatMode: method called, Mode = ${thermostatmodeX}, Power = ${power}")
 }
 
 def convertThermostatModeToKey(thermostatmodeX) {
@@ -518,6 +543,23 @@ def convertThermostatModeToKey(thermostatmodeX) {
 
 def setThermostatMode(thermostatmodeX) {
 
+        /*
+      if(value === this.platform.Characteristic.TargetHeaterCoolerState.AUTO) {
+        command = {'power':1, 'operationMode':8};
+        commandDirect = {'mode':'auto'};
+      } else if(value === this.platform.Characteristic.TargetHeaterCoolerState.HEAT) {
+        command = {'power':1, 'operationMode':1};
+        commandDirect = {'mode':'heat'};
+      } else if(value === this.platform.Characteristic.TargetHeaterCoolerState.COOL) {
+        command = {'power':1, 'operationMode':3};
+        commandDirect = {'mode':'cool'};
+      } 
+    }
+
+*/
+    
+    
+    
   parent.debugLog("setThermostatMode: Thermostat Mode passed in = ${thermostatmodeX}")
     
   def modeKey = null
@@ -530,7 +572,7 @@ def setThermostatMode(thermostatmodeX) {
   def power = null
   if(thermostatmodeX.trim() == "off") power = 0
   else power = 1
-  adjustThermostatMode(modeKey, power)
+  adjustThermostatMode(thermostatmodeX, power)
   
   if (thermostatmodeX == "off") { off() }
   else if (thermostatmodeX == "heat") { heat() }
@@ -551,13 +593,9 @@ def adjustThermostatOperatingState(thermostatModeX) {
 }
 
 def on() {
-
-    def bodyJson = getUnitCommandBody( true //Power
-                                      ,device.currentValue("thermostatFanMode")
-                                      ,device.currentValue("thermostatMode")
-                                      ,device.currentValue("thermostatSetpoint")
-                                     )
-       
+    
+    def bodyJson = "[\"${parent.getAuthCode()}\",{\"${device.currentValue("unitId")}\":{\"power\":1}}]"
+    
     parent.debugLog("on: Turning ON device ${device.label} (${device.currentValue("unitId")})")
     parent.debugLog("auto: Body = ${bodyJson}")
     unitCommand("${bodyJson}")
@@ -567,11 +605,7 @@ def on() {
 
 def off() {
 
-    def bodyJson = getUnitCommandBody( false //Power
-                                      ,device.currentValue("thermostatFanMode")
-                                      ,device.currentValue("thermostatMode")
-                                      ,device.currentValue("thermostatSetpoint")
-                                     )
+    def bodyJson = "[\"${parent.getAuthCode()}\",{\"${device.currentValue("unitId")}\":{\"power\":0}}]"
     
     
     parent.debugLog("off: Turning OFF device ${device.label} (${device.currentValue("unitId")})")
@@ -583,12 +617,7 @@ def off() {
 
 def auto() {
 
-    def bodyJson = getUnitCommandBody( true //Power
-                                      ,device.currentValue("thermostatFanMode")
-                                      ,"auto" //thermostatMode
-                                      ,device.currentValue("thermostatSetpoint")
-                                     )
-    
+    def bodyJson = "[\"${parent.getAuthCode()}\",{\"${device.currentValue("unitId")}\":{\"power\":1,\"operationMode\":8}}]"
     
     parent.debugLog("auto: Changing operating mode to AUTO for ${device.label} (${device.currentValue("unitId")})")
     parent.debugLog("auto: Body = ${bodyJson}")
@@ -597,7 +626,7 @@ def auto() {
 
 }
 
-def fanOn() { parent.debugLog("fanOn: Not currently supported by MELCloud driver") }
+def fanOn() { parent.debugLog("fanOn: Not currently supported by Kumo Cloud driver") }
 
 def fan() {
     
@@ -617,16 +646,12 @@ def fan() {
 
 def cool() {
 
-    def bodyJson = getUnitCommandBody( true //Power
-                                      ,device.currentValue("thermostatFanMode")
-                                      ,"cool" //thermostatMode
-                                      ,device.currentValue("thermostatSetpoint")
-                                     )
+    def bodyJson = "[\"${parent.getAuthCode()}\",{\"${device.currentValue("unitId")}\":{\"power\":1,\"operationMode\":3}}]"
     
     adjustCoolingSetpoint(device.currentValue("thermostatSetpoint"))
     
     parent.debugLog("cool: Changing operating mode to COOL for ${device.label} (${device.currentValue("unitId")})")
-    parent.debugLog("auto: Body = ${bodyJson}")
+    parent.debugLog("cool: Body = ${bodyJson}")
     unitCommand("${bodyJson}")
     parent.infoLog("Operating mode changed to COOL for ${device.label} (${device.currentValue("unitId")})")
 
@@ -652,11 +677,8 @@ def dry() {
 
 def heat() {
 
-    def bodyJson = getUnitCommandBody( true //Power
-                                      ,device.currentValue("thermostatFanMode")
-                                      ,"heat" //thermostatMode
-                                      ,device.currentValue("thermostatSetpoint")
-                                     )
+    
+    def bodyJson = "[\"${parent.getAuthCode()}\",{\"${device.currentValue("unitId")}\":{\"power\":1,\"operationMode\":1}}]"
     
     adjustHeatingSetpoint(device.currentValue("thermostatSetpoint"))
     
