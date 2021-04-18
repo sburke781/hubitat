@@ -330,7 +330,7 @@ def unitCommand(command) {
         body : bodyJson
 	]
     parent.debugLog("unitCommand: Body = ${bodyJson}, Headers = ${headers}")       
-	
+	/*
     try {
         
         httpPost(postParams) { resp ->
@@ -343,7 +343,7 @@ def unitCommand(command) {
 	catch (Exception e) {
         parent.errorLog "unitCommand : Unable to query Mitsubishi Electric Kumo Cloud: ${e}"
 	}
-    
+    */
 }
 
 
@@ -406,7 +406,7 @@ def setTemperature(givenSetTemp) {
                                       ,setTempValue
                                      )
     */
-    def bodyJson = "[\"${parent.getAuthCode()}\",{\"${device.currentValue("unitId")}\":{\"sp${device.currentValue("thermostatMode")}\":${setTempValue}}}]"
+    def bodyJson = "[\"${parent.getAuthCode()}\",{\"${device.currentValue("unitId")}\":{\"sp${device.currentValue("thermostatMode").toLowerCase().capitalize()}\":${setTempValue}}}]"
     parent.debugLog("setTemperature: Setting Temperature to ${setTempValue} for ${device.label}")
     parent.debugLog("setTemperature: Body JSON = ${bodyJson}")
         
