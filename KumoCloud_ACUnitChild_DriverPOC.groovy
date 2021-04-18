@@ -490,31 +490,14 @@ def adjustThermostatFanMode(givenFanModeKey) {
 
 def setThermostatFanMode(fanmode) {
 
-    def bodyJson = getUnitCommandBody( true //Power
-                                      ,fanmode
-                                      ,device.currentValue("thermostatMode")
-                                      ,device.currentValue("thermostatSetpoint")
-                                     )
+    def fanModeKey = convertFanModeToKey(fanmode)
+    parent.debugLog("setThermostatFanMode: Fan Mode passed in: ${fanmode.trim()}, Fan Mode Key: ${fanModeKey}")
     
+    def bodyJson = "[\"${parent.getAuthCode()}\",{\"${device.currentValue("unitId")}\":{\"fanSpeed\":${fanModeKey}}}]"
     
-    parent.debugLog("setThermostatFanMode: ${fanmode.trim()}, ${fanModeKey}")
-    
-    if (bodyJSON != null) {
-        adjustThermostatFanMode(convertFanModeToKey(fanmode))
-    
-        if(    device.currentValue("thermostatFanMode") == null || device.currentValue("thermostatFanMode") != fanmode.trim())
-           {
-            parent.debugLog("setThermostatFanMode: Setting Fan Mode to ${fanmode.trim()} for ${device.label}")
-            parent.debugLog("setThermostatFanMode: body = ${bodyJson}")
-            unitCommand("${bodyJson}")
-            parent.debugLog("setThermostatFanMode: Fan Mode set to ${fanmode.trim()} for ${device.label} (${device.currentValue("unitId")})")
-            parent.infoLog("Fan Mode set to ${fanmode.trim()} for ${device.label} (${device.currentValue("unitId")})")
-        }
-        else { parent.debugLog("setThermostatFanMode: No action taken")  }
+    unitCommand("${bodyJson}")
         
     
-        }
-    else { parent.warnLog("setThermostatFanMode: Warning - Fan Mode not identified") }
 }
 
 //Fan Speed method from the Fan Control capability
