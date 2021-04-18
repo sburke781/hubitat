@@ -330,7 +330,7 @@ def unitCommand(command) {
         body : bodyJson
 	]
     parent.debugLog("unitCommand: Body = ${bodyJson}, Headers = ${headers}")       
-	/*
+
     try {
         
         httpPost(postParams) { resp ->
@@ -343,7 +343,7 @@ def unitCommand(command) {
 	catch (Exception e) {
         parent.errorLog "unitCommand : Unable to query Mitsubishi Electric Kumo Cloud: ${e}"
 	}
-    */
+    
 }
 
 
