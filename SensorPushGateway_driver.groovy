@@ -92,7 +92,8 @@ def updateSensorPolling() {
    
    if(AutoSensorPolling == true) {
        
-	sched = "* */${SensorPollingInterval} * ? * * *"
+       sched = "0 0/${SensorPollingInterval} * ? * * *"
+       
        debugLog("updateSensorPolling: Setting up schedule with settings: schedule(\"${sched}\",refresh)")
        try{
            
@@ -111,7 +112,9 @@ def updateSensorPolling() {
 
 
 def refresh() {
+ debugLog("refresh: running samples()")
  samples()   
+ debugLog("refresh: samples() complete")
 }
 
 def samples() {
@@ -169,7 +172,7 @@ def samples() {
                             //Could not find sensor, run the sensors method to create any new sensor child devices
                             sensors()
                             //Attempt to do the lookup again
-                            childHumDevice = findChildDevice(it.value.id, "Humidity")
+                            childHumDevice = findChildDevice(sensor.key, "Humidity")
                         }
                         
                         if (childHumDevice == null) {
@@ -265,7 +268,7 @@ def getAccessToken(){
 def sensors() {
 
     
-    
+    debugLog("sensors: Sensors starting")
     def bodyJson = ""
     def postParams = [:]
     def headers = [:]
@@ -314,7 +317,7 @@ def sensors() {
 	catch (Exception e) {
         errorLog("sensors: Unable to query sensorpush cloud whilst getting sensor data: ${e}")
 	}
-    
+    debugLog("sensors: Sensors completed")
     
 }
 
