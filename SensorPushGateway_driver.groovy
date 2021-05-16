@@ -41,7 +41,7 @@
  *					polling occurred, now it correctly impacts the minute in the hour when
  *					polling occurs
  *				Removed redundant attributes lastUpdatedSource and lastUpdatedHE
- *
+ * 2021-05-16  Simon Burke	Additional fix to CRON setup
  * 
  */
 metadata {
