@@ -1255,13 +1255,13 @@ def unitCommand_MELView(pCommand) {
     
     def vPostParams = [
         uri: "${parent.getBaseURL()}unitcommand.aspx",
-        headers: getStandardHTTPHeaders_MELView("no"),
+        headers: parent.getStandardHTTPHeaders_MELView("no"),
         contentType: "application/json",
         body : vBodyJson
 	]
     
 	try {
-        httpPost(postParams) { resp -> parent.debugLog("unitCommand_MELView: (${pCommand}): Response - ${resp.data}") }
+        httpPost(vPostParams) { resp -> parent.debugLog("unitCommand_MELView: (${pCommand}): Response - ${resp.data}") }
     }
 	catch (Exception e) {
         parent.errorLog("unitCommand_MELView: (${pCommand}): Unable to query Mitsubishi Electric ${parent.getPlatform()}: ${e}")
