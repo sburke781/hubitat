@@ -776,6 +776,7 @@ def adjustSetTemperature(givenSetTemp) {
 
 def setTemperature(givenSetTemp) {
     
+    def vPlatform = parent.getPlatform()
     def setTempValue = convertTemperatureIfNeeded(givenSetTemp.toFloat(),"c",1)
     def currThermSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("thermostatSetpoint"),"23.0").toFloat(),"c",1)
     
@@ -783,9 +784,9 @@ def setTemperature(givenSetTemp) {
         parent.debugLog("setTemperature: Setting Temperature to ${setTempValue} for ${device.label}")
         adjustSetTemperature(givenSetTemp)
         
-        if (platform == "MELCloud")  { setTemperature_MELCloud(setTempValue)  }
-        if (platform == "MELView")   { setTemperature_MELView(setTempValue)   }
-        if (platform == "KumoCloud") { setTemperature_KumoCloud(setTempValue) }
+        if (vPlatform == "MELCloud")  { setTemperature_MELCloud(setTempValue)  }
+        if (vPlatform == "MELView")   { setTemperature_MELView(setTempValue)   }
+        if (vPlatform == "KumoCloud") { setTemperature_KumoCloud(setTempValue) }
         
         parent.infoLog("Temperature adjusted to ${setTempValue} for ${device.label}")
     }
@@ -871,6 +872,7 @@ def adjustThermostatFanMode(pFanModeKey) {
 
 def setThermostatFanMode(pFanMode) {
 
+    def vPlatform = parent.getPlatform()
     def vFanMode = pFanMode.trim()
     def vFanModeKey = convertFanModeToKey(vFanMode)
     parent.debugLog("setThermostatFanMode: HE Fan Mode ${pFanMode} parsed as MEL Fan Mode Key ${vFanModeKey}")
@@ -881,9 +883,9 @@ def setThermostatFanMode(pFanMode) {
             adjustThermostatFanMode(vFanModeKey)
             parent.debugLog("setThermostatFanMode: Setting Fan Mode to ${vFanMode}(${vFanModeKey}) for ${device.label} (${device.currentValue("unitId")})")
                         
-            if (platform == "MELCloud" ) { setThermostatFanMode_MELCloud  (vFanModeKey) }
-            if (platform == "MELView"  ) { setThermostatFanMode_MELView   (vFanModeKey) }
-            if (platform == "KumoCloud") { setThermostatFanMode_KumoCloud (vFanModeKey) }
+            if (vPlatform == "MELCloud" ) { setThermostatFanMode_MELCloud  (vFanModeKey) }
+            if (vPlatform == "MELView"  ) { setThermostatFanMode_MELView   (vFanModeKey) }
+            if (vPlatform == "KumoCloud") { setThermostatFanMode_KumoCloud (vFanModeKey) }
                         
             parent.infoLog("Fan Mode set to ${vFanMode} for ${device.label} (${device.currentValue("unitId")})")
         }
