@@ -627,7 +627,7 @@ def applyStatusUpdates(statusInfo) {
     parent.debugLog("applyResponseStatus: Status Info: ${statusInfo}")
     
     parent.debugLog("applyStatusUpdates: about to adjust mode")
-    adjustThermostatMode(statusInfo.setMode, statusInfo.power)
+    adjustThermostatMode(statusInfo.setMode)
     parent.debugLog("applyStatusUpdates: about to adjust room temperatures")
     adjustRoomTemperature(statusInfo.roomTemp)
     adjustSetTemperature(statusInfo.setTemp)
@@ -923,14 +923,16 @@ def setSpeed(pFanspeed) { setThermostatFanMode(pFanspeed) }
 
 def adjustThermostatMode(pThermostatmode) {
 
-    def vPower   = pThermostatMode.trim() != "off"
+    parent.debugLog("adjustThermostatMode: Adjust THermostat Mode called")
+    def vPower   = "${pThermostatMode}".trim() != "off"
     def vModeDesc = ""
+    parent.debugLog("adjustThermostatMode: vPower = ${vPower}, vModeDesc = ${vModeDesc}")
     if ("${vPower}" == "q" || "${vPower}" == "0" || "${vPower}" == "false")
       {vModeDesc = "off"}
     else {
         vModeDesc = modeMap[pThermostatmode]
     }
-    parent.debugLog("adjustThermostatMode: Adjusting Thermostat Mode to ${pThermostatmode}, Parse as Power = ${pPower} and Mode Description = ${vModeDesc}")
+    parent.debugLog("adjustThermostatMode: Adjusting Thermostat Mode to ${pThermostatmode}, Parse as Power = ${vPower} and Mode Description = ${vModeDesc}")
     
     if (checkNull(device.currentValue("thermostatMode"),"") != vModeDesc) {
     	sendEvent(name: "thermostatMode", value: vModeDesc)
