@@ -252,10 +252,10 @@ def retrieveAuthCode_KumoCloud() {
     
     def vnewAuthCode = ""
     def unitsList    = []
-    def unitDetail  = [:]
+    
    
     def vbodyJson = "{ \"username\": \"${UserName}\", \"password\": \"${Password}\", \"AppVersion\": \"2.2.0\" }"
-        
+    
     def postParams = [
         uri: "${getBaseURL()}/login",
         headers: getStandardHTTPHeaders_KumoCloud("yes"),
@@ -265,27 +265,29 @@ def retrieveAuthCode_KumoCloud() {
            
 	try {
         
-        httpPost(postParams)
-        { resp ->
-            debugLog("${resp?.data}")
-            vnewAuthCode = "${resp?.data[0].token}";
+          httpPost(postParams)
+          { resp ->
+              debugLog("retrieveAuthCode_KumoCloud: HTTP Response = ${resp?.data}")
+              vnewAuthCode = "${resp?.data[0].token}";
             
         
-            debugLog("retrieveAuthCode_KumoCloud: New Auth Code - ${vnewAuthCode}");
-            resp?.data[2].children.each { child ->
-                debugLog("retrieveAuthCode_KumoCloud: Child - ${child}")
-                child.zoneTable.each { unit ->
-                  debugLog("retrieveAuthCode_KumoCloud: Unit (Serial / Label) - ${unit.value.serial} / ${unit.value.label}")
-                  unitDetail = [unitId   : "${unit.value.serial}",
-                                unitName : "${unit.value.label}"
-                               ]
-                  unitsList.add(unitDetail)
-              
-                }
-            }
-        }
+              debugLog("retrieveAuthCode_KumoCloud: New Auth Code - ${vnewAuthCode}");
+              resp?.data[2].children.each { child ->
+                  debugLog("retrieveAuthCode_KumoCloud: Child - ${child}")
+                  child.zoneTable?.each { unit ->
+                    unitsList.add(parseKumoUnit(unit))
+                  
+                  }
+                  child.children?.each { child2
+                    if (child.containsKey("zoneTable")) {
+                      child2.zoneTable?.each { unit ->
+                        unitsList.add(parseKumoUnit(unit))
+                        }
+                    }
+                  }
+              }
+          }
         createChildACUnits(unitsList)
-        
     }
 	catch (Exception e) {
         errorLog("retrieveAuthCode_KumoCloud: Unable to query Mitsubishi Electric ${MELPlatform}: ${e}")
@@ -293,12 +295,15 @@ def retrieveAuthCode_KumoCloud() {
     return vnewAuthCode
 }
 
-
-
-
-           
-            
-                
+def parseKumoUnit(unit) {
+ 
+    def unitDetail  = [:]
+    debugLog("parseKumoUnit: Unit (Serial / Label) - ${unit.value.serial} / ${unit.value.label}")
+    unitDetail = [unitId   : "${unit.value.serial}",
+                  unitName : "${unit.value.label}"
+                     ]
+    return unitDetail
+}
 
 def retrieveAuthCode_MELView() {
 
