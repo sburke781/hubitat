@@ -661,7 +661,7 @@ def applyStatusUpdates(statusInfo) {
     parent.debugLog("applyResponseStatus: Status Info: ${statusInfo}")
     
     parent.debugLog("applyStatusUpdates: about to adjust mode")
-    adjustThermostatMode(statusInfo.setMode, statusInfo.power)
+    adjustThermostatMode(statusInfo.setMode)
     parent.debugLog("applyStatusUpdates: about to adjust room temperatures")
     adjustRoomTemperature(statusInfo.roomTemp)
     adjustSetTemperature(statusInfo.setTemp)
@@ -748,7 +748,8 @@ def adjustCoolingSetpoint(givenTemp) {
         parent.infoLog("Cooling Set Point adjusted to ${coolingSetTempValue} for ${device.label}")
     }
     
-    if (currThermSetTempValue != coolingSetTempValue) {
+    
+    if (device.currentValue("thermostatOperatingState") == "cooling" && currThermSetTempValue != coolingSetTempValue) {
         sendEvent(name: "thermostatSetpoint", value: coolingSetTempValue)
         parent.infoLog("Thermostat Set Point adjusted to ${coolingSetTempValue} for ${device.label}")
     }
@@ -830,7 +831,7 @@ def setTemperature(givenSetTemp) {
         if (vPlatform == "MELView")   { setTemperature_MELView(setTempValue)   }
         if (vPlatform == "KumoCloud") { setTemperature_KumoCloud(setTempValue) }
         
-        parent.infoLog("Temperature adjusted to ${setTempValue} for ${device.label}")
+        parent.debugLog("setTemperature: Temperature adjusted to ${setTempValue} for ${device.label}")
     }
     else {
         parent.debugLog("setTemperature: No action taken")
@@ -894,7 +895,7 @@ def adjustThermostatFanMode(pFanModeKey) {
         // Adjust the thermostatFanMode Attribute
         if (checkNull(device.currentValue("thermostatFanMode"),"") != vFanModeValue) {
     	    	sendEvent(name: "thermostatFanMode", value: vFanModeValue)
-                parent.infoLog("Fan Mode adjusted to ${vFanModeValue} for ${device.label} (${device.currentValue("unitId")})")
+                parent.debugLog("adjustThermostatFanMode: Fan Mode adjusted to ${vFanModeValue} for ${device.label} (${device.currentValue("unitId")})")
 	    }
         else { parent.debugLog("adjustThermostatFanMode: No change to Fan Mode detected, no action taken") }
     }
@@ -903,7 +904,7 @@ def adjustThermostatFanMode(pFanModeKey) {
     if(vFanControlSpeed == "") { parent.warnLog("adjustThermostatFanMode: Warning - Unknown Fan Speed selected, no action taken") }
     else {
         // Adjust the speed Attribute
-        if (checkNull(device.currentValue("speed"),"") != vFanModeValue) {
+        if (checkNull(device.currentValue("speed"),"") != vFanControlSpeed) {
             sendEvent(name: "speed", value: vFanControlSpeed)
             parent.infoLog("Fan Speed adjusted to ${vFanControlSpeed} for ${device.label} (${device.currentValue("unitId")})")
         }
@@ -965,16 +966,15 @@ def setSpeed(pFanspeed) { setThermostatFanMode(pFanspeed) }
 
 // Thermostat Mode Control
 
-def adjustThermostatMode(pThermostatMode, pPower) {
+def adjustThermostatMode(pThermostatMode) {
 
     parent.debugLog("adjustThermostatMode: Adjust Thermostat Mode called")
-    def vPower   = "${pPower}"
     def vModeDesc = modeMap[pThermostatMode]
-    parent.debugLog("adjustThermostatMode: Adjusting Thermostat Mode to ${pThermostatMode}, Parse as Power = ${pPower} and Mode Description = ${vModeDesc}")
+    parent.debugLog("adjustThermostatMode: Adjusting Thermostat Mode to ${pThermostatMode}, Parse as Mode Description = ${vModeDesc}")
     
     if (checkNull(device.currentValue("thermostatMode"),"") != vModeDesc) {
     	sendEvent(name: "thermostatMode", value: vModeDesc)
-        if (vModeDesc != "idle" && checkNull(device.currentValue("lastRunningMode"),"") != vModeDesc) {
+        if (vModeDesc != "off" && checkNull(device.currentValue("lastRunningMode"),"") != vModeDesc) {
             sendEvent(name: "lastRunningMode", value: vModeDesc)
         }
     }
@@ -998,7 +998,8 @@ def setThermostatMode(pThermostatMode) {
   parent.debugLog("setThermostatMode: Thermostat Mode passed in = ${pThermostatMode}")
   
   adjustThermostatMode(pThermostatMode)
-  
+  parent.debugLog("setThermostatMode: Thermostat Mode adjusted")
+    
   if ( pThermostatMode == "off"  ) off()
   if ( pThermostatMode == "heat" ) heat()
   if ( pThermostatMode == "dry"  ) dry()
