@@ -969,17 +969,14 @@ def adjustThermostatMode(pThermostatMode, pPower) {
 
     parent.debugLog("adjustThermostatMode: Adjust Thermostat Mode called")
     def vPower   = "${pPower}"
-    def vModeDesc = ""
-    
-    if ("${vPower}" == "0" || "${vPower}" == "false")
-      {vModeDesc = "off"}
-    else {
-        vModeDesc = modeMap[pThermostatMode]
-    }
-    parent.debugLog("adjustThermostatMode: Adjusting Thermostat Mode to ${pThermostatMode}, Parse as Power = ${vPower} and Mode Description = ${vModeDesc}")
+    def vModeDesc = modeMap[pThermostatMode]
+    parent.debugLog("adjustThermostatMode: Adjusting Thermostat Mode to ${pThermostatMode}, Parse as Power = ${pPower} and Mode Description = ${vModeDesc}")
     
     if (checkNull(device.currentValue("thermostatMode"),"") != vModeDesc) {
     	sendEvent(name: "thermostatMode", value: vModeDesc)
+        if (vModeDesc != "idle" && checkNull(device.currentValue("lastRunningMode"),"") != vModeDesc) {
+            sendEvent(name: "lastRunningMode", value: vModeDesc)
+        }
     }
     adjustThermostatOperatingState(pThermostatMode)
 }
@@ -992,9 +989,6 @@ def adjustThermostatOperatingState(pThermostatMode) {
     parent.debugLog("adjustThermostatOperatingState: Thermostat Mode passed in = ${pThermostatMode}, OperatingState: ${vOperatingState}")
     if (checkNull(device.currentValue("thermostatOperatingState"),"") != vOperatingState) {
         sendEvent(name: "thermostatOperatingState", value: vOperatingState)
-        if (pThermostatMode != "idle" && checkNull(device.currentValue("lastRunningMode"),"") != pThermostatMode) {
-            sendEvent(name: "lastRunningMode", value: pThermostatMode)
-        }
     }    
     
 }
