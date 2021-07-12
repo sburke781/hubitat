@@ -11,14 +11,14 @@
 		{
 			"id": "22597029-98db-490b-b8b9-c23b972ee5f2",
 			"name": "Unified Thermostat Parent Driver",
-			"namespace": "simnet.Unified Thermostat Parent Driver",
+			"namespace": "simnet",
 			"location": "https://raw.githubusercontent.com/sburke781/hubitat/MEL_UnifiedDrivers/UnifiedThermostat/UnifiedThermostatParent_Driver.groovy",
 			"required": true
 		},
 		{
 			"id": "e012ffff-7959-466b-a2ae-3181a33010f9",
 			"name": "Unified Thermostat Unit Child Driver",
-			"namespace": "simnet.Unified Thermostat Unit Child Driver",
+			"namespace": "simnet",
 			"location": "https://raw.githubusercontent.com/sburke781/hubitat/MEL_UnifiedDrivers/UnifiedThermostat/UnifiedThermostatUnitChild_Driver.groovy",
 			"required": true
 		}
