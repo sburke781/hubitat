@@ -660,11 +660,11 @@ def retrieveStatusInfo_MELCloud() {
 def applyStatusUpdates(statusInfo) {
     parent.debugLog("applyResponseStatus: Status Info: ${statusInfo}")
     
-    parent.debugLog("applyStatusUpdates: about to adjust mode")
-    adjustThermostatMode(statusInfo.setMode)
-    parent.debugLog("applyStatusUpdates: about to adjust room temperatures")
+    parent.debugLog("applyStatusUpdates: About to adjust thermostat mode details...")
+    adjustThermostatMode(statusInfo.setMode, statusInfo.power)
+    parent.debugLog("applyStatusUpdates: About to adjust temperatures...")
     adjustRoomTemperature(statusInfo.roomTemp)
-    adjustSetTemperature(statusInfo.setTemp)
+    adjustSetTemperature(statusInfo.setTemp, statusInfo.setMode, statusInfo.power)
     adjustThermostatFanMode(statusInfo.setFan)
 
     parent.debugLog("applyResponseStatus: Status update complete")
@@ -783,38 +783,42 @@ def setCoolingSetpoint(givenTemp) {
 
 // TO-DO: Look at use of the value 23.0 for the US
 //        Tidy up use of conversions and checks and logging, particularly when we get a null value returned from API
-def adjustSetTemperature(givenSetTemp) {
+def adjustSetTemperature(pSetTemp, pThermostatMode, pPower) {
 
-    def setTempValue
-    if ("${givenSetTemp}".isNumber()) { setTempValue = convertTemperatureIfNeeded(givenSetTemp.toFloat(),"c",1) }
-    else { setTempValue = null }
+    def vSetTemp
+    if ("${pSetTemp}".isNumber()) { vSetTemp = convertTemperatureIfNeeded(pSetTemp.toFloat(),"c",1) }
+    else { vSetTemp = null }
     
-    def currentSetTempValue
-	def currentSetTemp = device.currentValue("thermostatSetpoint")
-    if ("${currentSetTemp}".isNumber()) { currentSetTempValue = convertTemperatureIfNeeded(currentSetTemp.toFloat(),"c",1)}
-    else { currentSetTempValue = null }
     
-    def currentOperatingState = device.currentValue("thermostatOperatingState")
+    def vCurrentSetTempConv
+	def vCurrentSetTemp = device.currentValue("thermostatSetpoint")
+    if ("${vCurrentSetTemp}".isNumber()) { vCurrentSetTempConv = convertTemperatureIfNeeded(vCurrentSetTemp.toFloat(),"c",1)}
+    else { vCurrentSetTempConv = null }
+    parent.debugLog("adjustSetTemperature: Temperature passed in was ${pSetTemp} which was parsed as ${vSetTemp}, current set temperature is ${vCurrentSetTempConv}")
     
-    parent.debugLog("adjustSetTemperature: Temperature passed in was ${givenSetTemp} which was parsed as ${setTempValue}, current set temperature is ${currentSetTempValue} and Operating State is ${currentOperatingState}")
-    if ((currentSetTempValue == null || currentSetTempValue != setTempValue) && setTempValue != null) {
-        parent.debugLog("adjustSetTemperature: Changing Set Temperature from ${currentSetTempValue} to ${setTempValue}")
-    	sendEvent(name: "thermostatSetpoint", value: setTempValue)
+    if (vSetTemp != null && (vCurrentSetTempConv == null || vCurrentSetTempConv != vSetTemp)) {
+            
+        parent.debugLog("adjustSetTemperature: Changing Set Temperature from ${vCurrentSetTempConv} to ${vSetTemp}")
+    	sendEvent(name: "thermostatSetpoint", value: vSetTemp)
         
-        parent.debugLog("adjustSetTemperature: Checking if we are heating...")
-        if (currentOperatingState == "heating") {
-            parent.debugLog("adjustSetTemperature: Heating detected")
-            adjustHeatingSetpoint(setTempValue)
+        def vMode
+        if (pMode == null) { vMode = device.currentValue("thermostatMode") }
+        else { vMode = deriveThermostatMode(pThermostatMode, pPower) }
+        
+        parent.debugLog("adjustSetTemperature: Current mode is ${vMode}")
+        
+        if (vMode == "heat") {
+            parent.debugLog("adjustSetTemperature: Heating mode detected, adjusting heating set point")
+            adjustHeatingSetpoint(vSetTemp)
         }
         
-        parent.debugLog("adjustSetTemperature: Checking if we are cooling...")
-        if (currentOperatingState == "cooling") {
-            parent.debugLog("adjustSetTemperature: Cooling detected")
-            adjustCoolingSetpoint(setTempValue)
+        if (vMode == "cool" || vMode == "dry") {
+            parent.debugLog("adjustSetTemperature: Cooling / Drying mode detected, adjusting cooling set point")
+            adjustCoolingSetpoint(vSetTemp)
         }
         
     }
-    else { parent.debugLog("adjustSetTemperature: No action taken") }
+    else { parent.debugLog("adjustSetTemperature: No action taken, either no change in temperature or null temperature provided") }
 }
 
 def setTemperature(givenSetTemp) {
@@ -825,7 +829,7 @@ def setTemperature(givenSetTemp) {
     
     if(currThermSetTempValue != setTempValue) {
         parent.debugLog("setTemperature: Setting Temperature to ${setTempValue} for ${device.label}")
-        adjustSetTemperature(givenSetTemp)
+        adjustSetTemperature(givenSetTemp, null)
         
         if (vPlatform == "MELCloud")  { setTemperature_MELCloud(setTempValue)  }
         if (vPlatform == "MELView")   { setTemperature_MELView(setTempValue)   }
@@ -966,11 +970,11 @@ def setSpeed(pFanspeed) { setThermostatFanMode(pFanspeed) }
 
 // Thermostat Mode Control
 
-def adjustThermostatMode(pThermostatMode) {
+def adjustThermostatMode(pThermostatMode, pPower) {
 
     parent.debugLog("adjustThermostatMode: Adjust Thermostat Mode called")
-    def vModeDesc = modeMap[pThermostatMode]
-    parent.debugLog("adjustThermostatMode: Adjusting Thermostat Mode to ${pThermostatMode}, Parse as Mode Description = ${vModeDesc}")
+    def vModeDesc = deriveThermostatMode(pThermostatMode, pPower)
+    parent.debugLog("adjustThermostatMode: Thermostat Mode provided ${pThermostatMode}, Power provided ${pPower}, parsed as Mode Description ${vModeDesc}")
     
     if (checkNull(device.currentValue("thermostatMode"),"") != vModeDesc) {
     	sendEvent(name: "thermostatMode", value: vModeDesc)
@@ -978,27 +982,39 @@ def adjustThermostatMode(pThermostatMode) {
             sendEvent(name: "lastRunningMode", value: vModeDesc)
         }
     }
-    adjustThermostatOperatingState(pThermostatMode)
+    adjustThermostatOperatingState(pThermostatMode,pPower)
 }
 
 /* adjustThermostatOperatingState To-Do: use map for mode to state translation */
-def adjustThermostatOperatingState(pThermostatMode) {
+def adjustThermostatOperatingState(pThermostatMode, pPower) {
 	
-    def vOperatingState = operatingStateMap[pThermostatMode]
+    def vOperatingState
+    if (pPower == "1") { vOperatingState = operatingStateMap["${pThermostatMode}"] }
+    else { vOperatingState = "idle" }
     
-    parent.debugLog("adjustThermostatOperatingState: Thermostat Mode passed in = ${pThermostatMode}, OperatingState: ${vOperatingState}")
+    parent.debugLog("adjustThermostatOperatingState: Thermostat Mode passed in = ${pThermostatMode}, Power passed in ${pPower}, OperatingState: ${vOperatingState}")
     if (checkNull(device.currentValue("thermostatOperatingState"),"") != vOperatingState) {
         sendEvent(name: "thermostatOperatingState", value: vOperatingState)
     }    
     
 }
 
+def deriveThermostatMode(pThermostatMode, pPower) {
+ 
+    def vModeDesc
+    if (pPower == "1") { vModeDesc = modeMap["${pThermostatMode}"] }
+    else { vModeDesc = "off" }
+    
+    return vModeDesc
+    
+}
+
 def setThermostatMode(pThermostatMode) {
 
   parent.debugLog("setThermostatMode: Thermostat Mode passed in = ${pThermostatMode}")
-  
-  adjustThermostatMode(pThermostatMode)
-  parent.debugLog("setThermostatMode: Thermostat Mode adjusted")
+  def vPower
+  if ( pThermostatMode == "off" ) { vPower = "0" }
+  else { vPower = "1" }
     
   if ( pThermostatMode == "off"  ) off()
   if ( pThermostatMode == "heat" ) heat()
@@ -1009,6 +1025,8 @@ def setThermostatMode(pThermostatMode) {
   
   parent.debugLog("setThermostatMode: Thermostat Mode set")
   
+  adjustThermostatMode(convertThermostatModeToKey(pThermostatMode), vPower)
+  parent.debugLog("setThermostatMode: Thermostat Mode adjusted")
 }
 
 def on() {
@@ -1101,7 +1119,7 @@ def heat_MELCloud() {
 
 def heat_MELView() {
     
-    unitCommand_MELView("MD1")
+    unitCommand_MELView("PW1,MD1")
 }
     
 def dry() {
@@ -1132,7 +1150,7 @@ def dry_MELCloud() {
 
 def dry_MELView() {
     
-    unitCommand_MELView("MD2")
+    unitCommand_MELView("PW1,MD2")
 }
 
 def cool() {
@@ -1167,7 +1185,7 @@ def cool_MELCloud() {
 
 def cool_MELView() {
     
-    unitCommand_MELView("MD3")
+    unitCommand_MELView("PW1,MD3")
 }
 
 def fan() {
@@ -1198,7 +1216,7 @@ def fan_MELCloud() {
 
 def fan_MELView() {
     
-    unitCommand_MELView("MD7")
+    unitCommand_MELView("PW1,MD7")
 }
 
 def auto() {
@@ -1229,7 +1247,7 @@ def auto_MELCloud() {
 
 def auto_MELView() {
     
-     unitCommand_MELView("MD8")
+     unitCommand_MELView("PW1,MD8")
 }
 
 // Platform Specific API Command Methods
