@@ -34,8 +34,8 @@ metadata {
             platformSelected << ["MELCloud" : "MEL Cloud (Europe)"]
             platformSelected << ["KumoCloud" : "Kumo Cloud (US)"]
         
-		input name: "MELPlatform", type: "enum", title: "MEL Platform", required: true, multiple: false, options: platformSelected, defaultValue: "melView", displayDuringSetup: true
-        input name: "UserName", type: "string", title:"Username / Email", description: "Username / Email used to authenticate with MEL platform", displayDuringSetup: true
+		input name: "Platform", type: "enum", title: "Platform", required: true, multiple: false, options: platformSelected, defaultValue: "MELView", displayDuringSetup: true
+        input name: "UserName", type: "string", title:"Username / Email", description: "Username / Email used to authenticate", displayDuringSetup: true
 		input name: "Password", type: "password", title:"Password", displayDuringSetup: true
 		
         def languageSelected = []
@@ -67,7 +67,7 @@ metadata {
             languageSelected << ["1" : "Български (1)"]
             languageSelected << ["20" : "Українська (20)"]
         
-        input name: "Language", type: "enum", title:"Language", options: languageSelected, defaultValue: 0, description: "Select a language", displayDuringSetup: true
+        input name: "Language", type: "enum", title:"Language", options: languageSelected, defaultValue: 0, description: "Select a language (Europe only)", displayDuringSetup: true
         
         input(name: "DebugLogging", type: "bool", title:"Enable Debug Logging", displayDuringSetup: true, defaultValue: false)
         input(name: "WarnLogging", type: "bool", title:"Enable Warning Logging", displayDuringSetup: true, defaultValue: true)
@@ -98,14 +98,14 @@ def refresh() {
   //Only need to call createChildACUnits method separately for MELView and MELCloud platforms
   //  KumoCloud receives these in the authentication reply, so calls it from within
   //  the setAuthCode_KumoCloud method
-  if ("${MELPlatform}" != "KumoCloud") { createChildACUnits() }
+  if ("${getPlatform()}" != "KumoCloud") { createChildACUnits() }
     else { debugLog("refresh: createChildACUnits() method skipped, we are working with the Kumo Cloud platform") }
     
 }
 
 def updated() {
  
-    setBaseURL(MELPlatform,null)
+    setBaseURL(getPlatform(),null)
     
 }
 
@@ -116,13 +116,12 @@ def initialize() {
 
 def createChildACUnits(givenUnitsList) {
     
-    def unitsList = []
+    def unitsList
     def childDevice
     
     // Retreive list of Child AC Units
-    if (MELPlatform == "MELCloud" ) { unitsList = retrieveChildACUnits_MELCloud()  }
-    if (MELPlatform == "MELView"  ) { unitsList = retrieveChildACUnits_MELView()   }
-    if (MELPlatform == "KumoCloud") { unitsList = givenUnitsList }
+    if (givenUnitsList == null) { unitsList = "retrieveChildACUnits_${getPlatform()}"() }
+    else { unitsList = givenUnitsList }
     
     if (unitsList == null) {
         errorLog("createChildACUnits: Unit List was null")
@@ -179,7 +178,7 @@ def retrieveChildACUnits_MELView() {
                              }
        }   
 	catch (Exception e) {
-        log.error "retrieveChildACUnits_MELView: Unable to query Mitsubishi Electric ${MELPlatform}: ${e}"
+        log.error "retrieveChildACUnits_MELView: Unable to query ${getPlatform()}: ${e}"
 	 }
     return unitsList
 }
@@ -215,28 +214,23 @@ def retrieveChildACUnits_MELCloud()
                            } // End of response (resp)
     }  // End of Try 
 	catch (Exception e) {
-        log.error "retrieveChildACUnits_MelCloud: Unable to query Mitsubishi Electric ${MELPlatform}: ${e}"
+        log.error "retrieveChildACUnits_MelCloud: Unable to query ${getPlatform()}: ${e}"
 	}
     return unitsList
 }
 
-
-
-
-
+def retrieveChildACUnits_KumoCloud() {
+    //Units are captured differently for Kumo, so we won't return any here...
+   return null   
+}
 
 //Authentication
 
 def setAuthCode() {
     
-    debugLog("setAuthCode: method called, MELPlatform = ${MELPlatform}")
+    debugLog("setAuthCode: method called, Platform = ${getPlatform()}")
     
-    def newAuthCode = ""
-    
-    if ("${MELPlatform}" == "MELCloud" ) { newAuthCode = retrieveAuthCode_MELCloud() }
-    if ("${MELPlatform}" == "MELView"  ) { newAuthCode = retrieveAuthCode_MELView()  }
-    if ("${MELPlatform}" == "KumoCloud") { newAuthCode = retrieveAuthCode_KumoCloud()     }
-    
+    def newAuthCode = "retrieveAuthCode_${getPlatform()}"()
     if (newAuthCode != "") {
               
        state.authCode = newAuthCode
@@ -290,7 +284,7 @@ def retrieveAuthCode_KumoCloud() {
         createChildACUnits(unitsList)
     }
 	catch (Exception e) {
-        errorLog("retrieveAuthCode_KumoCloud: Unable to query Mitsubishi Electric ${MELPlatform}: ${e}")
+        errorLog("retrieveAuthCode_KumoCloud: Unable to query Mitsubishi Electric ${getPlatform()}: ${e}")
 	}
     return vnewAuthCode
 }
@@ -343,7 +337,7 @@ def retrieveAuthCode_MELView() {
             
 	}
 	catch (Exception e) {
-        errorLog("retrieveAuthCode_MELView: Unable to query Mitsubishi Electric ${MELPlatform}: ${e}")
+        errorLog("retrieveAuthCode_MELView: Unable to query ${getPlatform()}: ${e}")
 	}
     return vnewAuthCode
 
@@ -376,7 +370,7 @@ def retrieveAuthCode_MELCloud() {
             
 	}
 	catch (Exception e) {
-        errorLog("retrieveAuthCode_MELCloud: Unable to query Mitsubishi Electric ${MELPlatform}: ${e}")
+        errorLog("retrieveAuthCode_MELCloud: Unable to query ${getPlatform()}: ${e}")
 	}
     return vnewAuthCode
 }
@@ -394,36 +388,36 @@ def findChildDevice(childDeviceId, childDeviceType) {
 
 def getPlatform() {
  
-    return MELPlatform;
+    return Platform;
 }
 
 def getBaseURL() {
     
-    //If the Base URL is not set, set it using the current MELPlatform preference setting
+    //If the Base URL is not set, set it using the current Platform preference setting
     //  Null is passed in as we don't want to set an alternate URL in this case
-    if (state.BaseURL == null) { setBaseURL(MELPlatform, "null")  }
+    if (state.BaseURL == null) { setBaseURL(Platform, "null")  }
     
     //Hopefully the Base URL is now set, so return it
     return state.BaseURL
 }
 
-def setBaseURL(platform, alternateURL) {
+def setBaseURL(pPlatform, pAlternateURL) {
 
-    debugLog("setBaseURL: Platform provided = ${platform}, alternateURL = ${alternateURL}")
-    //Define the default list of Base URL's for the different MEL platforms
+    debugLog("setBaseURL: Platform provided = ${pPlatform}, alternateURL = ${pAlternateURL}")
+    //Define the default list of Base URL's for the different platforms supported
     def platformURLList = [  "MELView"   : "https://api.melview.net/api/"
                             ,"MELCloud"  : "https://app.melcloud.com"
                             ,"KumoCloud" : "https://geo-c.kumocloud.com"
                           ]
 
     //Set the BaseURL state variable
-    //   If an alternate platform is passed in, the get method returns the value in the alternateURL
+    //   If an alternate platform is passed in, the get method returns the value in the pAlternateURL
     //   parameter, instead of a value from the platformURLList
-    //   e.g. passing in to this method a platform of "melView" would result in the URL from the
+    //   e.g. passing in to this method a pPlatform of "melView" would result in the URL from the
     //   list above, "https://api.melview.net/api/", whereas passing in a platform of anything
-    //   other than melView, melCloud or kumoCloud, will result in the alternateURL parameter
+    //   other than melView, melCloud or kumoCloud, will result in the pAlternateURL parameter
     //   being stored in the BaseURL state variable.
-    state.BaseURL = platformURLList.get(platform, alternateURL)
+    state.BaseURL = platformURLList.get(pPlatform, pAlternateURL)
 }
 
 def createChildDevice(childDeviceId, childDeviceName, childDeviceType) {
@@ -512,4 +506,13 @@ def infoLog(infoMessage) {
 
 def warnLog(warnMessage) {
     if(WarnLogging == true) {log.warn(warnMessage)}    
+}
+
+// General Utility methods
+
+def checkNull(value, alternative) {
+ 
+    if(value == null) { return alternative }
+    return value
+    
 }
