@@ -132,11 +132,12 @@ def createChildACUnits(givenUnitsList) {
           debugLog("createChildACUnits: Unit List - ${unit.unitId} - ${unit.unitName}")
       
           childDevice = findChildDevice("${unit.unitId}", "AC")
-          if (childDevide == null) {
+          if (childDevice == null) {
               createChildDevice("${unit.unitId}", "${unit.unitName}", "AC")
               childDevice = findChildDevice("${unit.unitId}", "AC")
               childDevice.setUnitId("${unit.unitId}")
-              childDevice.initialize()
+              //childDevice.initialize()
+              runIn(30, "initializeChildDevices", [overwrite: true])
           }
       
         }
@@ -144,7 +145,11 @@ def createChildACUnits(givenUnitsList) {
     
 }
 
-
+def initializeChildDevices() {
+    debugLog("initializeChildDevices: initializing all child devices...")
+    for (unit in getChildDevices()) { unit.initialize() }
+    debugLog("initializeChildDevices: initialization complete")
+}
 
 
 def retrieveChildACUnits_MELView() {
@@ -280,7 +285,7 @@ def retrieveAuthCode_KumoCloud() {
                   
                   }
                   
-                  child.children?.each { child2
+                  child.children?.each { child2 ->
                     if (child2[0].containsKey("zoneTable")) {
                       child2[0].zoneTable?.each { unit ->
                         unitsList.add(parseKumoUnit(unit))
