@@ -20,23 +20,24 @@
  * 
  */
 metadata {
-	definition (name: "Unified Thermostat Parent Driver", namespace: "simnet", author: "Simon Burke") {
-        
-        capability "Refresh"
-        
-        
-	}
+	        definition (name:      "Unified Thermostat Parent Driver",
+                        namespace: "simnet",
+                        author:    "Simon Burke")
+                 { 
+                     capability "Refresh" //Adds the refresh command on the device page, allowing users to trigger the refresh() method
+                 }
 
-	preferences {
+	        preferences {
 		
+        // Platform and authentication Preferences
         def platformSelected = []
-            platformSelected << ["MELView" : "MEL View (Aus/NZ)"]
-            platformSelected << ["MELCloud" : "MEL Cloud (Europe)"]
-            platformSelected << ["KumoCloud" : "Kumo Cloud (US)"]
+            platformSelected << ["MELView"   : "MEL View (Aus/NZ)" ]
+            platformSelected << ["MELCloud"  : "MEL Cloud (Europe)"]
+            platformSelected << ["KumoCloud" : "Kumo Cloud (US)"   ]
         
-		input name: "Platform", type: "enum", title: "Platform", required: true, multiple: false, options: platformSelected, defaultValue: "MELView", displayDuringSetup: true
-        input name: "UserName", type: "string", title:"Username / Email", description: "Username / Email used to authenticate", displayDuringSetup: true
-		input name: "Password", type: "password", title:"Password", displayDuringSetup: true
+		input name: "Platform", type: "enum",     title: "Platform",        displayDuringSetup: true, required: true, multiple: false, options: platformSelected, defaultValue: "MELView"
+        input name: "UserName", type: "string",   title:"Username / Email", displayDuringSetup: true, required: true, multiple: false
+		input name: "Password", type: "password", title:"Password",         displayDuringSetup: true, required: true, multiple: false
 		
         def languageSelected = []
             languageSelected << ["2" : "Čeština (2)"]
@@ -69,50 +70,49 @@ metadata {
         
         input name: "Language", type: "enum", title:"Language", options: languageSelected, defaultValue: 0, description: "Select a language (Europe only)", displayDuringSetup: true
         
-        input(name: "DebugLogging", type: "bool", title:"Enable Debug Logging", displayDuringSetup: true, defaultValue: false)
-        input(name: "WarnLogging", type: "bool", title:"Enable Warning Logging", displayDuringSetup: true, defaultValue: true)
-        input(name: "ErrorLogging", type: "bool", title:"Enable Error Logging", displayDuringSetup: true, defaultValue: true)
-        input(name: "InfoLogging", type: "bool", title:"Enable Description Text (Info) Logging", displayDuringSetup: true, defaultValue: false)
+        // Logging Preferences
+        input(name: "DebugLogging", type: "bool", title:"Enable Debug Logging",                   displayDuringSetup: true, defaultValue: false)
+        input(name: "WarnLogging",  type: "bool", title:"Enable Warning Logging",                 displayDuringSetup: true, defaultValue: true )
+        input(name: "ErrorLogging", type: "bool", title:"Enable Error Logging",                   displayDuringSetup: true, defaultValue: true )
+        input(name: "InfoLogging",  type: "bool", title:"Enable Description Text (Info) Logging", displayDuringSetup: true, defaultValue: false)
         
-    }
+    } // End of Preferences
 
-    
-    
+} // End of metadata
+
+def initialize() {
+    debugLog("initialize: Method called...")
+    if (   "${UserName}"     != ""
+        && "${Password}"     != ""
+        && "${getBaseURL()}" != "")
+      { refresh() }
+    else { debugLog("initialize: Refresh process was not called, check Preferences for UserName, Password, Platform and the Base URL State variable") }
 }
 
-
-
+// updated() - Run when the "Save Preferences" button is pressed on the device edit page
+def updated() {
+   debugLog("updated: Update process called")
+   refresh()
+   debugLog("updated: Update process complete")
+}
 
 def refresh() {
   
   debugLog("refresh: Refresh process called")
   
-  // Check the Base URL has been populated correctly, attempting to populate it if it hasn't
-  def baseURLCheck = getBaseURL()
-  if (baseURLCheck == null) { errorLog("${vmethodName}: Base URL is not set, check the platform Preference setting") }  
-  
-  // Authenticate with MEL Platform and
-  //   record Authentication Code for use in future communications  
+  // Authenticate with Platform, including
+  //   Populating the Platform Base URL if not already setup
+  //   Recording Authentication Code for use in future communications
+  //   Creating Child Thermostat units, if details are provided during the authentication process
   setAuthCode()
-  
+          
   //Only need to call createChildACUnits method separately for MELView and MELCloud platforms
-  //  KumoCloud receives these in the authentication reply, so calls it from within
-  //  the setAuthCode_KumoCloud method
+  //  KumoCloud receives these in the authentication reply
   if ("${getPlatform()}" != "KumoCloud") { createChildACUnits() }
-    else { debugLog("refresh: createChildACUnits() method skipped, we are working with the Kumo Cloud platform") }
+  else { debugLog("refresh: createChildACUnits() method skipped, we are working with the Kumo Cloud platform") }
     
+  debugLog("refresh: Refresh process complete")
 }
-
-def updated() {
- 
-    setBaseURL(getPlatform(),null)
-    
-}
-
-def initialize() {
-    if ("${UserName}" != "" && "${Password}" != "" && "${getBaseURL()}" != "") { refresh() }
-}
-
 
 def createChildACUnits(givenUnitsList) {
     
@@ -135,7 +135,7 @@ def createChildACUnits(givenUnitsList) {
           if (childDevide == null) {
               createChildDevice("${unit.unitId}", "${unit.unitName}", "AC")
               childDevice = findChildDevice("${unit.unitId}", "AC")
-              childDevice.sendEvent(name: "unitId", value: "${unit.unitId}")
+              childDevice.setUnitId("${unit.unitId}")
               childDevice.initialize()
           }
       
@@ -230,14 +230,21 @@ def setAuthCode() {
     
     debugLog("setAuthCode: method called, Platform = ${getPlatform()}")
     
-    def newAuthCode = "retrieveAuthCode_${getPlatform()}"()
-    if (newAuthCode != "") {
+    // Check the Base URL has been populated correctly, attempting to populate it if it hasn't
+    def baseURLCheck = getBaseURL()
+    if (baseURLCheck == null) { errorLog("setAuthCode: Base URL is not set, check the platform Preference setting.  New authentication code was NOT set") }
+    else {    
+        
+        def newAuthCode = "retrieveAuthCode_${getPlatform()}"()
+        if (newAuthCode != "") {
               
-       state.authCode = newAuthCode
-       debugLog("setAuthCode: New authentication code value has been set")
-       infoLog("A new authentication code value has been set")
+           state.authCode = newAuthCode
+           debugLog("setAuthCode: New authentication code value has been set")
+           infoLog("A new authentication code value has been set")
+        }
+        else { errorLog("setAuthCode: New authentication code was NOT set") }
+    
     }
-    else { errorLog("setAuthCode: New authentication code was NOT set") }
     
 }
 
@@ -272,9 +279,10 @@ def retrieveAuthCode_KumoCloud() {
                     unitsList.add(parseKumoUnit(unit))
                   
                   }
+                  
                   child.children?.each { child2
-                    if (child.containsKey("zoneTable")) {
-                      child2.zoneTable?.each { unit ->
+                    if (child2[0].containsKey("zoneTable")) {
+                      child2[0].zoneTable?.each { unit ->
                         unitsList.add(parseKumoUnit(unit))
                         }
                     }
@@ -450,7 +458,7 @@ def getStandardHTTPHeaders_MELCloud(excludeAuthCode) {
     headers.put("X-Requested-With","XMLHttpRequest")
     headers.put("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36")
     if (excludeAuthCode == null || excludeAuthCode == "no") {
-        headers.put("X-MitsContextKey","${state.authCode}")
+        headers.put("X-MitsContextKey","${getAuthCode()}")
     }
     
     return headers
@@ -464,7 +472,7 @@ def getStandardHTTPHeaders_MELView(excludeAuthCode) {
 
     def headers = [:]
     headers.put("Content-Type", "application/json")
-    headers.put("Cookie", "auth=${state.authCode}")
+    headers.put("Cookie", "auth=${getAuthCode()}")
     headers.put("accept", "application/json, text/javascript, */*; q=0.01")
     return headers
 }
