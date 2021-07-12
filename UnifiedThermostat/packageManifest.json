@@ -4,7 +4,8 @@
 	"author": "Simon Burke (sburke781)",
 	"version": "1.0.0",
 	"dateReleased": "2021-07-12",
-	"licenseFile": "",
+	"documentationLink": "https://github.com/sburke781/hubitat/blob/MEL_UnifiedDrivers/UnifiedThermostat/Readme.md",
+	"communityLink": "https://community.hubitat.com/t/release-unified-thermostat-driver-alpha-melcloud-melview-kumo-cloud-and-more-if-you-want/75947",
 	"releaseNotes": "2021-07-12: Alpha release",
 	"apps" : [],
 	"drivers" : [
