@@ -272,7 +272,7 @@ def retrieveAuthCode_KumoCloud() {
                     unitsList.add(parseKumoUnit(unit))
                   
                   }
-                  child.children?.each { child2
+                  child.children?.each { child2 ->
                     if (child2[0].containsKey("zoneTable")) {
                       child2[0].zoneTable?.each { unit ->
                         unitsList.add(parseKumoUnit(unit))
