@@ -839,7 +839,7 @@ def setTemperature(givenSetTemp) {
     
     if(currThermSetTempValue != setTempValue) {
         parent.debugLog("setTemperature: Setting Temperature to ${setTempValue} for ${device.label}")
-        adjustSetTemperature(givenSetTemp, null)
+        adjustSetTemperature(givenSetTemp, null, null)
         
         if (vPlatform == "MELCloud")  { setTemperature_MELCloud(setTempValue)  }
         if (vPlatform == "MELView")   { setTemperature_MELView(setTempValue)   }
