@@ -89,3 +89,6 @@ The Hubitat Elevation system does allow for scheduling of thermostat changes.  T
 
 The Emergency Heat, Fan Auto and Fan Circulate commands that are part of the Thermostat definition in Hubitat are not currently supported.
 
+* Other Enhancements
+
+Other suggestions can be made and tracked under the Unified Thermostat Drivers project (https://github.com/sburke781/hubitat/projects/3) in this repository.
