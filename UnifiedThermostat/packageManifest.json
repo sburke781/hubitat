@@ -3,24 +3,24 @@
 	"minimumHEVersion": "2.2.1",
 	"author": "Simon Burke (sburke781)",
 	"version": "1.0.0",
-	"dateReleased": "2021-07-12",
-	"documentationLink": "https://github.com/sburke781/hubitat/blob/MEL_UnifiedDrivers/UnifiedThermostat/Readme.md",
-	"communityLink": "https://community.hubitat.com/t/release-unified-thermostat-driver-alpha-melcloud-melview-kumo-cloud-and-more-if-you-want/75947",
-	"releaseNotes": "2021-07-12: Alpha release",
+	"dateReleased": "2021-07-13",
+	"documentationLink": "https://github.com/sburke781/hubitat/blob/master/UnifiedThermostat/Readme.md",
+	"communityLink": "https://community.hubitat.com/t/release-unified-thermostat-driver-alpha-melcloud-melview-kumo-cloud-and-more-if-you-want",
+	"releaseNotes": "2021-07-13: Alpha release",
 	"apps" : [],
 	"drivers" : [
 		{
 			"id": "22597029-98db-490b-b8b9-c23b123ee5f2",
 			"name": "Unified Thermostat Parent Driver",
 			"namespace": "simnet",
-			"location": "https://raw.githubusercontent.com/sburke781/hubitat/MEL_UnifiedDrivers/UnifiedThermostat/UnifiedThermostatParent_Driver.groovy",
+			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/UnifiedThermostat/UnifiedThermostatParent_Driver.groovy",
 			"required": true
 		},
 		{
 			"id": "e012ffff-7959-466b-a2ae-3123a33010f9",
 			"name": "Unified Thermostat Unit Child Driver",
 			"namespace": "simnet",
-			"location": "https://raw.githubusercontent.com/sburke781/hubitat/MEL_UnifiedDrivers/UnifiedThermostat/UnifiedThermostatUnitChild_Driver.groovy",
+			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/UnifiedThermostat/UnifiedThermostatUnitChild_Driver.groovy",
 			"required": true
 		}
 	]
