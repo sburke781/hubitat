@@ -67,6 +67,9 @@ You can now click on one of the child devices and start interacting with it, cha
 ### Automatic Status Polling
 Each air conditioning unit device will automatically update it's status every 10 minutes.  This can be turned on or off using the **Automatic Status Polling** Preference or the frequency changed using the **Status Polling Interval** Preference.  Although not shown as a listing, the frequencies supported are 1, 2, 5, 10, 30 and 60 minutes.
 
+### Fan Modes - Text or Numbers?
+This option toggles Fan Modes / Speeds between being displayed as numbers 1-5 (or whatever range is appropriate for the unit) or as text-based settings of Low, Low-Medium, Medium, Medium-High and High.  This allows for a similar experience to the different native mobile applications provided by each platform.  The choice of how to display Fan Modes does not impact the integration with the unit, it is purely for display purposes, and doesn't even need to match what is displayed in the native mobile application.
+
 ### Logging
 THe default logging will capture warnings and errors that occur, however more detail information logging can be turned on to capture details such as changes in temperature settings, mode and other state changes.  In addition, debug logging can be turned on to provide a much larger amount of information about what is happening.  Debug logging is only intended for troubleshooting purposes and should not be left on for an extended period of time.  There is also potentially sensitive information logged with this setting turned on, so please get in touch with the developer if you have any concerns.
 
