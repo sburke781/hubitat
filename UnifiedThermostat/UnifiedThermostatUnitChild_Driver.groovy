@@ -32,7 +32,7 @@ preferences {
 
         input(name: "AutoStatusPolling", type: "bool", title:"Automatic Status Polling", description: "Enable / Disable automatic polling of unit status", defaultValue: true, required: true, displayDuringSetup: true)
         input(name: "StatusPollingInterval", type: "ENUM", multiple: false, options: ["1", "2", "5", "10", "30", "60"], title:"Status Polling Interval", description: "Number of minutes between automatic status updates", defaultValue: 10, required: true, displayDuringSetup: true)		
-		input(name: "FansTextOrNumbers", type: "bool", title: "Famode Modes: Text or Numbers?", description: "Use Text Fan Modes (ON) or Numbers (OFF)?", defaultValue: true, required: true, displayDuringSetup: true)
+		input(name: "FansTextOrNumbers", type: "bool", title: "Fan Modes: Text or Numbers?", description: "Use Text for Fan Modes (ON) or Numbers (OFF)?", defaultValue: true, required: true, displayDuringSetup: true)
         
     }
         
@@ -90,10 +90,10 @@ preferences {
         /*
         command "auto"
         command "cool"
-        command "emergencyHeat" //Currently unsupported in MELCloud
-        command "fanAuto"       //Currently unsupported in MELCloud
-        command "fanCirculate"  //Currently unsupported in MELCloud
-        command "fanOn"         //Currently unsupported in MELCloud
+        command "emergencyHeat" //Currently unsupported
+        command "fanAuto"       //Currently unsupported
+        command "fanCirculate"  //Currently unsupported
+        command "fanOn"         //Currently unsupported
         command "heat"
         command "off"
         
