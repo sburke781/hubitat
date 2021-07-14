@@ -14,9 +14,10 @@
  *
  *  Change History:
  *
- *    Date        Who            What
- *    ----        ---            ----
- *    2021-07-12  Simon Burke    Alpha release
+ *    Date        Who            Version	What
+ *    ----        ---            -------	----
+ *    2021-07-12  Simon Burke    1.0.0		Alpha release
+ *    2021-07-15  Simon Burke    1.0.1		Removed temperature conversion that was causing inflated temperatures when using Fahrenheit
  * 
  */
 import java.text.DecimalFormat;
@@ -497,14 +498,14 @@ def applyUnitSettings(givenSettings) {
     
     parent.debugLog("applyUnitSettings: Unit Settings are ${givenSettings}")
     
-    def minTempCoolValue  = convertTemperatureIfNeeded(givenSettings.minTempCool?.toFloat(),"c",1)
-	def maxTempCoolValue  = convertTemperatureIfNeeded(givenSettings.maxTempCool?.toFloat(),"c",1)
-    def minTempDryValue   = convertTemperatureIfNeeded(givenSettings.minTempDry?.toFloat() ,"c",1)
-	def maxTempDryValue   = convertTemperatureIfNeeded(givenSettings.maxTempDry?.toFloat() ,"c",1)
-    def minTempHeatValue  = convertTemperatureIfNeeded(givenSettings.minTempHeat?.toFloat(),"c",1)
-    def maxTempHeatValue  = convertTemperatureIfNeeded(givenSettings.maxTempHeat?.toFloat(),"c",1)
-    def minTempAutoValue  = convertTemperatureIfNeeded(givenSettings.minTempAuto?.toFloat(),"c",1)
-    def maxTempAutoValue  = convertTemperatureIfNeeded(givenSettings.maxTempAuto?.toFloat(),"c",1)
+    def minTempCoolValue  = givenSettings.minTempCool?.toFloat().round(1)
+	def maxTempCoolValue  = givenSettings.maxTempCool?.toFloat().round(1)
+    def minTempDryValue   = givenSettings.minTempDry?.toFloat().round(1)
+	def maxTempDryValue   = givenSettings.maxTempDry?.toFloat().round(1)
+    def minTempHeatValue  = givenSettings.minTempHeat?.toFloat().round(1)
+    def maxTempHeatValue  = givenSettings.maxTempHeat?.toFloat().round(1)
+    def minTempAutoValue  = givenSettings.minTempAuto?.toFloat().round(1)
+    def maxTempAutoValue  = givenSettings.maxTempAuto?.toFloat().round(1)
     
     //Temperature Ranges Configured
     sendEvent(name: "MinTempCool", value: minTempCoolValue)
@@ -689,7 +690,7 @@ def applyStatusUpdates(statusInfo) {
 def adjustRoomTemperature(givenTemp) {
 
   def tempscaleUnit = "°${location.temperatureScale}"
-  def roomtempValue = convertTemperatureIfNeeded(givenTemp.toFloat(),"c",1)	
+  def roomtempValue = givenTemp.toFloat().round(1)	
   
   parent.debugLog("adjustRoomTemperature: Temperature provided = ${givenTemp}, Units = ${tempscaleUnit}, Converted Value = ${roomtempValue}")
   if (device.currentValue("temperature") == null || device.currentValue("temperature") != roomtempValue) {
@@ -701,9 +702,9 @@ def adjustRoomTemperature(givenTemp) {
 
 // adjustHeatingSetpoint() To-Do: Use Minimum Heating Set Point instead of 23
 def adjustHeatingSetpoint(givenTemp) {
-    def heatingSetTempValue = convertTemperatureIfNeeded(givenTemp.toFloat(),"c",1)
-	def currHeatingSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("heatingSetpoint"),"23.0").toFloat(),"c",1)
-    def currThermSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("thermostatSetpoint"),"23.0").toFloat(),"c",1)
+    def heatingSetTempValue = givenTemp.toFloat().round(1)
+	def currHeatingSetTempValue = checkNull(device.currentValue("heatingSetpoint"),"23.0").toFloat().round(1)
+    def currThermSetTempValue = checkNull(device.currentValue("thermostatSetpoint"),"23.0").toFloat().round(1)
     
     parent.debugLog("adjustHeatingSetpoint: Current heatingSetpoint ${currHeatingSetTempValue}, Current ThermostatSetpoint = ${currThermSetTempValue}, New heatingSetpoint = ${heatingSetTempValue}")
     
@@ -747,9 +748,9 @@ def setHeatingSetpoint(givenTemp) {
 // adjustCoolingSetpoint() To-Do: Use Maximum Heating Set Point instead of 23
 def adjustCoolingSetpoint(givenTemp) {
  
-    def coolingSetTempValue = convertTemperatureIfNeeded(givenTemp.toFloat(),"c",1)
-	def currCoolingSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("coolingSetpoint"),"23.0").toFloat(),"c",1)
-    def currThermSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("thermostatSetpoint"),"23.0").toFloat(),"c",1)
+    def coolingSetTempValue = givenTemp.toFloat().round(1)
+	def currCoolingSetTempValue = checkNull(device.currentValue("coolingSetpoint"),"23.0").toFloat().round(1)
+    def currThermSetTempValue = checkNull(device.currentValue("thermostatSetpoint"),"23.0").toFloat().round(1)
     
     parent.debugLog("adjustCoolingSetpoint: Current coolingSetpoint ${currCoolingSetTempValue}, Current ThermostatSetpoint = ${currThermSetTempValue}, New coolingSetpoint = ${coolingSetTempValue}")
     
@@ -796,13 +797,13 @@ def setCoolingSetpoint(givenTemp) {
 def adjustSetTemperature(pSetTemp, pThermostatMode, pPower) {
 
     def vSetTemp
-    if ("${pSetTemp}".isNumber()) { vSetTemp = convertTemperatureIfNeeded(pSetTemp.toFloat(),"c",1) }
+    if ("${pSetTemp}".isNumber()) { vSetTemp = pSetTemp.toFloat().round(1) }
     else { vSetTemp = null }
     
     
     def vCurrentSetTempConv
 	def vCurrentSetTemp = device.currentValue("thermostatSetpoint")
-    if ("${vCurrentSetTemp}".isNumber()) { vCurrentSetTempConv = convertTemperatureIfNeeded(vCurrentSetTemp.toFloat(),"c",1)}
+    if ("${vCurrentSetTemp}".isNumber()) { vCurrentSetTempConv = vCurrentSetTemp.toFloat().round(1)}
     else { vCurrentSetTempConv = null }
     parent.debugLog("adjustSetTemperature: Temperature passed in was ${pSetTemp} which was parsed as ${vSetTemp}, current set temperature is ${vCurrentSetTempConv}")
     
@@ -834,8 +835,8 @@ def adjustSetTemperature(pSetTemp, pThermostatMode, pPower) {
 def setTemperature(givenSetTemp) {
     
     def vPlatform = parent.getPlatform()
-    def setTempValue = convertTemperatureIfNeeded(givenSetTemp.toFloat(),"c",1)
-    def currThermSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("thermostatSetpoint"),"23.0").toFloat(),"c",1)
+    def setTempValue = givenSetTemp.toFloat().round(1)
+    def currThermSetTempValue = checkNull(device.currentValue("thermostatSetpoint"),"23.0").toFloat().round(1)
     
     if(currThermSetTempValue != setTempValue) {
         parent.debugLog("setTemperature: Setting Temperature to ${setTempValue} for ${device.label}")
