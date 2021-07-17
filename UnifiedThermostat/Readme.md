@@ -54,6 +54,7 @@ The drivers can be installed using one of two methods:
   1. The **Device Edit** page will be displayed
   1. In the **Preferences** section, select the **Platform** and enter in the **Username** and **Password** used for Authenticating with the platform selected
       1. For those using the MELCloud platform in Europe, also select the appropriate **Language**.
+  1. If needed, select the temperature scale used by the platform
   1. Click the **Save Preferences** button to save the changes
   1. At the bottom of the page each air conditioning unit detected will be displayed in the Component Devices section of the table, along with a Scheduled Job to initialize each child device in 30 seconds
   1. Wait approximately 60 seconds and refresh the browser window
