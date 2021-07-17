@@ -16,7 +16,9 @@
  *
  *    Date        Who            What
  *    ----        ---            ----
- *    2021-07-12  Simon Burke    Alpha release
+ *    2021-07-12  Simon Burke    1.0.0 - Alpha release
+ *                               1.0.1 - No Change
+ *    2021-07-17  Simon Burke    1.0.2 - Added Platform temperature scale preference and get/set methods
  * 
  */
 metadata {
@@ -68,8 +70,8 @@ metadata {
             languageSelected << ["1" : "Български (1)"]
             languageSelected << ["20" : "Українська (20)"]
         
-        input name: "Language", type: "enum", title:"Language", options: languageSelected, defaultValue: 0, description: "Select a language (Europe only)", displayDuringSetup: true
-        
+        input(name: "Language", type: "enum", title:"Language", options: languageSelected, defaultValue: 0, description: "Select a language (Europe only)", displayDuringSetup: true)
+        input(name: "Scale", type: "bool", title:"Platform Temperature Scale", description: "Does the platform report in Celsius (ON, Default) or Fahrenheit (OFF)", displayDuringSetup: true, defaultValue: true)
         // Logging Preferences
         input(name: "DebugLogging", type: "bool", title:"Enable Debug Logging",                   displayDuringSetup: true, defaultValue: false)
         input(name: "WarnLogging",  type: "bool", title:"Enable Warning Logging",                 displayDuringSetup: true, defaultValue: true )
@@ -79,6 +81,19 @@ metadata {
     } // End of Preferences
 
 } // End of metadata
+
+def getPlatformScale() {
+ def vScale   
+ if(Scale == true) { vScale = 'c'}
+    else { vScale = 'f'}
+ return vScale
+}
+
+def setScale(pScale) {
+    
+    if(pScale == 'c') { Scale = true}
+    else { Scale = false }
+}
 
 def initialize() {
     debugLog("initialize: Method called...")
