@@ -18,6 +18,7 @@
  *    ----        ---            -------	----
  *    2021-07-12  Simon Burke    1.0.0		Alpha release
  *    2021-07-15  Simon Burke    1.0.1		Removed temperature conversion that was causing inflated temperatures when using Fahrenheit
+ *    2021-07-17  Simon Burke    1.0.2      Added temperature conversion back in where necessary, using parent driver platform temperature scale preference
  * 
  */
 import java.text.DecimalFormat;
@@ -347,6 +348,15 @@ def retrieveUnitSettings() {
     if (platform == "MELCloud")  { settings = retrieveUnitSettings_MELCloud() }
     if (platform == "MELView")   { settings = retrieveUnitSettings_MELView() }
     if (platform == "KumoCloud") { settings = retrieveUnitSettings_KumoCloud() }
+    parent.debugLog("retrieveUnitSettings: pre-conversion")
+    settings.minTempCool = convertTemperatureIfNeeded(settings.minTempCool.toFloat(),parent.getPlatformScale(),1)
+    settings.maxTempCool = convertTemperatureIfNeeded(settings.maxTempCool.toFloat(),parent.getPlatformScale(),1)
+    settings.minTempDry  = convertTemperatureIfNeeded(settings.minTempDry.toFloat(), parent.getPlatformScale(),1)
+    settings.maxTempDry  = convertTemperatureIfNeeded(settings.maxTempDry.toFloat(), parent.getPlatformScale(),1)
+    settings.minTempHeat = convertTemperatureIfNeeded(settings.minTempHeat.toFloat(),parent.getPlatformScale(),1)
+    settings.maxTempHeat = convertTemperatureIfNeeded(settings.maxTempHeat.toFloat(),parent.getPlatformScale(),1)
+    settings.minTempAuto = convertTemperatureIfNeeded(settings.minTempAuto.toFloat(),parent.getPlatformScale(),1)
+    settings.maxTempAuto = convertTemperatureIfNeeded(settings.maxTempAuto.toFloat(),parent.getPlatformScale(),1)
     
     return settings
     
@@ -497,25 +507,15 @@ def retrieveUnitSettings_KumoCloud() {
 def applyUnitSettings(givenSettings) {
     
     parent.debugLog("applyUnitSettings: Unit Settings are ${givenSettings}")
-    
-    def minTempCoolValue  = givenSettings.minTempCool?.toFloat().round(1)
-	def maxTempCoolValue  = givenSettings.maxTempCool?.toFloat().round(1)
-    def minTempDryValue   = givenSettings.minTempDry?.toFloat().round(1)
-	def maxTempDryValue   = givenSettings.maxTempDry?.toFloat().round(1)
-    def minTempHeatValue  = givenSettings.minTempHeat?.toFloat().round(1)
-    def maxTempHeatValue  = givenSettings.maxTempHeat?.toFloat().round(1)
-    def minTempAutoValue  = givenSettings.minTempAuto?.toFloat().round(1)
-    def maxTempAutoValue  = givenSettings.maxTempAuto?.toFloat().round(1)
-    
     //Temperature Ranges Configured
-    sendEvent(name: "MinTempCool", value: minTempCoolValue)
-    sendEvent(name: "MaxTempCool", value: maxTempCoolValue)
-    sendEvent(name: "MinTempDry" , value: minTempDryValue )
-    sendEvent(name: "MaxTempDry" , value: maxTempDryValue )
-    sendEvent(name: "MinTempHeat", value: minTempHeatValue)
-    sendEvent(name: "MaxTempHeat", value: maxTempHeatValue)
-    sendEvent(name: "MinTempAuto", value: minTempAutoValue)
-    sendEvent(name: "MaxTempAuto", value: maxTempAutoValue)
+    sendEvent(name: "MinTempCool", value: givenSettings.minTempCool)
+    sendEvent(name: "MaxTempCool", value: givenSettings.maxTempCool)
+    sendEvent(name: "MinTempDry" , value: givenSettings.minTempDry)
+    sendEvent(name: "MaxTempDry" , value: givenSettings.maxTempDry)
+    sendEvent(name: "MinTempHeat", value: givenSettings.minTempHeat)
+    sendEvent(name: "MaxTempHeat", value: givenSettings.maxTempHeat)
+    sendEvent(name: "MinTempAuto", value: givenSettings.minTempAuto)
+    sendEvent(name: "MaxTempAuto", value: givenSettings.maxTempAuto)
 
     //Modes and Features
     sendEvent(name: "CanHeat",              value: givenSettings.canHeat)
@@ -533,7 +533,11 @@ def retrieveStatusInfo() {
     
     //Returns current status information for the ac unit
     parent.debugLog("retrieveStatusInfo: Retrieving status info from ${parent.getPlatform()} ")
-    return "retrieveStatusInfo_${parent.getPlatform()}"()
+    def statusInfo = "retrieveStatusInfo_${parent.getPlatform()}"()
+    statusInfo.setTemp  = convertTemperatureIfNeeded(statusInfo.setTemp.toFloat(), parent.getPlatformScale(),1)
+    statusInfo.roomTemp = convertTemperatureIfNeeded(statusInfo.roomTemp.toFloat(),parent.getPlatformScale(),1)
+    
+    return statusInfo
     
 }
 
@@ -723,6 +727,7 @@ def adjustHeatingSetpoint(givenTemp) {
 def setHeatingSetpoint(givenTemp) {
 
     def correctedTemp = givenTemp
+    def convertedTemp
     
     parent.debugLog("setHeatingSetpoint: Setting Heating Set Point to ${givenTemp}, current minimum ${device.currentValue("MinTempHeat")}, current maximum ${device.currentValue("MaxTempHeat")}")
     
@@ -741,7 +746,11 @@ def setHeatingSetpoint(givenTemp) {
         
     adjustHeatingSetpoint(correctedTemp)
     if (device.currentValue("thermostatOperatingState") == "heating") {
-        setTemperature(correctedTemp)
+        convertedTemp = correctedTemp
+        if(getTemperatureScale() == 'c' && parent.getPlatformScale() == 'f') { convertedTemp = celsiusToFahrenheit(correctedTemp) }
+        if(getTemperatureScale() == 'f' && parent.getPlatformScale() == 'c') { convertedTemp = fahrenheitToCelsius(correctedTemp) }
+        
+        setTemperature(convertedTemp)
     }
 }
 
@@ -788,7 +797,11 @@ def setCoolingSetpoint(givenTemp) {
         
     adjustCoolingSetpoint(correctedTemp)
     if (device.currentValue("thermostatOperatingState") == "cooling") {
-        setTemperature(correctedTemp)
+        convertedTemp = correctedTemp
+        if(getTemperatureScale() == 'c' && parent.getPlatformScale() == 'f') { convertedTemp = celsiusToFahrenheit(correctedTemp) }
+        if(getTemperatureScale() == 'f' && parent.getPlatformScale() == 'c') { convertedTemp = fahrenheitToCelsius(correctedTemp) }
+        
+        setTemperature(convertedTemp)
     }
 }
 
