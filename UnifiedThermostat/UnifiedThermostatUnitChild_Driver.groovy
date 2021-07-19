@@ -19,7 +19,7 @@
  *    2021-07-12  Simon Burke    1.0.0		Alpha release
  *    2021-07-15  Simon Burke    1.0.1		Removed temperature conversion that was causing inflated temperatures when using Fahrenheit
  *    2021-07-17  Simon Burke    1.0.2      Added temperature conversion back in where necessary, using parent driver platform temperature scale preference
- * 
+ *    2021-07-19  Simon Burke    1.0.3      Updated setHeatingSetpoint and setCoolingSetpoint to add extra logging and align case of temperature scale comaprison
  */
 import java.text.DecimalFormat;
 
@@ -747,8 +747,11 @@ def setHeatingSetpoint(givenTemp) {
     adjustHeatingSetpoint(correctedTemp)
     if (device.currentValue("thermostatOperatingState") == "heating") {
         convertedTemp = correctedTemp
-        if(getTemperatureScale() == 'c' && parent.getPlatformScale() == 'f') { convertedTemp = celsiusToFahrenheit(correctedTemp) }
-        if(getTemperatureScale() == 'f' && parent.getPlatformScale() == 'c') { convertedTemp = fahrenheitToCelsius(correctedTemp) }
+        
+        parent.debugLog("setHeatingSetpoint: HE Temperature Scale = ${getTemperatureScale()}, Platform Temperature Scale = ${parent.getPlatformScale()}")
+        if(getTemperatureScale() == 'C' && parent.getPlatformScale() == 'F') { convertedTemp = celsiusToFahrenheit(correctedTemp) }
+        if(getTemperatureScale() == 'F' && parent.getPlatformScale() == 'C') { convertedTemp = fahrenheitToCelsius(correctedTemp) }
+        parent.debugLog("setHeatingSetpoint: Corrected Temperature = ${correctedTemp}, Converted Temp = ${convertedTemp}")
         
         setTemperature(convertedTemp)
     }
@@ -798,9 +801,10 @@ def setCoolingSetpoint(givenTemp) {
     adjustCoolingSetpoint(correctedTemp)
     if (device.currentValue("thermostatOperatingState") == "cooling") {
         convertedTemp = correctedTemp
-        if(getTemperatureScale() == 'c' && parent.getPlatformScale() == 'f') { convertedTemp = celsiusToFahrenheit(correctedTemp) }
-        if(getTemperatureScale() == 'f' && parent.getPlatformScale() == 'c') { convertedTemp = fahrenheitToCelsius(correctedTemp) }
-        
+        parent.debugLog("setCoolingSetpoint: HE Temperature Scale = ${getTemperatureScale()}, Platform Temperature Scale = ${parent.getPlatformScale()}")
+        if(getTemperatureScale() == 'C' && parent.getPlatformScale() == 'F') { convertedTemp = celsiusToFahrenheit(correctedTemp) }
+        if(getTemperatureScale() == 'F' && parent.getPlatformScale() == 'C') { convertedTemp = fahrenheitToCelsius(correctedTemp) }
+        parent.debugLog("setCoolingSetpoint: Corrected Temperature = ${correctedTemp}, Converted Temp = ${convertedTemp}")
         setTemperature(convertedTemp)
     }
 }
