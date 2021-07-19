@@ -6,7 +6,7 @@
 	"dateReleased": "2021-07-19",
 	"documentationLink": "https://github.com/sburke781/hubitat/blob/master/UnifiedThermostat/Readme.md",
 	"communityLink": "https://community.hubitat.com/t/release-unified-thermostat-driver-alpha-melcloud-melview-kumo-cloud-and-more-if-you-want",
-	"releaseNotes": "2021-07-13: 1.0.0 - Alpha release\n2021-07-15: 1.0.1 - Fahrenheit fix - removal of temperature conversion\n2021-07-17: 1.0.2 - Added temperature conversion back in where necessary\n2021-07-19: 1.0.3 - Updated case of temp scale and added more logging",
+	"releaseNotes": "2021-07-13: 1.0.0 - Alpha release\n2021-07-15: 1.0.1 - Fahrenheit fix - removal of temperature conversion\n2021-07-17: 1.0.2 - Added temperature conversion back in where necessary\n2021-07-19: 1.0.3 - Updated case of temp scale and added more logging\n2021-07-19: 1.0.4 - Updated derive mode logic to cater for power = true rather than just power = 1, catering for MELCloud status updates",
 	"apps" : [],
 	"drivers" : [
 		{
