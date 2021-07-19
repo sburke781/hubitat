@@ -19,6 +19,7 @@
  *    2021-07-12  Simon Burke    1.0.0 - Alpha release
  *                               1.0.1 - No Change
  *    2021-07-17  Simon Burke    1.0.2 - Added Platform temperature scale preference and get/set methods
+ *    2021-07-19  Simon Burke	 1.0.3 - Updated platform temperature scale to align case of F and C with HE scale
  * 
  */
 metadata {
@@ -84,14 +85,14 @@ metadata {
 
 def getPlatformScale() {
  def vScale   
- if(Scale == true) { vScale = 'c'}
-    else { vScale = 'f'}
+ if(Scale == true) { vScale = 'C'}
+    else { vScale = 'F'}
  return vScale
 }
 
 def setScale(pScale) {
     
-    if(pScale == 'c') { Scale = true}
+    if(pScale == 'C') { Scale = true}
     else { Scale = false }
 }
 
