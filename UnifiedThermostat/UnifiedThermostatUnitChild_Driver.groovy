@@ -20,6 +20,7 @@
  *    2021-07-15  Simon Burke    1.0.1		Removed temperature conversion that was causing inflated temperatures when using Fahrenheit
  *    2021-07-17  Simon Burke    1.0.2      Added temperature conversion back in where necessary, using parent driver platform temperature scale preference
  *    2021-07-19  Simon Burke    1.0.3      Updated setHeatingSetpoint and setCoolingSetpoint to add extra logging and align case of temperature scale comaprison
+ *    2021-07-19  Simon Burke    1.0.4      Updated derive mode logic to cater for power = true rather than just power = 1, catering for MELCloud status updates
  */
 import java.text.DecimalFormat;
 
@@ -1030,7 +1031,7 @@ def adjustThermostatOperatingState(pThermostatMode, pPower) {
 def deriveThermostatMode(pThermostatMode, pPower) {
  
     def vModeDesc
-    if (pPower == "1") { vModeDesc = modeMap["${pThermostatMode}"] }
+    if (pPower == "1" || pPower == "true") { vModeDesc = modeMap["${pThermostatMode}"] }
     else { vModeDesc = "off" }
     
     return vModeDesc
