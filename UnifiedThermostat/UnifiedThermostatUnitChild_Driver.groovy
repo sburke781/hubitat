@@ -21,6 +21,7 @@
  *    2021-07-17  Simon Burke    1.0.2      Added temperature conversion back in where necessary, using parent driver platform temperature scale preference
  *    2021-07-19  Simon Burke    1.0.3      Updated setHeatingSetpoint and setCoolingSetpoint to add extra logging and align case of temperature scale comaprison
  *    2021-07-19  Simon Burke    1.0.4      Updated derive mode logic to cater for power = true rather than just power = 1, catering for MELCloud status updates
+ *    2021-07-20  Simon Burke    1.0.5      Fixes for MELCloud Heating, was passing in power = false, should be true
  */
 import java.text.DecimalFormat;
 
@@ -1122,7 +1123,7 @@ def heat_KumoCloud() {
 
 def heat_MELCloud() {
     
-    def vBodyJson = getUnitCommandBody_MELCloud( false //Power
+    def vBodyJson = getUnitCommandBody_MELCloud( true //Power
                                       ,device.currentValue("thermostatFanMode")
                                       ,"heat" //thermostatMode
                                       ,device.currentValue("thermostatSetpoint")
