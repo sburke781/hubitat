@@ -22,6 +22,7 @@
  *    2021-07-19  Simon Burke    1.0.3      Updated setHeatingSetpoint and setCoolingSetpoint to add extra logging and align case of temperature scale comaprison
  *    2021-07-19  Simon Burke    1.0.4      Updated derive mode logic to cater for power = true rather than just power = 1, catering for MELCloud status updates
  *    2021-07-20  Simon Burke    1.0.5      Fixes for MELCloud Heating, was passing in power = false, should be true
+ *    2021-07-25  Simon Burke    1.0.6      Fahrenheit Conversion - moving temp conversion from setCooling / Heating SetPoint to setTemperature method
  */
 import java.text.DecimalFormat;
 
@@ -359,7 +360,8 @@ def retrieveUnitSettings() {
     settings.maxTempHeat = convertTemperatureIfNeeded(settings.maxTempHeat.toFloat(),parent.getPlatformScale(),1)
     settings.minTempAuto = convertTemperatureIfNeeded(settings.minTempAuto.toFloat(),parent.getPlatformScale(),1)
     settings.maxTempAuto = convertTemperatureIfNeeded(settings.maxTempAuto.toFloat(),parent.getPlatformScale(),1)
-    
+    parent.debugLog("retrieveUnitSettings: ${convertTemperatureIfNeeded(settings.minTempCool.toFloat(),'X',1)}")
+    parent.debugLog("retrieveUnitSettings: ${convertTemperatureIfNeeded(settings.minTempCool.toFloat(),parent.getPlatformScale(),1)}")
     return settings
     
 }
@@ -745,18 +747,9 @@ def setHeatingSetpoint(givenTemp) {
         correctedTemp = device.currentValue("MaxTempHeat")
         parent.debugLog("setHeatingSetpoint: Temperature selected = ${givenTemp}, corrected to maximum heating set point ${correctedTemp}")
     }
-        
+    parent.debugLog("setHeatingSetpoint: Corrected Temp = ${correctedTemp}")
     adjustHeatingSetpoint(correctedTemp)
-    if (device.currentValue("thermostatOperatingState") == "heating") {
-        convertedTemp = correctedTemp
-        
-        parent.debugLog("setHeatingSetpoint: HE Temperature Scale = ${getTemperatureScale()}, Platform Temperature Scale = ${parent.getPlatformScale()}")
-        if(getTemperatureScale() == 'C' && parent.getPlatformScale() == 'F') { convertedTemp = celsiusToFahrenheit(correctedTemp) }
-        if(getTemperatureScale() == 'F' && parent.getPlatformScale() == 'C') { convertedTemp = fahrenheitToCelsius(correctedTemp) }
-        parent.debugLog("setHeatingSetpoint: Corrected Temperature = ${correctedTemp}, Converted Temp = ${convertedTemp}")
-        
-        setTemperature(convertedTemp)
-    }
+    if (device.currentValue("thermostatOperatingState") == "heating") { setTemperature(correctedTemp) }
 }
 
 // adjustCoolingSetpoint() To-Do: Use Maximum Heating Set Point instead of 23
@@ -801,14 +794,7 @@ def setCoolingSetpoint(givenTemp) {
     }
         
     adjustCoolingSetpoint(correctedTemp)
-    if (device.currentValue("thermostatOperatingState") == "cooling") {
-        convertedTemp = correctedTemp
-        parent.debugLog("setCoolingSetpoint: HE Temperature Scale = ${getTemperatureScale()}, Platform Temperature Scale = ${parent.getPlatformScale()}")
-        if(getTemperatureScale() == 'C' && parent.getPlatformScale() == 'F') { convertedTemp = celsiusToFahrenheit(correctedTemp) }
-        if(getTemperatureScale() == 'F' && parent.getPlatformScale() == 'C') { convertedTemp = fahrenheitToCelsius(correctedTemp) }
-        parent.debugLog("setCoolingSetpoint: Corrected Temperature = ${correctedTemp}, Converted Temp = ${convertedTemp}")
-        setTemperature(convertedTemp)
-    }
+    if (device.currentValue("thermostatOperatingState") == "cooling") { setTemperature(correctedTemp) }
 }
 
 // TO-DO: Look at use of the value 23.0 for the US
@@ -856,14 +842,20 @@ def setTemperature(givenSetTemp) {
     def vPlatform = parent.getPlatform()
     def setTempValue = givenSetTemp.toFloat().round(1)
     def currThermSetTempValue = checkNull(device.currentValue("thermostatSetpoint"),"23.0").toFloat().round(1)
+    def convertedTemp = setTempValue
     
     if(currThermSetTempValue != setTempValue) {
         parent.debugLog("setTemperature: Setting Temperature to ${setTempValue} for ${device.label}")
         adjustSetTemperature(givenSetTemp, null, null)
         
-        if (vPlatform == "MELCloud")  { setTemperature_MELCloud(setTempValue)  }
-        if (vPlatform == "MELView")   { setTemperature_MELView(setTempValue)   }
-        if (vPlatform == "KumoCloud") { setTemperature_KumoCloud(setTempValue) }
+        parent.debugLog("setTemperature: HE Temperature Scale = ${getTemperatureScale()}, Platform Temperature Scale = ${parent.getPlatformScale()}")
+        if(getTemperatureScale() == 'C' && parent.getPlatformScale() == 'F') { convertedTemp = celsiusToFahrenheit(correctedTemp) }
+        if(getTemperatureScale() == 'F' && parent.getPlatformScale() == 'C') { convertedTemp = fahrenheitToCelsius(correctedTemp) }
+        parent.debugLog("setTemperature: Set Temperature Provided = ${setTempValue}, Converted Temp = ${convertedTemp}")
+        
+        if (vPlatform == "MELCloud")  { setTemperature_MELCloud(convertedTemp)  }
+        if (vPlatform == "MELView")   { setTemperature_MELView(convertedTemp)   }
+        if (vPlatform == "KumoCloud") { setTemperature_KumoCloud(convertedTemp) }
         
         parent.debugLog("setTemperature: Temperature adjusted to ${setTempValue} for ${device.label}")
     }
