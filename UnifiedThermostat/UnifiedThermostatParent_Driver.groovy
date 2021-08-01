@@ -20,7 +20,10 @@
  *                               1.0.1 - No Change
  *    2021-07-17  Simon Burke    1.0.2 - Added Platform temperature scale preference and get/set methods
  *    2021-07-19  Simon Burke	 1.0.3 - Updated platform temperature scale to align case of F and C with HE scale
- * 
+ *                               1.0.4 - No Change
+ *                               1.0.5 - No Change
+ *                               1.0.6 - No Change
+ *    2021-08-01  Simon Burke    1.0.7 - Added heTempScale attribute and override command to override HE hub temp scale
  */
 metadata {
 	        definition (name:      "Unified Thermostat Parent Driver",
@@ -81,7 +84,25 @@ metadata {
         
     } // End of Preferences
 
+    attribute "heTempScale",                 "string"
+    
+    command "overrideHeTempScale", [[name:"givenHeTempScale", type: "STRING", description: "Enter the Temperature Scale override value (F, C or <Blank>)" ] ]
+    
 } // End of metadata
+
+def overrideHeTempScale(givenHeTempScale) {
+    
+ sendEvent(name: "heTempScale", value : givenHeTempScale);   
+}
+
+def getHETempScale() {
+    
+    def vTempScale = ""
+    if (checkNull(device.currentValue("heTempScale"), "") == "") { vTempScale = getTemperatureScale() }
+    else { vTempScale = device.currentValue("heTempScale") }
+                                  
+    return vTempScale
+}
 
 def getPlatformScale() {
  def vScale   
@@ -90,7 +111,7 @@ def getPlatformScale() {
  return vScale
 }
 
-def setScale(pScale) {
+def setPlatformScale(pScale) {
     
     if(pScale == 'C') { Scale = true}
     else { Scale = false }
