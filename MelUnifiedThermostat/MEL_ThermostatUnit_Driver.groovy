@@ -1,5 +1,5 @@
 /**
- *  Mitsubishi Electric Thermostat Unit Driver
+ *  Unified Thermostat Unit Child Driver
  *
  *  Copyright 2020 Simon Burke
  *
@@ -14,24 +14,32 @@
  *
  *  Change History:
  *
- *    Date        Who            What
- *    ----        ---            ----
- *    2021-06-06  Simon Burke    Original Creation
- * 
+ *    Date        Who            Version	What
+ *    ----        ---            -------	----
+ *    2021-07-12  Simon Burke    1.0.0		Alpha release
+ *    2021-07-15  Simon Burke    1.0.1		Removed temperature conversion that was causing inflated temperatures when using Fahrenheit
+ *    2021-07-17  Simon Burke    1.0.2      Added temperature conversion back in where necessary, using parent driver platform temperature scale preference
+ *    2021-07-19  Simon Burke    1.0.3      Updated setHeatingSetpoint and setCoolingSetpoint to add extra logging and align case of temperature scale comaprison
+ *    2021-07-19  Simon Burke    1.0.4      Updated derive mode logic to cater for power = true rather than just power = 1, catering for MELCloud status updates
+ *    2021-07-20  Simon Burke    1.0.5      Fixes for MELCloud Heating, was passing in power = false, should be true
+ *    2021-07-25  Simon Burke    1.0.6      Fahrenheit Conversion - moving temp conversion from setCooling / Heating SetPoint to setTemperature method
+ *    2021-08-01  Simon Burke    1.0.7      Added temperature conversion In/Out methods to make use of new temp scale override in parent driver
+ *    2021-08-08  Simon Burke    1.0.8      Added Last Command UTC attribute and checked this when determining whether to apply status updates - Kumo Only at the moment
  */
 import java.text.DecimalFormat;
 
 metadata {
-	definition (name: "MEL Thermostat Unit", namespace: "simnet", author: "Simon Burke") {
+	definition (name: "Unified Thermostat Unit Child Driver", namespace: "simnet", author: "Simon Burke") {
         capability "Refresh"
         capability "Initialize"
         capability "Thermostat"
         capability "FanControl"
 
 preferences {
-		input(name: "AutoStatusPolling", type: "bool", title:"Automatic Status Polling", description: "Enable / Disable automatic polling of unit status", defaultValue: true, required: true, displayDuringSetup: true)
-        input(name: "StatusPollingInterval", type: "ENUM", multiple: false, options: ["20", "30", "60", "300"], title:"Status Polling Interval", description: "Number of seconds between automatic status updates", defaultValue: 30, required: true, displayDuringSetup: true)		
-		input(name: "FansTextOrNumbers", type: "bool", title: "Famode Modes: Text or Numbers?", description: "Use HE Text Fan Modes or Numbers?", defaultValue: true, required: true, displayDuringSetup: true)
+
+        input(name: "AutoStatusPolling", type: "bool", title:"Automatic Status Polling", description: "Enable / Disable automatic polling of unit status", defaultValue: true, required: true, displayDuringSetup: true)
+        input(name: "StatusPollingInterval", type: "ENUM", multiple: false, options: ["1", "2", "5", "10", "30", "60"], title:"Status Polling Interval", description: "Number of minutes between automatic status updates", defaultValue: 10, required: true, displayDuringSetup: true)		
+		input(name: "FansTextOrNumbers", type: "bool", title: "Fan Modes: Text or Numbers?", description: "Use Text for Fan Modes (ON) or Numbers (OFF)?", defaultValue: true, required: true, displayDuringSetup: true)
         
     }
         
@@ -81,6 +89,7 @@ preferences {
         */
         
         attribute "lastRunningMode",                "STRING"
+        attribute "lastCommandUTC",                 "STRING"
         
         //MELCloud specific commands:
         command "on"
@@ -89,10 +98,10 @@ preferences {
         /*
         command "auto"
         command "cool"
-        command "emergencyHeat" //Currently unsupported in MELCloud
-        command "fanAuto"       //Currently unsupported in MELCloud
-        command "fanCirculate"  //Currently unsupported in MELCloud
-        command "fanOn"         //Currently unsupported in MELCloud
+        command "emergencyHeat" //Currently unsupported
+        command "fanAuto"       //Currently unsupported
+        command "fanCirculate"  //Currently unsupported
+        command "fanOn"         //Currently unsupported
         command "heat"
         command "off"
         
@@ -122,6 +131,16 @@ preferences {
 
 }
 
+def getUnitId() {
+    
+    return state.unitId
+}
+
+def setUnitId(pUnitId) {
+    
+    state.unitId = pUnitId
+}
+
 // Standard Driver Methods
 
 /* Initialize() To-Do
@@ -129,21 +148,15 @@ preferences {
            Celsius and Fahrenheit
 
 */
+
 def initialize() {
   
-    parent.debugLog("initialize: Initialize process started...")
-/*        
-    // Retrieve current unit settings and features, applying updates
-    //   to HE device attributes
-    parent.debugLog("initialize: Applying Unit Settings and Features...")
-    applyUnitSettings(retrieveUnitSettings())
-    adjustFanModes()
-    adjustThermostatModes()
-    
+    parent.debugLog("initialize: Initialize process started for unit ${getUnitId()}...")
+    //update unit settings and status polling
+    updated()
     //Run refresh process, including status updates for power, mode, temperatures, etc
     refresh()
-    updated()
-*/
+    parent.debugLog("initialize: Initialize process completed for unit ${getUnitId()}...")
 }
 
 def refresh() {
@@ -154,13 +167,19 @@ def refresh() {
     applyStatusUpdates(retrieveStatusInfo())   
 }
 
-// Updated To-Do: Turn on polling
+// Updated - Run when the Save Preferences button is pressed on the Device Edit page
+//            and when device is initialized
+//        To-Do: Turn on polling
 def updated() {
 
-    setFanModes()
-    setThermostatModes()
-    //parent.debugLog("updated: AutoStatusPolling = ${AutoStatusPolling}, StatusPollingInterval = ${StatusPollingInterval}")
-    //updateStatusPolling()    
+    // Retrieve current unit settings and features, applying updates
+    //   to HE device attributes
+    parent.debugLog("updated: Applying Unit Settings and Features for unit ${getUnitId()}...")
+    applyUnitSettings(retrieveUnitSettings())
+    
+    parent.debugLog("updated: AutoStatusPolling = ${AutoStatusPolling}, StatusPollingInterval = ${StatusPollingInterval}")
+    updateStatusPolling()
+    
 }
 
 // Mode and Fan Mode Maps and Conversions
@@ -204,7 +223,7 @@ def convertFanModeToKey(pFanMode) {
     return vModeKey
 }
 
-def adjustFanModes() {
+def adjustFanModes(pNumberOfFanSpeeds, pHasAutomaticFanSpeed) {
     def fanModes = []
     
     fanModes.add('Off')
@@ -212,18 +231,18 @@ def adjustFanModes() {
     //Text or Numbers?
     if (FansTextOrNumbers == true || FansTextOrNumbers == "1") {
         parent.debugLog("adjustFanModes:Text-based Fan Modes")
-        if(device.currentValue("NumberOfFanSpeeds").toInteger() == 3) {
+        if(pNumberOfFanSpeeds.toInteger() == 3) {
             fanModes.add('Low')
             fanModes.add('Medium')
             fanModes.add('High')
         }
-        else if(device.currentValue("NumberOfFanSpeeds").toInteger() == 2) {
+        else if(pNumberOfFanSpeeds.toInteger() == 2) {
             fanModes.add('Low')
             fanModes.add('High')
         }
         else
         {
-        //if(device.currentValue("NumberOfFanSpeeds").toInteger() == 5) {
+        //if(pNumberOfFanSpeeds.toInteger() == 5) {
             fanModes.add('Low')
             fanModes.add('Medium Low')
             fanModes.add('Medium')
@@ -234,18 +253,18 @@ def adjustFanModes() {
     }
     else {
         parent.debugLog("adjustFanModes:Number-based Fan Modes")
-        if(device.currentValue("NumberOfFanSpeeds").toInteger() == 3) {
+        if(pNumberOfFanSpeeds.toInteger() == 3) {
             fanModes.add('1')
             fanModes.add('2')
             fanModes.add('3')
         }
-        else if(device.currentValue("NumberOfFanSpeeds").toInteger() == 2) {
+        else if(pNumberOfFanSpeeds.toInteger() == 2) {
             fanModes.add('1')
             fanModes.add('2')
         }
         else
         {
-        //if(device.currentValue("NumberOfFanSpeeds").toInteger() == 5) {
+        //if(pNumberOfFanSpeeds.toInteger() == 5) {
             fanModes.add('1')
             fanModes.add('2')
             fanModes.add('3')
@@ -254,7 +273,7 @@ def adjustFanModes() {
         }
     }
     
-    if(device.currentValue("HasAutomaticFanSpeed") == "true") {
+    if(pHasAutomaticFanSpeed == "true" || pHasAutomaticFanSpeed == "1") {
         fanModes.add('Auto')
     }
     
@@ -292,24 +311,23 @@ def getOperatingStateMap() {
     ]
 }
 
-def adjustThermostatModes() {
+def adjustThermostatModes(pCanHeat,pCanCool,pCanDry, pCanAuto) {
     
     parent.debugLog("adjustThermostatModes: Adjusting Thermostat Modes...")
     def thermostatModes = []
-    parent.debugLog("adjustThermostatModes: CanHeat = ${device.currentValue("CanHeat")}")
-    parent.debugLog("adjustThermostatModes: CanDry = ${device.currentValue("CanDry")}")
-    parent.debugLog("adjustThermostatModes: CanCool = ${device.currentValue("CanCool")}")
-    if(device.currentValue("CanHeat") == "true" || device.currentValue("CanHeat") == "1") { thermostatModes.add('heat') }
-    if(device.currentValue("CanDry")  == "true" || device.currentValue("CanDry")  == "1") { thermostatModes.add('dry')  }
-    if(device.currentValue("CanCool") == "true" || device.currentValue("CanCool") == "1") { thermostatModes.add('cool') }
+    parent.debugLog("adjustThermostatModes: CanHeat = ${pCanHeat}, CanCool = ${pCanCool}, CanDry = ${pCanDry}, CanAuto = ${pCanAuto}")
+    
+    if(pCanHeat == "true" || pCanHeat == "1") { thermostatModes.add('heat') }
+    if(pCanCool == "true" || pCanCool == "1") { thermostatModes.add('cool') }
+    if(pCanDry  == "true" || pCanDry  == "1") { thermostatModes.add('dry')  }
+    if(pCanAuto == "true" || pCanAuto == "1") { thermostatModes.add('auto') }
     
     thermostatModes.add('fan')
-    thermostatModes.add('auto')
     thermostatModes.add('off')
     
-    parent.debugLog("setThermostatModes: thermostatModes detected are ${thermostatModes}")
+    parent.debugLog("adjustThermostatModes: thermostatModes detected are ${thermostatModes}")
     sendEvent(name: 'supportedThermostatModes', value: thermostatModes)
-            
+           
 }
 
 /* convertThermostatModeToKey() To-Do: Confirm mode values across each platform */
@@ -331,12 +349,21 @@ def retrieveUnitSettings() {
     
     //Returns current features and settings information for the ac unit
     def settings = [:]
-    def platform = parent.getPlatform()
-    parent.debugLog("retrieveUnitSettings: Retrieving unit features and setting from ${platform} ")
-    if (platform == "MELCloud")  { settings = retrieveUnitSettings_MELCloud() }
-    if (platform == "MELView")   { settings = retrieveUnitSettings_MELView() }
-    if (platform == "KumoCloud") { settings = retrieveUnitSettings_KumoCloud() }
+    parent.debugLog("retrieveUnitSettings: Retrieving unit features and settings")
+    settings = "retrieveUnitSettings_${parent.getPlatform()}"()
     
+    parent.debugLog("retrieveUnitSettings: pre-conversion")
+    
+    settings.minTempCool = convertTemperatureIn(settings.minTempCool)
+    settings.maxTempCool = convertTemperatureIn(settings.maxTempCool)
+    settings.minTempDry  = convertTemperatureIn(settings.minTempDry)
+    settings.maxTempDry  = convertTemperatureIn(settings.maxTempDry)
+    settings.minTempHeat = convertTemperatureIn(settings.minTempHeat)
+    settings.maxTempHeat = convertTemperatureIn(settings.maxTempHeat)
+    settings.minTempAuto = convertTemperatureIn(settings.minTempAuto)
+    settings.maxTempAuto = convertTemperatureIn(settings.maxTempAuto)
+    
+    parent.debugLog("retrieveUnitSettings: Settings to be returned = ${settings}")
     return settings
     
 }
@@ -349,7 +376,7 @@ def retrieveUnitSettings_MELView() {
         uri: "${parent.getBaseURL()}unitcapabilities.aspx",
         headers: parent.getStandardHTTPHeaders_MELView("no"),
         contentType: "application/json",
-        body : "{'unitid': '${device.currentValue("unitId")}'}"
+        body : "{'unitid': '${getUnitId()}'}"
 	]
     
 	try {
@@ -445,7 +472,7 @@ def retrieveUnitSettings_KumoCloud() {
         uri: "${parent.getBaseURL()}/getInfrequentDeviceUpdates",
         headers: parent.getStandardHTTPHeaders_KumoCloud("no"),
         contentType: "application/json; charset=UTF-8",
-        body : "[ \"${parent.getAuthCode()}\",[\"${device.currentValue("unitId")}\"] ]"
+        body : "[ \"${parent.getAuthCode()}\",[\"${getUnitId()}\"] ]"
 	]
     
     try {
@@ -482,51 +509,42 @@ def retrieveUnitSettings_KumoCloud() {
     return settings
 }
 
-/* applyUnitSettings() TO-DO - Work on handling Fahrenheit / Celsius */
+
 def applyUnitSettings(givenSettings) {
     
     parent.debugLog("applyUnitSettings: Unit Settings are ${givenSettings}")
-    
-    def minTempCoolValue  = convertTemperatureIfNeeded(givenSettings.minTempCool?.toFloat(),"c",1)
-	def maxTempCoolValue  = convertTemperatureIfNeeded(givenSettings.maxTempCool?.toFloat(),"c",1)
-    def minTempDryValue   = convertTemperatureIfNeeded(givenSettings.minTempDry?.toFloat() ,"c",1)
-	def maxTempDryValue   = convertTemperatureIfNeeded(givenSettings.maxTempDry?.toFloat() ,"c",1)
-    def minTempHeatValue  = convertTemperatureIfNeeded(givenSettings.minTempHeat?.toFloat(),"c",1)
-    def maxTempHeatValue  = convertTemperatureIfNeeded(givenSettings.maxTempHeat?.toFloat(),"c",1)
-    def minTempAutoValue  = convertTemperatureIfNeeded(givenSettings.minTempAuto?.toFloat(),"c",1)
-    def maxTempAutoValue  = convertTemperatureIfNeeded(givenSettings.maxTempAuto?.toFloat(),"c",1)
-    
     //Temperature Ranges Configured
-    sendEvent(name: "MinTempCool", value: minTempCoolValue)
-    sendEvent(name: "MaxTempCool", value: maxTempCoolValue)
-    sendEvent(name: "MinTempDry" , value: minTempDryValue )
-    sendEvent(name: "MaxTempDry" , value: maxTempDryValue )
-    sendEvent(name: "MinTempHeat", value: minTempHeatValue)
-    sendEvent(name: "MaxTempHeat", value: maxTempHeatValue)
-    sendEvent(name: "MinTempAuto", value: minTempAutoValue)
-    sendEvent(name: "MaxTempAuto", value: maxTempAutoValue)
+    sendEvent(name: "MinTempCool", value: givenSettings.minTempCool)
+    sendEvent(name: "MaxTempCool", value: givenSettings.maxTempCool)
+    sendEvent(name: "MinTempDry" , value: givenSettings.minTempDry)
+    sendEvent(name: "MaxTempDry" , value: givenSettings.maxTempDry)
+    sendEvent(name: "MinTempHeat", value: givenSettings.minTempHeat)
+    sendEvent(name: "MaxTempHeat", value: givenSettings.maxTempHeat)
+    sendEvent(name: "MinTempAuto", value: givenSettings.minTempAuto)
+    sendEvent(name: "MaxTempAuto", value: givenSettings.maxTempAuto)
 
     //Modes and Features
     sendEvent(name: "CanHeat",              value: givenSettings.canHeat)
-    sendEvent(name: "CanDry",               value: givenSettings.canDry)
     sendEvent(name: "CanCool",              value: givenSettings.canCool)
+    sendEvent(name: "CanDry",               value: givenSettings.canDry)
     sendEvent(name: "CanAuto",              value: givenSettings.canAuto)
     sendEvent(name: "HasAutomaticFanSpeed", value: givenSettings.hasAutomaticFanSpeed)
     sendEvent(name: "NumberOfFanSpeeds",    value: givenSettings.numberOfFanSpeeds)
     
+    adjustFanModes(givenSettings.numberOfFanSpeeds, givenSettings.hasAutomaticFanSpeed)
+    adjustThermostatModes(givenSettings.canHeat, givenSettings.canCool, givenSettings.canDry, givenSettings.canAuto)
 }
 
 def retrieveStatusInfo() {
     
     //Returns current status information for the ac unit
-    def statusInfo = [:]
-    def platform = parent.getPlatform()
-    parent.debugLog("retrieveStatusInfo: Retrieving status info from ${platform} ")
-    if (platform == "MELCloud") { statusInfo = retrieveStatusInfo_MELCloud() }
-    if (platform == "MELView") { statusInfo = retrieveStatusInfo_MELView() }
-    if (platform == "KumoCloud") { statusInfo = retrieveStatusInfo_KumoCloud() }
+    parent.debugLog("retrieveStatusInfo: Retrieving status info from ${parent.getPlatform()} ")
+    def statusInfo = "retrieveStatusInfo_${parent.getPlatform()}"()
+    statusInfo.setTemp  = convertTemperatureIn(statusInfo.setTemp)
+    statusInfo.roomTemp = convertTemperatureIn(statusInfo.roomTemp)
     
     return statusInfo
+    
 }
 
 def retrieveStatusInfo_MELView() { 
@@ -536,9 +554,9 @@ def retrieveStatusInfo_MELView() {
         uri: "${parent.getBaseURL()}unitCommand.aspx",
         headers: parent.getStandardHTTPHeaders_MELView("no"),
         contentType: "application/json",
-        body : "{'unitid': '${device.currentValue("unitId")}'}"
+        body : "{'unitid': '${getUnitId()}'}"
 	]
-    
+    parent.debugLog("retrieveStatusInfo_MELView: Post Params = ${postParams}")
 	try {
         
         httpPost(postParams) { acUnit ->
@@ -571,19 +589,20 @@ def retrieveStatusInfo_KumoCloud() {
         uri: "${parent.getBaseURL()}/getDeviceUpdates",
         headers: parent.getStandardHTTPHeaders_KumoCloud("no"),
         contentType: "application/json",
-        body : "[ \"${parent.getAuthCode()}\",[\"${device.currentValue("unitId")}\"] ]"
+        body : "[ \"${parent.getAuthCode()}\",[\"${getUnitId()}\"] ]"
 	]
     
 	try {
         
         httpPost(postParams) { acUnit ->
                                  parent.debugLog("retrieveStatusInfo_KumoCloud: response - ${acUnit.data}")     
-                                 statusInfo.unitId   = "${acUnit.data[2][0].device_serial}".replace("[","").replace("]","")
-                
+                                 statusInfo.unitId     = "${acUnit.data[2][0].device_serial}".replace("[","").replace("]","")
+                                 statusInfo.statusAsAt = "${acUnit.data[2][0].record_time}".replace("[","").replace("]","")
+                                 
                                  //Current Status Information
-                                 statusInfo.power    = "${acUnit.data[2][0].power}".replace("[","").replace("]","")
-                                 statusInfo.setMode  = "${acUnit.data[2][0].operation_mode}".replace("[","").replace("]","")
-                                 statusInfo.roomTemp = "${acUnit.data[2][0].room_temp}".replace("[","").replace("]","")
+                                 statusInfo.power      = "${acUnit.data[2][0].power}".replace("[","").replace("]","")
+                                 statusInfo.setMode    = "${acUnit.data[2][0].operation_mode}".replace("[","").replace("]","")
+                                 statusInfo.roomTemp   = "${acUnit.data[2][0].room_temp}".replace("[","").replace("]","")
                                  
                                  if(statusInfo.setMode == "3" || statusInfo.setMode == "35") { statusInfo.setTemp  = "${acUnit.data[2][0].sp_cool}".replace("[","").replace("]","") }
                                  if(statusInfo.setMode == "1" || statusInfo.setMode == "33") { statusInfo.setTemp  = "${acUnit.data[2][0].sp_heat}".replace("[","").replace("]","") }
@@ -658,16 +677,36 @@ def retrieveStatusInfo_MELCloud() {
 }
 
 def applyStatusUpdates(statusInfo) {
+    def statusIsCurrent = 1
     parent.debugLog("applyResponseStatus: Status Info: ${statusInfo}")
     
-    parent.debugLog("applyStatusUpdates: About to adjust thermostat mode details...")
-    adjustThermostatMode(statusInfo.setMode, statusInfo.power)
-    parent.debugLog("applyStatusUpdates: About to adjust temperatures...")
-    adjustRoomTemperature(statusInfo.roomTemp)
-    adjustSetTemperature(statusInfo.setTemp, statusInfo.setMode, statusInfo.power)
-    adjustThermostatFanMode(statusInfo.setFan)
-
-    parent.debugLog("applyResponseStatus: Status update complete")
+    if (!statusInfo.isEmpty()) {
+        parent.debugLog("applyResponseStatus: lastCommandUTC = ${checkNull(device.currentValue("lastCommandUTC"),"Null")}, ${checkNull(statusInfo.statusAsAt,"Null")}")
+        if (device.currentValue("lastCommandUTC") != null && statusInfo.containsKey("statusAsAt") ) {
+            
+            def lastCommandUTC_Date = new java.text.SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.SSS'Z'" ).parse(device.currentValue("lastCommandUTC"))
+            def statusAsAt_Date = new java.text.SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'" ).parse(statusInfo.statusAsAt)
+            parent.debugLog("applyResponseStatus: lastCommandUTC_Date = ${lastCommandUTC_Date}, statusAsAt_Date = ${statusAsAt_Date}")
+            
+            if (lastCommandUTC_Date > statusAsAt_Date) {
+               statusIsCurrent = 0 
+            }
+            else { statusIsCurrent = 1 }
+        }
+        else { statusIsCurrent = 1 }
+        parent.debugLog("applyStatusUpdates: statusIsCurrent = ${statusIsCurrent}")
+        if (statusIsCurrent == 1) {
+            parent.debugLog("applyStatusUpdates: About to adjust thermostat mode details...")
+            adjustThermostatMode(statusInfo.setMode, statusInfo.power)
+            parent.debugLog("applyStatusUpdates: About to adjust temperatures...")
+            adjustRoomTemperature(statusInfo.roomTemp)
+            adjustSetTemperature(statusInfo.setTemp, statusInfo.setMode, statusInfo.power)
+            adjustThermostatFanMode(statusInfo.setFan)
+        }
+        else { parent.debugLog("applyResponseStatus: Status information is out of date, a command must have been run recently") }
+        parent.debugLog("applyResponseStatus: Status update complete")
+    }
+    else { parent.debugLog("applyResponseStatus: No status information was provided, no further action was taken") }
 }
 
 
@@ -675,25 +714,32 @@ def applyStatusUpdates(statusInfo) {
 
 // Temperature Control
 
-/* adjustRoomTemperature() To-Do: Handle Fahrenheit / Celsius */
-def adjustRoomTemperature(givenTemp) {
+def adjustRoomTemperature(pTemp) {
 
-  def tempscaleUnit = "°${location.temperatureScale}"
-  def roomtempValue = convertTemperatureIfNeeded(givenTemp.toFloat(),"c",1)	
+  def vTempScaleUnit = "°${parent.getHETempScale()}"
+  def vRoomTempValue
   
-  parent.debugLog("adjustRoomTemperature: Temperature provided = ${givenTemp}, Units = ${tempscaleUnit}, Converted Value = ${roomtempValue}")
-  if (device.currentValue("temperature") == null || device.currentValue("temperature") != roomtempValue) {
-      parent.debugLog("adjustRoomTemperature: updating room temperature from ${device.currentValue("temperature")} to ${roomtempValue}")
-      sendEvent(name: "temperature", value: roomtempValue)
+  parent.debugLog("adjustRoomTemperature: Temperature provided = ${pTemp}")
+  if(pTemp == null || !"${pTemp}".isNumber()) {
+      
+      parent.warnLog("adjustRoomTemperature: Warning, The Room Temperature was either null or not a number")
   }
-  else { parent.debugLog("adjustRoomTemperature: No action taken") }
+  else {
+        vRoomTempValue = pTemp.toFloat().round(1)
+        if (device.currentValue("temperature") == null || device.currentValue("temperature").toFloat().round(1) != vRoomTempValue) {
+            if (device.currentValue("temperature") != vRoomTempValue) { parent.debugLog("adjustRoomTemperature: Current Room Temperature value and value provided did not match") }
+              parent.debugLog("adjustRoomTemperature: updating room temperature from ${device.currentValue("temperature")} to ${vRoomTempValue}")
+              sendEvent(name: "temperature", value: vRoomTempValue)
+          }
+        else { parent.debugLog("adjustRoomTemperature: No action taken") }
+  }
 }
 
 // adjustHeatingSetpoint() To-Do: Use Minimum Heating Set Point instead of 23
 def adjustHeatingSetpoint(givenTemp) {
-    def heatingSetTempValue = convertTemperatureIfNeeded(givenTemp.toFloat(),"c",1)
-	def currHeatingSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("heatingSetpoint"),"23.0").toFloat(),"c",1)
-    def currThermSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("thermostatSetpoint"),"23.0").toFloat(),"c",1)
+    def heatingSetTempValue = givenTemp.toFloat().round(1)
+	def currHeatingSetTempValue = checkNull(device.currentValue("heatingSetpoint"),"23.0").toFloat().round(1)
+    def currThermSetTempValue = checkNull(device.currentValue("thermostatSetpoint"),"23.0").toFloat().round(1)
     
     parent.debugLog("adjustHeatingSetpoint: Current heatingSetpoint ${currHeatingSetTempValue}, Current ThermostatSetpoint = ${currThermSetTempValue}, New heatingSetpoint = ${heatingSetTempValue}")
     
@@ -727,19 +773,17 @@ def setHeatingSetpoint(givenTemp) {
         correctedTemp = device.currentValue("MaxTempHeat")
         parent.debugLog("setHeatingSetpoint: Temperature selected = ${givenTemp}, corrected to maximum heating set point ${correctedTemp}")
     }
-        
+    parent.debugLog("setHeatingSetpoint: Corrected Temp = ${correctedTemp}")
     adjustHeatingSetpoint(correctedTemp)
-    if (device.currentValue("thermostatOperatingState") == "heating") {
-        setTemperature(correctedTemp)
-    }
+    if (device.currentValue("thermostatOperatingState") == "heating") { setTemperature(correctedTemp) }
 }
 
 // adjustCoolingSetpoint() To-Do: Use Maximum Heating Set Point instead of 23
 def adjustCoolingSetpoint(givenTemp) {
  
-    def coolingSetTempValue = convertTemperatureIfNeeded(givenTemp.toFloat(),"c",1)
-	def currCoolingSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("coolingSetpoint"),"23.0").toFloat(),"c",1)
-    def currThermSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("thermostatSetpoint"),"23.0").toFloat(),"c",1)
+    def coolingSetTempValue = givenTemp.toFloat().round(1)
+	def currCoolingSetTempValue = checkNull(device.currentValue("coolingSetpoint"),"23.0").toFloat().round(1)
+    def currThermSetTempValue = checkNull(device.currentValue("thermostatSetpoint"),"23.0").toFloat().round(1)
     
     parent.debugLog("adjustCoolingSetpoint: Current coolingSetpoint ${currCoolingSetTempValue}, Current ThermostatSetpoint = ${currThermSetTempValue}, New coolingSetpoint = ${coolingSetTempValue}")
     
@@ -776,9 +820,7 @@ def setCoolingSetpoint(givenTemp) {
     }
         
     adjustCoolingSetpoint(correctedTemp)
-    if (device.currentValue("thermostatOperatingState") == "cooling") {
-        setTemperature(correctedTemp)
-    }
+    if (device.currentValue("thermostatOperatingState") == "cooling") { setTemperature(correctedTemp) }
 }
 
 // TO-DO: Look at use of the value 23.0 for the US
@@ -786,13 +828,13 @@ def setCoolingSetpoint(givenTemp) {
 def adjustSetTemperature(pSetTemp, pThermostatMode, pPower) {
 
     def vSetTemp
-    if ("${pSetTemp}".isNumber()) { vSetTemp = convertTemperatureIfNeeded(pSetTemp.toFloat(),"c",1) }
+    if ("${pSetTemp}".isNumber()) { vSetTemp = pSetTemp.toFloat().round(1) }
     else { vSetTemp = null }
     
     
     def vCurrentSetTempConv
 	def vCurrentSetTemp = device.currentValue("thermostatSetpoint")
-    if ("${vCurrentSetTemp}".isNumber()) { vCurrentSetTempConv = convertTemperatureIfNeeded(vCurrentSetTemp.toFloat(),"c",1)}
+    if ("${vCurrentSetTemp}".isNumber()) { vCurrentSetTempConv = vCurrentSetTemp.toFloat().round(1)}
     else { vCurrentSetTempConv = null }
     parent.debugLog("adjustSetTemperature: Temperature passed in was ${pSetTemp} which was parsed as ${vSetTemp}, current set temperature is ${vCurrentSetTempConv}")
     
@@ -824,22 +866,25 @@ def adjustSetTemperature(pSetTemp, pThermostatMode, pPower) {
 def setTemperature(givenSetTemp) {
     
     def vPlatform = parent.getPlatform()
-    def setTempValue = convertTemperatureIfNeeded(givenSetTemp.toFloat(),"c",1)
-    def currThermSetTempValue = convertTemperatureIfNeeded(checkNull(device.currentValue("thermostatSetpoint"),"23.0").toFloat(),"c",1)
+    def setTempValue = givenSetTemp.toFloat().round(1)
+    def currThermSetTempValue = checkNull(device.currentValue("thermostatSetpoint"),"23.0").toFloat().round(1)
+    def convertedTemp = setTempValue
     
     if(currThermSetTempValue != setTempValue) {
         parent.debugLog("setTemperature: Setting Temperature to ${setTempValue} for ${device.label}")
-        adjustSetTemperature(givenSetTemp, null)
+        adjustSetTemperature(givenSetTemp, null, null)
         
-        if (vPlatform == "MELCloud")  { setTemperature_MELCloud(setTempValue)  }
-        if (vPlatform == "MELView")   { setTemperature_MELView(setTempValue)   }
-        if (vPlatform == "KumoCloud") { setTemperature_KumoCloud(setTempValue) }
+        convertedTemp = convertTemperatureOut("${givenSetTemp}")
+        parent.debugLog("setTemperature: Set Temperature Provided = ${setTempValue}, converted to ${convertedTemp} for ${vPlatform}")
+        
+        if (vPlatform == "MELCloud")  { setTemperature_MELCloud(convertedTemp)  }
+        if (vPlatform == "MELView")   { setTemperature_MELView(convertedTemp)   }
+        if (vPlatform == "KumoCloud") { setTemperature_KumoCloud(convertedTemp) }
         
         parent.debugLog("setTemperature: Temperature adjusted to ${setTempValue} for ${device.label}")
     }
     else {
         parent.debugLog("setTemperature: No action taken")
-    
     }
 }
 
@@ -899,7 +944,7 @@ def adjustThermostatFanMode(pFanModeKey) {
         // Adjust the thermostatFanMode Attribute
         if (checkNull(device.currentValue("thermostatFanMode"),"") != vFanModeValue) {
     	    	sendEvent(name: "thermostatFanMode", value: vFanModeValue)
-                parent.debugLog("adjustThermostatFanMode: Fan Mode adjusted to ${vFanModeValue} for ${device.label} (${device.currentValue("unitId")})")
+                parent.debugLog("adjustThermostatFanMode: Fan Mode adjusted to ${vFanModeValue} for ${device.label} (${getUnitId()})")
 	    }
         else { parent.debugLog("adjustThermostatFanMode: No change to Fan Mode detected, no action taken") }
     }
@@ -910,7 +955,7 @@ def adjustThermostatFanMode(pFanModeKey) {
         // Adjust the speed Attribute
         if (checkNull(device.currentValue("speed"),"") != vFanControlSpeed) {
             sendEvent(name: "speed", value: vFanControlSpeed)
-            parent.infoLog("Fan Speed adjusted to ${vFanControlSpeed} for ${device.label} (${device.currentValue("unitId")})")
+            parent.infoLog("Fan Speed adjusted to ${vFanControlSpeed} for ${device.label} (${getUnitId()})")
         }
         else { parent.debugLog("adjustThermostatFanMode: No change to Fan Speed detected, no action taken") }
     }
@@ -928,13 +973,13 @@ def setThermostatFanMode(pFanMode) {
         if(checkNull(device.currentValue("thermostatFanMode"),"") != vFanMode)
         {
             adjustThermostatFanMode(vFanModeKey)
-            parent.debugLog("setThermostatFanMode: Setting Fan Mode to ${vFanMode}(${vFanModeKey}) for ${device.label} (${device.currentValue("unitId")})")
+            parent.debugLog("setThermostatFanMode: Setting Fan Mode to ${vFanMode}(${vFanModeKey}) for ${device.label} (${getUnitId()})")
                         
             if (vPlatform == "MELCloud" ) { setThermostatFanMode_MELCloud  (vFanModeKey) }
             if (vPlatform == "MELView"  ) { setThermostatFanMode_MELView   (vFanModeKey) }
             if (vPlatform == "KumoCloud") { setThermostatFanMode_KumoCloud (vFanModeKey) }
                         
-            parent.infoLog("Fan Mode set to ${vFanMode} for ${device.label} (${device.currentValue("unitId")})")
+            parent.infoLog("Fan Mode set to ${vFanMode} for ${device.label} (${getUnitId()})")
         }
         else { parent.debugLog("setThermostatFanMode: No action taken")  }
         
@@ -1002,7 +1047,7 @@ def adjustThermostatOperatingState(pThermostatMode, pPower) {
 def deriveThermostatMode(pThermostatMode, pPower) {
  
     def vModeDesc
-    if (pPower == "1") { vModeDesc = modeMap["${pThermostatMode}"] }
+    if (pPower == "1" || pPower == "true") { vModeDesc = modeMap["${pThermostatMode}"] }
     else { vModeDesc = "off" }
     
     return vModeDesc
@@ -1012,39 +1057,25 @@ def deriveThermostatMode(pThermostatMode, pPower) {
 def setThermostatMode(pThermostatMode) {
 
   parent.debugLog("setThermostatMode: Thermostat Mode passed in = ${pThermostatMode}")
-  def vPower
-  if ( pThermostatMode == "off" ) { vPower = "0" }
-  else { vPower = "1" }
-    
-  if ( pThermostatMode == "off"  ) off()
-  if ( pThermostatMode == "heat" ) heat()
-  if ( pThermostatMode == "dry"  ) dry()
-  if ( pThermostatMode == "cool" ) cool()
-  if ( pThermostatMode == "fan"  ) fan()
-  if ( pThermostatMode == "auto" ) auto()
-  
+  "${pThermostatMode}"()
   parent.debugLog("setThermostatMode: Thermostat Mode set")
-  
-  adjustThermostatMode(convertThermostatModeToKey(pThermostatMode), vPower)
-  parent.debugLog("setThermostatMode: Thermostat Mode adjusted")
 }
 
 def on() {
     
-    def vPlatform = parent.getPlatform()
+    parent.debugLog("on: Turning ON device ${device.label} (${getUnitId()})")
+    "on_${parent.getPlatform()}"()
+    parent.infoLog("Power turned ON for ${device.label} (${getUnitId()})")
     
-    parent.debugLog("on: Turning ON device ${device.label} (${device.currentValue("unitId")})")
-    if (vPlatform == "KumoCloud") on_KumoCloud()
-    if (vPlatform == "MELCloud" ) on_MELCloud()
-    if (vPlatform == "MELView"  ) on_MELView()
-    parent.infoLog("Power turned ON for ${device.label} (${device.currentValue("unitId")})")    
+    adjustThermostatMode(convertThermostatModeToKey("on"), "1")
+    parent.debugLog("on: Thermostat Mode adjusted")
 }
 
 def on_MELCloud() {
     def vBodyJson = getUnitCommandBody_MELCloud( true //Power
                                       ,device.currentValue("thermostatFanMode")
                                       ,device.currentValue("thermostatMode")
-                                      ,device.currentValue("thermostatSetpoint")
+                                      ,convertTemperatureOut(device.currentValue("thermostatSetpoint"))
                                      )
     unitCommand_MELCloud("${vBodyJson}")
 }
@@ -1060,13 +1091,12 @@ def on_MELView() {
 
 def off() {
     
-    def vPlatform = parent.getPlatform()
+    parent.debugLog("off: Turning OFF device ${device.label} (${getUnitId()})")
+    "off_${parent.getPlatform()}"()
+    parent.infoLog("Power turned OFF for ${device.label} (${getUnitId()})")
     
-    parent.debugLog("off: Turning OFF device ${device.label} (${device.currentValue("unitId")})")
-    if (vPlatform == "KumoCloud" ) off_KumoCloud()
-    if (vPlatform == "MELCloud"  ) off_MELCloud()
-    if (vPlatform == "MELView"   ) off_MELView()
-    parent.infoLog("Power turned OFF for ${device.label} (${device.currentValue("unitId")})")
+    adjustThermostatMode(convertThermostatModeToKey("off"), "0")
+    parent.debugLog("off: Thermostat Mode adjusted")
 }
 
 def off_KumoCloud() {
@@ -1079,7 +1109,7 @@ def off_MELCloud() {
     def vBodyJson = getUnitCommandBody_MELCloud( false //Power
                                       ,device.currentValue("thermostatFanMode")
                                       ,device.currentValue("thermostatMode")
-                                      ,device.currentValue("thermostatSetpoint")
+                                      ,convertTemperatureOut(device.currentValue("thermostatSetpoint"))
                                      )
     unitCommand_MELCloud("${vBodyJson}")
 }
@@ -1091,15 +1121,14 @@ def off_MELView() {
 
 def heat() {
     
-    def vPlatform = parent.getPlatform()
-    
     adjustHeatingSetpoint(device.currentValue("thermostatSetpoint"))
     
-    parent.debugLog("heat: Adjusting Thermostat Mode to Heating for ${device.label} (${device.currentValue("unitId")})")
-    if (vPlatform == "KumoCloud" ) heat_KumoCloud()
-    if (vPlatform == "MELCloud"  ) heat_MELCloud()
-    if (vPlatform == "MELView"   ) heat_MELView()
-    parent.infoLog("Thermostat Mode set to Heating for ${device.label} (${device.currentValue("unitId")})")
+    parent.debugLog("heat: Adjusting Thermostat Mode to Heating for ${device.label} (${getUnitId()})")
+    "heat_${parent.getPlatform()}"()
+    parent.infoLog("Thermostat Mode set to Heating for ${device.label} (${getUnitId()})")
+    
+    adjustThermostatMode(convertThermostatModeToKey("heat"), "1")
+    parent.debugLog("heat: Thermostat Mode adjusted")
 }
 
 def heat_KumoCloud() {
@@ -1109,10 +1138,10 @@ def heat_KumoCloud() {
 
 def heat_MELCloud() {
     
-    def vBodyJson = getUnitCommandBody_MELCloud( false //Power
+    def vBodyJson = getUnitCommandBody_MELCloud( true //Power
                                       ,device.currentValue("thermostatFanMode")
                                       ,"heat" //thermostatMode
-                                      ,device.currentValue("thermostatSetpoint")
+                                      ,convertTemperatureOut(device.currentValue("thermostatSetpoint"))
                                      )
     unitCommand_MELCloud("${vBodyJson}")
 }
@@ -1124,13 +1153,12 @@ def heat_MELView() {
     
 def dry() {
     
-    def vPlatform = parent.getPlatform()
+    parent.debugLog("dry: Adjusting Thermostat Mode to Dry for ${device.label} (${getUnitId()})")
+    "dry_${parent.getPlatform()}"()
+    parent.infoLog("Thermostat Mode set to Dry for ${device.label} (${getUnitId()})")
     
-    parent.debugLog("dry: Adjusting Thermostat Mode to Dry for ${device.label} (${device.currentValue("unitId")})")
-    if (vPlatform == "KumoCloud" ) dry_KumoCloud()
-    if (vPlatform == "MELCloud"  ) dry_MELCloud()
-    if (vPlatform == "MELView"   ) dry_MELView()
-    parent.infoLog("Thermostat Mode set to Dry for ${device.label} (${device.currentValue("unitId")})")
+    adjustThermostatMode(convertThermostatModeToKey("dry"), "1")
+    parent.debugLog("dry: Thermostat Mode adjusted")
 }
 
 def dry_KumoCloud() {
@@ -1143,7 +1171,7 @@ def dry_MELCloud() {
     def vBodyJson = getUnitCommandBody_MELCloud( true //Power
                                       ,device.currentValue("thermostatFanMode")
                                       ,"dry" //thermostatMode
-                                      ,device.currentValue("thermostatSetpoint")
+                                      ,convertTemperatureOut(device.currentValue("thermostatSetpoint"))
                                      )
     unitCommand_MELCloud("${vBodyJson}")
 }
@@ -1155,16 +1183,12 @@ def dry_MELView() {
 
 def cool() {
     
-    def vPlatform = parent.getPlatform()
+    parent.debugLog("cool: Adjusting Thermostat Mode to Cooling for ${device.label} (${getUnitId()})")
+    "cool_${parent.getPlatform()}"()
+    parent.infoLog("Thermostat Mode set to Cooling for ${device.label} (${getUnitId()})")
     
-    //adjustCoolingSetpoint(device.currentValue("thermostatSetpoint"))
-    
-    parent.debugLog("cool: Adjusting Thermostat Mode to Cooling for ${device.label} (${device.currentValue("unitId")})")
-    if (vPlatform == "KumoCloud" ) cool_KumoCloud()
-    if (vPlatform == "MELCloud"  ) cool_MELCloud()
-    if (vPlatform == "MELView"   ) cool_MELView()
-    parent.infoLog("Thermostat Mode set to Cooling for ${device.label} (${device.currentValue("unitId")})")
-    
+    adjustThermostatMode(convertThermostatModeToKey("cool"), "1")
+    parent.debugLog("cool: Thermostat Mode adjusted")
 }
 
 def cool_KumoCloud() {
@@ -1177,7 +1201,7 @@ def cool_MELCloud() {
     def vBodyJson = getUnitCommandBody_MELCloud( true //Power
                                       ,device.currentValue("thermostatFanMode")
                                       ,"cool" //thermostatMode
-                                      ,device.currentValue("thermostatSetpoint")
+                                      ,convertTemperatureOut(device.currentValue("thermostatSetpoint"))
                                      )
     
     unitCommand_MELCloud("${vBodyJson}")
@@ -1190,13 +1214,12 @@ def cool_MELView() {
 
 def fan() {
     
-    def vPlatform = parent.getPlatform()
+    parent.debugLog("fan: Adjusting Thermostat Mode to Fan for ${device.label} (${getUnitId()})")
+    "fan_${parent.getPlatform()}"()
+    parent.infoLog("Thermostat Mode set to Fan for ${device.label} (${getUnitId()})")
     
-    parent.debugLog("fan: Adjusting Thermostat Mode to Fan for ${device.label} (${device.currentValue("unitId")})")
-    if (vPlatform == "KumoCloud" ) fan_KumoCloud()
-    if (vPlatform == "MELCloud"  ) fan_MELCloud()
-    if (vPlatform == "MELView"   ) fan_MELView()
-    parent.infoLog("Thermostat Mode set to Fan for ${device.label} (${device.currentValue("unitId")})")   
+    adjustThermostatMode(convertThermostatModeToKey("fan"), "1")
+    parent.debugLog("fan: Thermostat Mode adjusted")
 }
 
 def fan_KumoCloud() {
@@ -1209,7 +1232,7 @@ def fan_MELCloud() {
    def vBodyJson = getUnitCommandBody_MELCloud( true //Power
                                       ,device.currentValue("thermostatFanMode")
                                       ,"fan" //thermostatMode
-                                      ,device.currentValue("thermostatSetpoint")
+                                      ,convertTemperatureOut(device.currentValue("thermostatSetpoint"))
                                      )
     unitCommand_MELCloud("${vBodyJson}") 
 }
@@ -1221,13 +1244,12 @@ def fan_MELView() {
 
 def auto() {
     
-    def vPlatform = parent.getPlatform()
+    parent.debugLog("auto: Adjusting Thermostat Mode to Auto for ${device.label} (${getUnitId()})")
+    "auto_${parent.getPlatform()}"()
+    parent.infoLog("Thermostat Mode set to Auto for ${device.label} (${getUnitId()})")  
     
-    parent.debugLog("auto: Adjusting Thermostat Mode to Auto for ${device.label} (${device.currentValue("unitId")})")
-    if (vPlatform == "KumoCloud" ) auto_KumoCloud()
-    if (vPlatform == "MELCloud"  ) auto_MELCloud()
-    if (vPlatform == "MELView"   ) auto_MELView()
-    parent.infoLog("Thermostat Mode set to Auto for ${device.label} (${device.currentValue("unitId")})")  
+    adjustThermostatMode(convertThermostatModeToKey("auto"), "1")
+    parent.debugLog("auto: Thermostat Mode adjusted")
 }
 
 def auto_KumoCloud() {
@@ -1240,7 +1262,7 @@ def auto_MELCloud() {
     def vBodyJson = getUnitCommandBody_MELCloud( true //Power
                                       ,device.currentValue("thermostatFanMode")
                                       ,"auto" //thermostatMode
-                                      ,device.currentValue("thermostatSetpoint")
+                                      ,convertTemperatureOut(device.currentValue("thermostatSetpoint"))
                                      )
     unitCommand_MELCloud("${vBodyJson}")  
 }
@@ -1277,7 +1299,7 @@ def unitCommand_MELCloud(pCommand) {
 
 def unitCommand_KumoCloud(pCommand) {
 
-    def vBodyJson = "[\"${parent.getAuthCode()}\",{\"${device.currentValue("unitId")}\":${pCommand}}]"
+    def vBodyJson = "[\"${parent.getAuthCode()}\",{\"${getUnitId()}\":${pCommand}}]"
     parent.debugLog("unitCommand_KumoCloud: Body of command = ${vBodyJson}")
     def vPostParams = [
         uri: "${parent.getBaseURL()}/sendDeviceCommands/v2",
@@ -1288,7 +1310,8 @@ def unitCommand_KumoCloud(pCommand) {
     
     try {
         httpPost(vPostParams) { resp ->
-            parent.debugLog("unitCommand: Initial data returned from unitCommand: ${resp.data}")
+            sendEvent(name: "lastCommandUTC", value: "${new Date().format("yyyy-MM-dd HH:mm:ss.SSS'Z'", TimeZone.getTimeZone('UTC'))}")
+            parent.debugLog("unitCommand: Initial data returned from unitCommand: ${resp.data}, response received ${new Date().format("yyyy-MM-dd HH:mm:ss.SSS'Z'", TimeZone.getTimeZone('UTC'))}")
           }
     }   
 	catch (Exception e) {
@@ -1301,7 +1324,7 @@ def unitCommand_MELView(pCommand) {
     // Re-usable method that submits a command to the MELView Service, based on the command text passed in
     // See https://github.com/NovaGL/diy-melview for more details on commands and this API more generally
  
-    def vBodyJson = "{ \"unitid\": \"${device.currentValue("unitId", true)}\", \"v\": 2, \"commands\": \"${pCommand}\", \"lc\": 1 }"
+    def vBodyJson = "{ \"unitid\": \"${getUnitId()}\", \"v\": 2, \"commands\": \"${pCommand}\", \"lc\": 1 }"
     
     def vPostParams = [
         uri: "${parent.getBaseURL()}unitcommand.aspx",
@@ -1359,7 +1382,7 @@ def getUnitCommandBody_MELCloud(pPower, pFanMode, pOpMode, pSetTemp) {
     
     vSetTempText = "\"SetTemperature\" : \"${pSetTemp}\","
     
-    vBodyJSON = "{ \"Power\" : \"${pPower}\", ${vModeText} ${vSetTempText} ${vFanModeText} \"EffectiveFlags\" : \"15\", \"DeviceID\" : \"${device.currentValue("unitId")}\",  \"HasPendingCommand\" : \"true\" }"
+    vBodyJSON = "{ \"Power\" : \"${pPower}\", ${vModeText} ${vSetTempText} ${vFanModeText} \"EffectiveFlags\" : \"15\", \"DeviceID\" : \"${getUnitId()}\",  \"HasPendingCommand\" : \"true\" }"
     
     return "${vBodyJSON}"
     
@@ -1385,7 +1408,7 @@ def updateStatusPolling() {
    
    if(AutoStatusPolling == true) {
        
-       vSchedule = "2/${StatusPollingInterval} * * ? * * *"
+       vSchedule = "0 0/${StatusPollingInterval} * ? * * *"
        parent.debugLog("updateStatusPolling: Setting up schedule with settings: schedule(\"${vSchedule}\",refresh)")
        try{
            
@@ -1397,7 +1420,7 @@ def updateStatusPolling() {
        
        parent.debugLog("updateStatusPolling: Scheduled refresh set")
    }
-   else { parent.debugLog("updateStatusPolling: Automatic status polling is currently disabled, no action was taken")  }
+   else { parent.debugLog("updateStatusPolling: Automatic status polling is disabled, no further action was taken")  }
 }
 
 // Utility Methods
@@ -1407,4 +1430,32 @@ def checkNull(value, alternative) {
     if(value == null) { return alternative }
     return value
     
+}
+
+def convertTemperatureIn(String pTemp) {
+    
+    def vPlatformScale = parent.getPlatformScale()
+    def vHEScale = parent.getHETempScale()
+    return convertTemperature(pTemp,vPlatformScale,vHEScale)
+}
+
+def convertTemperatureOut(String pTemp) {
+    
+    def vPlatformScale = parent.getPlatformScale()
+    def vHEScale = parent.getHETempScale()
+    return convertTemperature(pTemp,vHEScale,vPlatformScale)
+}
+
+def convertTemperature(String pTemp, String pSourceScale, String pTargetScale) {
+    
+    def vTemp = pTemp
+    
+    if (pTemp == null || !pTemp.isNumber() || pSourceScale == null || pTargetScale == null) { vTemp = null }
+    else {
+        if(pSourceScale != pTargetScale) {
+            if(pSourceScale == "C") { vTemp = celsiusToFahrenheit(pTemp.toFloat()) }
+            else { vTemp = fahrenheitToCelsius(pTemp.toFloat()) }
+        }
+    }
+    return vTemp
 }
