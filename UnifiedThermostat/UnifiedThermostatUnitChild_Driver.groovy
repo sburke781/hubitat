@@ -24,6 +24,7 @@
  *    2021-07-20  Simon Burke    1.0.5      Fixes for MELCloud Heating, was passing in power = false, should be true
  *    2021-07-25  Simon Burke    1.0.6      Fahrenheit Conversion - moving temp conversion from setCooling / Heating SetPoint to setTemperature method
  *    2021-08-01  Simon Burke    1.0.7      Added temperature conversion In/Out methods to make use of new temp scale override in parent driver
+ *    2021-08-08  Simon Burke    1.0.8      Added Last Command UTC attribute and checked this when determining whether to apply status updates - Kumo Only at the moment
  */
 import java.text.DecimalFormat;
 
@@ -88,6 +89,7 @@ preferences {
         */
         
         attribute "lastRunningMode",                "STRING"
+        attribute "lastCommandUTC",                 "STRING"
         
         //MELCloud specific commands:
         command "on"
@@ -594,12 +596,13 @@ def retrieveStatusInfo_KumoCloud() {
         
         httpPost(postParams) { acUnit ->
                                  parent.debugLog("retrieveStatusInfo_KumoCloud: response - ${acUnit.data}")     
-                                 statusInfo.unitId   = "${acUnit.data[2][0].device_serial}".replace("[","").replace("]","")
-                
+                                 statusInfo.unitId     = "${acUnit.data[2][0].device_serial}".replace("[","").replace("]","")
+                                 statusInfo.statusAsAt = "${acUnit.data[2][0].record_time}".replace("[","").replace("]","")
+                                 
                                  //Current Status Information
-                                 statusInfo.power    = "${acUnit.data[2][0].power}".replace("[","").replace("]","")
-                                 statusInfo.setMode  = "${acUnit.data[2][0].operation_mode}".replace("[","").replace("]","")
-                                 statusInfo.roomTemp = "${acUnit.data[2][0].room_temp}".replace("[","").replace("]","")
+                                 statusInfo.power      = "${acUnit.data[2][0].power}".replace("[","").replace("]","")
+                                 statusInfo.setMode    = "${acUnit.data[2][0].operation_mode}".replace("[","").replace("]","")
+                                 statusInfo.roomTemp   = "${acUnit.data[2][0].room_temp}".replace("[","").replace("]","")
                                  
                                  if(statusInfo.setMode == "3" || statusInfo.setMode == "35") { statusInfo.setTemp  = "${acUnit.data[2][0].sp_cool}".replace("[","").replace("]","") }
                                  if(statusInfo.setMode == "1" || statusInfo.setMode == "33") { statusInfo.setTemp  = "${acUnit.data[2][0].sp_heat}".replace("[","").replace("]","") }
@@ -674,16 +677,33 @@ def retrieveStatusInfo_MELCloud() {
 }
 
 def applyStatusUpdates(statusInfo) {
+    def statusIsCurrent = 1
     parent.debugLog("applyResponseStatus: Status Info: ${statusInfo}")
     
     if (!statusInfo.isEmpty()) {
-        parent.debugLog("applyStatusUpdates: About to adjust thermostat mode details...")
-        adjustThermostatMode(statusInfo.setMode, statusInfo.power)
-        parent.debugLog("applyStatusUpdates: About to adjust temperatures...")
-        adjustRoomTemperature(statusInfo.roomTemp)
-        adjustSetTemperature(statusInfo.setTemp, statusInfo.setMode, statusInfo.power)
-        adjustThermostatFanMode(statusInfo.setFan)
-
+        parent.debugLog("applyResponseStatus: lastCommandUTC = ${checkNull(device.currentValue("lastCommandUTC"),"Null")}, ${checkNull(statusInfo.statusAsAt,"Null")}")
+        if (device.currentValue("lastCommandUTC") != null && statusInfo.containsKey("statusAsAt") ) {
+            
+            def lastCommandUTC_Date = new java.text.SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.SSS'Z'" ).parse(device.currentValue("lastCommandUTC"))
+            def statusAsAt_Date = new java.text.SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'" ).parse(statusInfo.statusAsAt)
+            parent.debugLog("applyResponseStatus: lastCommandUTC_Date = ${lastCommandUTC_Date}, statusAsAt_Date = ${statusAsAt_Date}")
+            
+            if (lastCommandUTC_Date > statusAsAt_Date) {
+               statusIsCurrent = 0 
+            }
+            else { statusIsCurrent = 1 }
+        }
+        else { statusIsCurrent = 1 }
+        parent.debugLog("applyStatusUpdates: statusIsCurrent = ${statusIsCurrent}")
+        if (statusIsCurrent == 1) {
+            parent.debugLog("applyStatusUpdates: About to adjust thermostat mode details...")
+            adjustThermostatMode(statusInfo.setMode, statusInfo.power)
+            parent.debugLog("applyStatusUpdates: About to adjust temperatures...")
+            adjustRoomTemperature(statusInfo.roomTemp)
+            adjustSetTemperature(statusInfo.setTemp, statusInfo.setMode, statusInfo.power)
+            adjustThermostatFanMode(statusInfo.setFan)
+        }
+        else { parent.debugLog("applyResponseStatus: Status information is out of date, a command must have been run recently") }
         parent.debugLog("applyResponseStatus: Status update complete")
     }
     else { parent.debugLog("applyResponseStatus: No status information was provided, no further action was taken") }
@@ -1290,7 +1310,8 @@ def unitCommand_KumoCloud(pCommand) {
     
     try {
         httpPost(vPostParams) { resp ->
-            parent.debugLog("unitCommand: Initial data returned from unitCommand: ${resp.data}")
+            sendEvent(name: "lastCommandUTC", value: "${new Date().format("yyyy-MM-dd HH:mm:ss.SSS'Z'", TimeZone.getTimeZone('UTC'))}")
+            parent.debugLog("unitCommand: Initial data returned from unitCommand: ${resp.data}, response received ${new Date().format("yyyy-MM-dd HH:mm:ss.SSS'Z'", TimeZone.getTimeZone('UTC'))}")
           }
     }   
 	catch (Exception e) {
