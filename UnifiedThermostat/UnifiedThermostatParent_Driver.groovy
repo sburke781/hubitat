@@ -105,7 +105,7 @@ def getHETempScale() {
 }
 
 def getPlatformScale() {
- def vScale   
+ def vScale
  if(Scale == true) { vScale = 'C'}
     else { vScale = 'F'}
  return vScale
