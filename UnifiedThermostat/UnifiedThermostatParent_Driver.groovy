@@ -23,7 +23,7 @@
  *                               1.0.4 - No Change
  *                               1.0.5 - No Change
  *                               1.0.6 - No Change
- *    2021-08-01  Simon Burke    1.0.7 - Added heTempScale attribute and override command to override HE hub temp scale
+ *    2021-08-15  Simon Burke    1.0.7 - Added heTempScale attribute and override command to override HE hub temp scale
  */
 metadata {
 	        definition (name:      "Unified Thermostat Parent Driver",
