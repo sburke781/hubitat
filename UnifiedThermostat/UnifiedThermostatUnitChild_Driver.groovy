@@ -23,8 +23,8 @@
  *    2021-07-19  Simon Burke    1.0.4      Updated derive mode logic to cater for power = true rather than just power = 1, catering for MELCloud status updates
  *    2021-07-20  Simon Burke    1.0.5      Fixes for MELCloud Heating, was passing in power = false, should be true
  *    2021-07-25  Simon Burke    1.0.6      Fahrenheit Conversion - moving temp conversion from setCooling / Heating SetPoint to setTemperature method
- *    2021-08-01  Simon Burke    1.0.7      Added temperature conversion In/Out methods to make use of new temp scale override in parent driver
- *    2021-08-08  Simon Burke    1.0.8      Added Last Command UTC attribute and checked this when determining whether to apply status updates - Kumo Only at the moment
+ *    2021-08-15  Simon Burke    1.0.7      Added temperature conversion In/Out methods to make use of new temp scale override in parent driver
+ *    2021-08-15  Simon Burke    1.0.8      Added Last Command UTC attribute and checked this when determining whether to apply status updates - Kumo Only at the moment
  */
 import java.text.DecimalFormat;
 
