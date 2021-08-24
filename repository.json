@@ -4,12 +4,18 @@
 	"packages": [
 		{
 			"name": "Unified Thermostat",
-			"category": "",
+			"category": "Integrations",
 			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/UnifiedThermostat/packageManifest.json",
 			"description": "Integrates Mitsubishi Electric Wi-Fi Thermostat platforms in Australia / NZ, Europe and the U.S. using a single unified set of drivers.  Simply select your platform, enter your credentials and start using your thermostat(s) in rules, dashboards and applications.  Multiple units are supported, detected automatically during the authentication / setup process.  There is scope for expanding this to support other thermostats in the future, benefiting from the existing structure and logic built to integrate Mitsubishi platforms.",
 			"tags": [ "Climate Control","Temperature & Humidity","Cloud","LAN" ]
 		}
-		
+		,{
+			"name": "Ecowitt WiFi Gateway",
+			"category": "Integrations",
+			"location": "https://raw.githubusercontent.com/sburke781/ecowitt/re-release/packageManifest.json",
+			"description": "Ecowitt Wifi Gateway driver for Hubitat Elevation",
+			"tags": [ "Temperature & Humidity","LAN" ]
+		}
 	]
 	
 }
