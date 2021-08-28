@@ -1,0 +1,18 @@
+{
+	"packageName": "Virtual Battery Sensor",
+	"minimumHEVersion": "2.1.9",
+	"author": "Simon Burke",
+	"version": "1.0",
+	"dateReleased": "2021-08-28",
+	"licenseFile": "",
+	"releaseNotes": "2021-08-28: 1.0 - Initial Release",
+	"drivers" : [
+		{
+			"id": "22597029-98db-490b-b8b9-c23b972ee123",
+			"name": "Virtual Battery Sensor",
+			"namespace": "simnet",
+			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/UtilityDrivers/VirtualBatterySensor/VirtualBatterySensor_Driver.groovy",
+			"required": true
+		}
+	]
+}
