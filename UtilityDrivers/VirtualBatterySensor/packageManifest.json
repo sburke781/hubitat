@@ -2,10 +2,10 @@
 	"packageName": "Virtual Battery Sensor",
 	"minimumHEVersion": "2.1.9",
 	"author": "Simon Burke",
-	"version": "1.0",
-	"dateReleased": "2021-08-28",
+	"version": "1.1.0",
+	"dateReleased": "2021-08-29",
 	"licenseFile": "",
-	"releaseNotes": "2021-08-28: 1.0 - Initial Release",
+	"releaseNotes": "2021-08-28: 1.0 - Initial Release\n2021-08-29: 1.1.0 - Added batteryStatus attribute",
 	"drivers" : [
 		{
 			"id": "22597029-98db-490b-b8b9-c23b972ee123",
