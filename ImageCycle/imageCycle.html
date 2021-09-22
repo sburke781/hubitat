@@ -1,40 +1,117 @@
 
 <html>
 
+
+<head>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+
+	<style>
+        img
+		{
+            width: 512px;
+            height:512px;
+			position:absolute;
+		}
+		img.background 
+        {
+			width:512px;
+			height:512px;
+			position:absolute;
+			display: 'block';
+			z-index=1;
+        }
+		img.locations 
+        {
+			width:512px;
+			height:512px;
+			position:absolute;
+			display: 'block';
+            z-index=2;
+        }
+		img.images
+        {
+			position: absolute;
+			z-index=3;
+        }
+	
+		
+    </style>
+
+	<script>
+
+	$(document).ready(function () {
+		
+			$.ajax({
+			  dataType: "json",
+			  url: "HTTP://herules01.local/local/radarImages.json",
+			  success: function (data) { 
+
+				  var items = [];
+				  $.each( data, function( key, val ) {
+					items.push(val);       // PUSH THE VALUES INSIDE THE ARRAY.
+				  });
+				  
+				  
+				  var baseURL = "http://www.bom.gov.au/radar/";
+				  var divContainer = document.getElementById("picLayer");
+				  
+				  //divContainer.innerHTML = "";
+
+				  for (var i = 0; i < items.length; i++) {
+						var img = document.createElement("img");      // IMAGE
+						img.className = "images";
+						img.style = "position: absolute; display: none; z-index: 2;";
+						img.src = baseURL + items[i];
+						divContainer.appendChild(img);
+				  }
+
+
+
+			  }
+			}).fail(function(jqXHR, textStatus, errorThrown) {
+			  console.error(jqXHR, textStatus, errorThrown);
+			  console.error(jqXHR.responseJSON);
+			});	
+		
+		});
+
+	</script>
+
+
+	
+    
+
+</head>
+
 <body>
 
-<!-- Layer 2 of Images -->
-<div id="piclayer" style="position:absolute ;width:100%; height:100%; z-index:2; align:center; margin-left:0%; margin-top:0%">
-   <img class="background" src="http:// HE-Hub-IP /local/bom_radar_background.png" style="width:512px; height:512px; display: 'block'; position:absolute; z-index=1;">
-   <img class="background" src="http:// HE-Hub-IP /local/bom_radar_locations.png" style="width:512px; height:512px; display: 'block'; position:absolute; z-index=2;">
-   <img class="images" src="http:// HE-Hub-IP /local/bom_radar_1.png" style="width:512px; height:512px; display:none; position:absolute; z-index=3;">
-   <img class="images" src="http:// HE-Hub-IP /local/bom_radar_2.png" style="width:512px; height:512px; display:none; position:absolute; z-index=3;">
-   <img class="images" src="http:// HE-Hub-IP /local/bom_radar_3.png" style="width:512px; height:512px; display:none; position:absolute; z-index=3;">
-   <img class="images" src="http:// HE-Hub-IP /local/bom_radar_4.png" style="width:512px; height:512px; display:none; position:absolute; z-index=3;">
-   <img class="images" src="http:// HE-Hub-IP /local/bom_radar_5.png" style="width:512px; height:512px; display:none; position:absolute; z-index=3;">
-</div> <!-- Layer 2 closed -->
+	<div id="picLayer" style="position:absolute; width:100%; height:100%; align:center; margin-left:0%; margin-top:0%" >
+		<img class="background" src="http://www.bom.gov.au/products/radar_transparencies/IDR043.background.png" />
+		<img class="locations" src="http://www.bom.gov.au/products/radar_transparencies/IDR043.locations.png" />
+	</div>
+
+
+
 
 </body>
 
+	<script>
+		var x = 0;
+		function myFunction(){  
+		
+		
+		   var Layer2Images = document.querySelectorAll("img.images"); 
+		   if (x == Layer2Images.length)
+			  x=0;
+		   for (i = 0; i < Layer2Images.length; i++) {
+			Layer2Images[i].style.display = 'none';
+		   }
+		   Layer2Images[x].style.display = 'block';
+		   x++;
+		}
 
+		setInterval(myFunction, 1000)
 
-<script>
-var x = 0;
-function myFunction(){  
-   
-   var Layer2Images = document.querySelectorAll("img.images"); 
-   if (x == Layer2Images.length)
-      x=0;
-   for (i = 0; i < Layer2Images.length; i++) {
-    Layer2Images[i].style.display = 'none';
-   }
-   Layer2Images[x].style.display = 'block';
-   x++;
-}
-
-setInterval(myFunction, 1000)
-</script>
-
-
+	</script>
 
 </html>
