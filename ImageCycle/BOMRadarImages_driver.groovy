@@ -50,7 +50,7 @@ def refresh() {
         
         httpGet(getParams) { resp ->
             String shtmlResponse = groovy.xml.XmlUtil.escapeXml(resp.data.text);
-            if (logEnable) log.debug(shtmlResponse)
+            
             def lines = "${shtmlResponse}".split("\\r\\n|\\n|\\r");
             def images = lines.findAll { it.startsWith('theImageNames[') }
             
