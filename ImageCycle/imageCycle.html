@@ -6,42 +6,15 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
 	<!-- Style settings for different image types -->
 	<style>
-        img
+		img
 		{
-            width: 512px;
-            height:512px;
-			position:absolute;
-		}
-		img.background01 
-        {
-			width:512px;
-			height:512px;
-			position:absolute;
 			display: 'block';
-			z-index:1;
-        }
-		img.background02
-        {
-			width:512px;
-			height:512px;
-			position:absolute;
-			display: 'block';
-            z-index:2;
-        }
-		img.background03
-        {
-			width:512px;
-			height:512px;
-			position:absolute;
-			display: 'block';
-            z-index:3;
-        }
-		img.images
-        {
 			position: absolute;
-			z-index:3;
-        }
-	
+		}
+        img.background01 { z-index:1; }
+		img.background02 { z-index:2; }
+		img.background03 { z-index:3; }
+		img.images 		 { z-index:4; }
 		
     </style>
 
@@ -77,19 +50,11 @@
 		});
 
 	</script>
-
-
-	
-    
-
 </head>
 
 <body>
 	<!-- DIV container that will house the images -->
 	<div id="picLayer" style="position:absolute; width:100%; height:100%; margin-left:0%; margin-top:0% scrolling=no" />
-		<!-- <img class="background" src="http://www.bom.gov.au/products/radar_transparencies/IDR043.background.png" /> -->
-		<!-- <img class="locations" src="http://www.bom.gov.au/products/radar_transparencies/IDR043.locations.png" /> -->
-	<!-- </div> -->
 </body>
 
 	<!-- Script to cycle through the image elements with the "images" class, leaving any background images alone -->
