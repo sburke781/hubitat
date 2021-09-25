@@ -54,7 +54,11 @@ def refresh() {
             def lines = "${shtmlResponse}".split("\\r\\n|\\n|\\r");
             def images = lines.findAll { it.startsWith('theImageNames[') }
             
-            def imagesJson = "{"
+            def imagesJson = "{\n"
+            
+            imagesJson += "\"background01\": \"http://www.bom.gov.au/products/radar_transparencies/${idr}.background.png\",\n";
+		    imagesJson += "\"background02\": \"http://www.bom.gov.au/products/radar_transparencies/${idr}.locations.png\",\n";
+
             def i = 1
             images.each { 
                 imagesJson += "\"image${i}\": \"http://www.bom.gov.au/radar/${it.value.toString().substring(32).substring(0,it.value.toString().substring(32).length() - 7)}\"";

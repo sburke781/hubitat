@@ -4,7 +4,7 @@
 
 <head>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
-
+	<!-- Style settings for different image types -->
 	<style>
         img
 		{
@@ -12,7 +12,7 @@
             height:512px;
 			position:absolute;
 		}
-		img.background 
+		img.background01 
         {
 			width:512px;
 			height:512px;
@@ -20,13 +20,21 @@
 			display: 'block';
 			z-index:1;
         }
-		img.locations 
+		img.background02
         {
 			width:512px;
 			height:512px;
 			position:absolute;
 			display: 'block';
             z-index:2;
+        }
+		img.background03
+        {
+			width:512px;
+			height:512px;
+			position:absolute;
+			display: 'block';
+            z-index:3;
         }
 		img.images
         {
@@ -37,35 +45,28 @@
 		
     </style>
 
+	<!-- Script to extract the image listing from the JSON file and create the image elements -->
 	<script>
 
 	$(document).ready(function () {
 		
 			$.ajax({
 			  dataType: "json",
-			  url: "HTTP://herules01.local/local/radarImages.json",
+			  url: "radarImages.json",
 			  success: function (data) { 
+				
+				// Find the DIV element that will contain the images
+				var divContainer = document.getElementById("picLayer");
 
-				  var items = [];
-				  $.each( data, function( key, val ) {
-					items.push(val);       // PUSH THE VALUES INSIDE THE ARRAY.
-				  });
-				  
-				  
-				  //var baseURL = "http://www.bom.gov.au/radar/";
-				  var divContainer = document.getElementById("picLayer");
-				  
-				  //divContainer.innerHTML = "";
-
-				  for (var i = 0; i < items.length; i++) {
-						var img = document.createElement("img");      // IMAGE
-						img.className = "images";
-						img.style = "position: absolute; display: none; z-index: 2;";
-						img.src = items[i];
-						divContainer.appendChild(img);
-				  }
-
-
+				$.each( data, function( key, val ) {
+				
+					var img = document.createElement("img");      // IMAGE
+					if (key.contains("background")) { img.className = key;      }
+					if (key.contains("image")) 		{ img.className = "images"; }
+					
+					img.src = val;
+					divContainer.appendChild(img);
+				});
 
 			  }
 			}).fail(function(jqXHR, textStatus, errorThrown) {
@@ -84,17 +85,14 @@
 </head>
 
 <body>
-
-	<div id="picLayer" style="position:absolute; width:100%; height:100%; align:center; margin-left:0%; margin-top:0% scrolling=no" >
-		<img class="background" src="http://www.bom.gov.au/products/radar_transparencies/IDR043.background.png" />
-		<img class="locations" src="http://www.bom.gov.au/products/radar_transparencies/IDR043.locations.png" />
-	</div>
-
-
-
-
+	<!-- DIV container that will house the images -->
+	<div id="picLayer" style="position:absolute; width:100%; height:100%; margin-left:0%; margin-top:0% scrolling=no" />
+		<!-- <img class="background" src="http://www.bom.gov.au/products/radar_transparencies/IDR043.background.png" /> -->
+		<!-- <img class="locations" src="http://www.bom.gov.au/products/radar_transparencies/IDR043.locations.png" /> -->
+	<!-- </div> -->
 </body>
 
+	<!-- Script to cycle through the image elements with the "images" class, leaving any background images alone -->
 	<script>
 		var x = 0;
 		function myFunction(){  
