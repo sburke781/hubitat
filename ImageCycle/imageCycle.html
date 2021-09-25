@@ -61,8 +61,8 @@
 				$.each( data, function( key, val ) {
 				
 					var img = document.createElement("img");      // IMAGE
-					if (key.contains("background")) { img.className = key;      }
-					if (key.contains("image")) 		{ img.className = "images"; }
+					if (key.includes("background")) { img.className = key;      }
+					if (key.includes("image")) 	 { img.className = "images"; }
 					
 					img.src = val;
 					divContainer.appendChild(img);
