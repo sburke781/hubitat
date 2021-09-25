@@ -57,7 +57,7 @@ def refresh() {
             def imagesJson = "{"
             def i = 1
             images.each { 
-                imagesJson += "\"image${i}\": \"${it.value.toString().substring(32).substring(0,it.value.toString().substring(32).length() - 7)}\"";
+                imagesJson += "\"image${i}\": \"http://www.bom.gov.au/radar/${it.value.toString().substring(32).substring(0,it.value.toString().substring(32).length() - 7)}\"";
                 if (i != images.size()) imagesJson += ",";
                 imagesJson += "\n";
                 i++
