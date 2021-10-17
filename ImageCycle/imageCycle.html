@@ -1,0 +1,80 @@
+
+<html>
+
+
+<head>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+	<!-- Style settings for different image types -->
+	<style>
+		img
+		{
+			display: 'block';
+			position: absolute;
+		}
+        img.background01 { z-index:1; }
+		img.background02 { z-index:2; }
+		img.background03 { z-index:3; }
+		img.images 		 { z-index:4; }
+		
+    </style>
+
+	<!-- Script to extract the image listing from the JSON file and create the image elements -->
+	<script>
+
+	$(document).ready(function () {
+		
+			$.ajax({
+			  dataType: "json",
+			  url: "imageCycle.json",
+			  success: function (data) { 
+				
+				// Find the DIV element that will contain the images
+				var divContainer = document.getElementById("picLayer");
+
+				$.each( data, function( key, val ) {
+				
+					var img = document.createElement("img");      // IMAGE
+					if (key.includes("background")) { img.className = key;      }
+					if (key.includes("image")) 	 { img.className = "images"; }
+					
+					img.src = val;
+					divContainer.appendChild(img);
+				});
+
+			  }
+			}).fail(function(jqXHR, textStatus, errorThrown) {
+			  console.error(jqXHR, textStatus, errorThrown);
+			  console.error(jqXHR.responseJSON);
+			});	
+		
+		});
+
+	</script>
+</head>
+
+<body>
+	<!-- DIV container that will house the images -->
+	<div id="picLayer" style="position:absolute; width:100%; height:100%; margin-left:0%; margin-top:0% scrolling=no" />
+</body>
+
+	<!-- Script to cycle through the image elements with the "images" class, leaving any background images alone -->
+	<script>
+		var x = 0;
+		function myFunction(){  
+		
+		
+		   var Layer2Images = document.querySelectorAll("img.images"); 
+		   if (x == Layer2Images.length)
+			  x=0;
+		   for (i = 0; i < Layer2Images.length; i++) {
+			Layer2Images[i].style.display = 'none';
+		   }
+		   Layer2Images[x].style.display = 'block';
+		   x++;
+		}
+
+		setInterval(myFunction, 1000)
+
+	</script>
+
+</html>
