@@ -13,7 +13,7 @@
 			"id": "22597029-98db-490b-b8b9-c23b123ee123",
 			"name": "BoM Radar Images Data File Driver",
 			"namespace": "simnet",
-			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/BoMWeather/BoMRadarImagesDataFile_Driver.groovy",
+			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/BoMWeather/RadarImages/BoMRadarImagesDataFile_Driver.groovy",
 			"required": true
 		},
 		{
