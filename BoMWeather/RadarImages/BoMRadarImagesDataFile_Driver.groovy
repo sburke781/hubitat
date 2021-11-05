@@ -129,7 +129,7 @@ void createChildDevice(String childDeviceDriver, String childDeviceId, String ch
 	def childDevice = findChildDevice(childDeviceId, childDeviceType)
 
     if (childDevice == null) {
-        childDevice = addChildDevice('SIMNET', childDeviceDriver, deriveChildDNI(childDeviceId, childDeviceType), [label: "${device.displayName} - ${childDeviceName}"])
+        childDevice = addChildDevice('simnet', childDeviceDriver, deriveChildDNI(childDeviceId, childDeviceType), [label: "${device.displayName} - ${childDeviceName}"])
         infoLog("createChildDevice: New ${childDeviceDriver} created -  ${device.displayName} - ${childDeviceName}")
 	}
     else {
