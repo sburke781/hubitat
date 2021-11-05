@@ -55,8 +55,6 @@ void refresh() {
     debugLog('refresh: Refreshing image cycle')
     String lastUpdate = null
 
-    if (fileExists(dataFileName)) { setImageList(null) }
-
     if (includeIFrame) {
         sendEvent(name: 'iFrame', value: "<div style='height: 100%; width: 100%'><iframe src='http://${location.hub.localIP}:8080/local/${htmlFileName}' style='height: ${iFrameHeight}px; width: ${iFrameWidth}px; border: none;' scrolling=no version=${iFrameCounter()}></iframe><div>")
         lastUpdate = new Date().format('YYYY-MM-dd HH:mm:ss')
@@ -163,6 +161,24 @@ void setImageList(String pimages) {
 
     // Write the updated data file
     writeImageFile(groovy.json.JsonOutput.toJson(jsonData))
+}
+
+void setFullImageList(String pbackgrounds, String pimages) {
+    
+    Map jsonData  = null
+
+    // Attempt to parse the image and background lists provided
+    try {
+        jsonData = new groovy.json.JsonSlurper().parseText(pbackgrounds)
+        jsonData.putAll(new groovy.json.JsonSlurper().parseText(pimages));
+        debugLog("setFullImageList: jsonData = ${jsonData}")
+    }
+    catch (Exception e) {
+        errorLog("setFullImageList: Error parsing new images - ${e}")
+    }
+    // Write the updated data file
+    writeImageFile(groovy.json.JsonOutput.toJson(jsonData))
+    refresh()
 }
 
 void writeImageFile(String pimagesJson) {
