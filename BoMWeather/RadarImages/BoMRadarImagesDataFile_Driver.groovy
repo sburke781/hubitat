@@ -109,8 +109,7 @@ void updateDataFile(String pbackgrounds, String pimages) {
               createChildDevice('Image Cycle', 'radar', 'BOM Radar', 'ImageCycle')
               imageCycle = findChildDevice('radar','ImageCycle');
     }
-    imageCycle.setBackgroundList(pbackgrounds);
-    imageCycle.setImageList(pimages);
+    imageCycle.setFullImageList(pbackgrounds,pimages)
 }
 
 // Child Device methods
