@@ -6,7 +6,7 @@
 	"dateReleased": "2021-11-06",
 	"documentationLink": "",
 	"communityLink": "https://community.hubitat.com/t/project-australian-bureau-of-meteorology-data/82637",
-	"releaseNotes": "2021-07-13: 0.1.0 - Alpha release",
+	"releaseNotes": "2021-11-06: 0.1.0 - Alpha release",
 	"apps" : [],
 	"drivers" : [
 		{
