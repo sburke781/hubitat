@@ -1,0 +1,27 @@
+{
+	"packageName": "BoM Weather Radar Images",
+	"minimumHEVersion": "2.2.9.141",
+	"author": "Simon Burke (sburke781)",
+	"version": "0.1.0",
+	"dateReleased": "2021-11-06",
+	"documentationLink": "",
+	"communityLink": "https://community.hubitat.com/t/project-australian-bureau-of-meteorology-data/82637",
+	"releaseNotes": "2021-11-06: 0.1.0 - Alpha release",
+	"apps" : [],
+	"drivers" : [
+		{
+			"id": "22597029-98db-490b-b8b9-c23b123ee123",
+			"name": "BoM Radar Images Data File Driver",
+			"namespace": "simnet",
+			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/BoMWeather/BoMRadarImagesDataFile_Driver.groovy",
+			"required": true
+		},
+		{
+			"id": "e012ffff-7959-466b-a2ae-3123a3309270",
+			"name": "Image Cycle Driver",
+			"namespace": "simnet",
+			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/ImageCycle/ImageCycle_Driver.groovy",
+			"required": true
+		}
+	]
+}
