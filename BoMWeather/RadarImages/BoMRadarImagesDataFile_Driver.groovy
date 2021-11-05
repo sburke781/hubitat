@@ -72,7 +72,7 @@ void retrieveImageURLs() {
         httpGet(getParams) { resp ->
             String shtmlResponse = groovy.xml.XmlUtil.escapeXml(resp.data.text)
 
-            String lines = shtmlResponse.split('\\r\\n|\\n|\\r')
+            String[] lines = shtmlResponse.split('\\r\\n|\\n|\\r')
             def images = lines.findAll { it.startsWith('theImageNames[') }
 
             String backgroundsJson = '{\n'
