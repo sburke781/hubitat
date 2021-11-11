@@ -21,8 +21,8 @@ preferences {
 		input name: 'htmlFileName',   type: 'text',   title: 'HTML File Name (inc. file extension, e.g. imageCycle.html)', required: true,  defaultValue: 'imageCycle.html'
         input name: 'avatarImageURL', type: 'text',   title: 'Image URL',                                                  required: true,  defaultValue: ''
         input name: 'includeIFrame',  type: 'bool',   title: 'Produce an IFrame attribute for Dashboard display',          required: true,  defaultValue: true
-        input name: 'imageHeight',   type: 'number',  title: 'Height of the avatar image',                                 required: true,  defaultValue: 625
-        input name: 'imageWidth',    type: 'number',  title: 'Width of the avatar image',                                  required: true,  defaultValue: 600
+        input name: 'imageHeight',   type: 'number',  title: 'Height of the avatar image',                                 required: true,  defaultValue: 100
+        input name: 'imageWidth',    type: 'number',  title: 'Width of the avatar image',                                  required: true,  defaultValue: 100
 
 		input(name: 'DebugLogging', type: 'bool',   title: 'Enable Debug Logging', displayDuringSetup: true, defaultValue: false)
         input(name: 'WarnLogging',  type: 'bool',   title: 'Enable Warning Logging', displayDuringSetup: true, defaultValue: true)
