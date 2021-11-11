@@ -122,7 +122,6 @@ a.avatar-link{
     <a class="avatar-link" href="#">
 <img width="${imageWidth}" height="${imageHeight}" alt="avatar" src="${avatarImageURL}" class="user-avatar">
 """;
-    log.debug("avatar: ${pswitch}");
     if(pswitch == "on") { htmlContent += """
 <div class="notifications"></div>
 """; }
