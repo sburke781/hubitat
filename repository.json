@@ -36,6 +36,12 @@
 			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/ImageCycle/packageManifest.json",
 			"description": "Cycles images using a locally stored HTML file and listing of image URLs in local JSON file"
 		  }
+		,{
+			"name": "Status Avatar",
+			"category": "Convenience",
+			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/StatusAvatar/packageManifest.json",
+			"description": "Displays an image with decorations to indicate status information"
+		  }
 	]
 	
 }
