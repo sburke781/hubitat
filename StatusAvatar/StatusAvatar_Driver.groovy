@@ -49,25 +49,23 @@ void updated() {
 
 void refresh() {
     debugLog('refresh: Refreshing status avatar')
-    updateAvatar(device.currentValue('switch'))
+    Map statusMap = getStatusMap();
+
+    updateAvatar(statusMap.switchStatus, statusMap.statusNum1, statusMap.statusNum2, statusMap.statusNum3, statusMap.statusNum4)
 }
 
 void on() {
     sendEvent(name: 'switch', value: 'on')
-    int statusNum1 = ((device.currentValue('statusNum1') == null) ? 0 : device.currentValue('statusNum1'))
-    int statusNum2 = ((device.currentValue('statusNum2') == null) ? 0 : device.currentValue('statusNum2'))
-    int statusNum3 = ((device.currentValue('statusNum3') == null) ? 0 : device.currentValue('statusNum3'))
-    int statusNum4 = ((device.currentValue('statusNum4') == null) ? 0 : device.currentValue('statusNum4'))
-    updateAvatar('on', statusNum1, statusNum2, statusNum3, statusNum4)
+    Map statusMap = getStatusMap();
+
+    updateAvatar('on', statusMap.statusNum1, statusMap.statusNum2, statusMap.statusNum3, statusMap.statusNum4)
 }
 
 void off() {
     sendEvent(name: 'switch', value: 'off')
-    int statusNum1 = ((device.currentValue('statusNum1') == null) ? 0 : device.currentValue('statusNum1'))
-    int statusNum2 = ((device.currentValue('statusNum2') == null) ? 0 : device.currentValue('statusNum2'))
-    int statusNum3 = ((device.currentValue('statusNum3') == null) ? 0 : device.currentValue('statusNum3'))
-    int statusNum4 = ((device.currentValue('statusNum4') == null) ? 0 : device.currentValue('statusNum4'))
-    updateAvatar('off', statusNum1, statusNum2, statusNum3, statusNum4)
+    Map statusMap = getStatusMap();
+
+    updateAvatar('off', statusMap.statusNum1, statusMap.statusNum2, statusMap.statusNum3, statusMap.statusNum4)
 }
 
 void setStatusNum(Integer pstatusNumber, Number pstatusValue) {
@@ -79,12 +77,6 @@ void setStatusNum(Integer pstatusNumber, Number pstatusValue) {
 
     if (vvalidStatusNum && vvalidStatusValue) {
         sendEvent(name: "statusNum${pstatusNumber}", value: pstatusValue)
-        String switchStatus = ((device.currentValue('switch') == null) ? '' : device.currentValue('switch'))
-        int statusNum1 = ((device.currentValue('statusNum1') == null) ? 0 : device.currentValue('statusNum1'))
-        int statusNum2 = ((device.currentValue('statusNum2') == null) ? 0 : device.currentValue('statusNum2'))
-        int statusNum3 = ((device.currentValue('statusNum3') == null) ? 0 : device.currentValue('statusNum3'))
-        int statusNum4 = ((device.currentValue('statusNum4') == null) ? 0 : device.currentValue('statusNum4'))
-        updateAvatar(switchStatus, statusNum1, statusNum2, statusNum3, statusNum4)
     }
     else {
         String verrorMessage = 'setStatusNum: Status update failed'
@@ -96,18 +88,41 @@ void setStatusNum(Integer pstatusNumber, Number pstatusValue) {
 
 void setStatusNum1(Number pstatusValue) {
     setStatusNum(1, pstatusValue)
+    Map statusMap = getStatusMap();
+
+    updateAvatar(statusMap.switchStatus, (int)pstatusValue, statusMap.statusNum2, statusMap.statusNum3, statusMap.statusNum4)
 }
 
 void setStatusNum2(Number pstatusValue) {
     setStatusNum(2, pstatusValue)
+    Map statusMap = getStatusMap();
+
+    updateAvatar(statusMap.switchStatus, statusMap.statusNum1, (int)pstatusValue, statusMap.statusNum3, statusMap.statusNum4)
 }
 
 void setStatusNum3(Number pstatusValue) {
     setStatusNum(3, pstatusValue)
+    Map statusMap = getStatusMap();
+
+    updateAvatar(statusMap.switchStatus, statusMap.statusNum1, statusMap.statusNum2, (int)pstatusValue, statusMap.statusNum4)
 }
 
 void setStatusNum4(Number pstatusValue) {
     setStatusNum(4, pstatusValue)
+    Map statusMap = getStatusMap();
+
+    updateAvatar(statusMap.switchStatus, statusMap.statusNum1, statusMap.statusNum2, statusMap.statusNum3, (int)pstatusValue)
+}
+
+Map getStatusMap() {
+    Map statusMap = [:]
+    statusMap.put('switchStatus', ((device.currentValue('switch') == null) ? '' : device.currentValue('switch')))
+    statusMap.put('statusNum1', ((device.currentValue('statusNum1') == null) ? 0 : (int)device.currentValue('statusNum1')))
+    statusMap.put('statusNum2', ((device.currentValue('statusNum2') == null) ? 0 : (int)device.currentValue('statusNum2')))
+    statusMap.put('statusNum3', ((device.currentValue('statusNum3') == null) ? 0 : (int)device.currentValue('statusNum3')))
+    statusMap.put('statusNum4', ((device.currentValue('statusNum4') == null) ? 0 : (int)device.currentValue('statusNum4')))
+
+    return statusMap
 }
 
 void updateAvatar(String pswitch, int pstatus1, int pstatus2, int pstatus3, int pstatus4) {
