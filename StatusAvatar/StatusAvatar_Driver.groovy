@@ -8,12 +8,19 @@ metadata {
     definition(name: 'Status Avatar Driver', namespace: 'simnet', author: 'sburke781') {
         capability 'Switch'
 
-        attribute 'lastUpdate', 'text'
-        attribute 'switch', "ENUM ['on', 'off']"
-		attribute 'iFrame', 'text'
+        attribute 'lastUpdate'  , 'text'
+        attribute 'switch'      , "ENUM ['on', 'off']"
+        attribute 'statusNum1'  , 'number'
+        attribute 'statusNum2'  , 'number'
+        attribute 'statusNum3'  , 'number'
+        attribute 'statusNum4'  , 'number'
+		attribute 'iFrame'      , 'text'
 
         command 'refresh'
-        
+        command 'setStatusNum1', [[name:'statusValue', type: 'NUMBER', description: 'Enter the status value (number)' ] ]
+        command 'setStatusNum2', [[name:'statusValue', type: 'NUMBER', description: 'Enter the status value (number)' ] ]
+        command 'setStatusNum3', [[name:'statusValue', type: 'NUMBER', description: 'Enter the status value (number)' ] ]
+        command 'setStatusNum4', [[name:'statusValue', type: 'NUMBER', description: 'Enter the status value (number)' ] ]
     }
 }
 
@@ -42,23 +49,86 @@ void updated() {
 
 void refresh() {
     debugLog('refresh: Refreshing status avatar')
-    updateAvatar(device.currentValue('switch'))
+    Map statusMap = getStatusMap();
+
+    updateAvatar(statusMap.switchStatus, statusMap.statusNum1, statusMap.statusNum2, statusMap.statusNum3, statusMap.statusNum4)
 }
 
 void on() {
-    sendEvent(name: 'switch', value: 'on');
-    updateAvatar('on')
+    sendEvent(name: 'switch', value: 'on')
+    Map statusMap = getStatusMap();
+
+    updateAvatar('on', statusMap.statusNum1, statusMap.statusNum2, statusMap.statusNum3, statusMap.statusNum4)
 }
 
 void off() {
-    sendEvent(name: 'switch', value: 'off');
-    updateAvatar('off')
+    sendEvent(name: 'switch', value: 'off')
+    Map statusMap = getStatusMap();
+
+    updateAvatar('off', statusMap.statusNum1, statusMap.statusNum2, statusMap.statusNum3, statusMap.statusNum4)
 }
 
-void updateAvatar(String pswitch) {
+void setStatusNum(Integer pstatusNumber, Number pstatusValue) {
+    Boolean vvalidStatusNum   = false;
+    Boolean vvalidStatusValue = false;
+
+    if (pstatusNumber >= 1 && pstatusNumber <= 4) { vvalidStatusNum   = true }
+    if (pstatusValue >= 0 && pstatusValue <= 99 ) { vvalidStatusValue = true }
+
+    if (vvalidStatusNum && vvalidStatusValue) {
+        sendEvent(name: "statusNum${pstatusNumber}", value: pstatusValue)
+    }
+    else {
+        String verrorMessage = 'setStatusNum: Status update failed'
+        if (!vvalidStatusNum) { verrorMessage += ", status number ${pstatusNumber} outside the range of 0 - 4" }
+        if (!vvalidStatusValue) { verrorMessage += ", status value ${pstatusValue} outside the range of 0 - 99" }
+        errorLog(verrorMessage)
+    }
+}
+
+void setStatusNum1(Number pstatusValue) {
+    setStatusNum(1, pstatusValue)
+    Map statusMap = getStatusMap();
+
+    updateAvatar(statusMap.switchStatus, (int)pstatusValue, statusMap.statusNum2, statusMap.statusNum3, statusMap.statusNum4)
+}
+
+void setStatusNum2(Number pstatusValue) {
+    setStatusNum(2, pstatusValue)
+    Map statusMap = getStatusMap();
+
+    updateAvatar(statusMap.switchStatus, statusMap.statusNum1, (int)pstatusValue, statusMap.statusNum3, statusMap.statusNum4)
+}
+
+void setStatusNum3(Number pstatusValue) {
+    setStatusNum(3, pstatusValue)
+    Map statusMap = getStatusMap();
+
+    updateAvatar(statusMap.switchStatus, statusMap.statusNum1, statusMap.statusNum2, (int)pstatusValue, statusMap.statusNum4)
+}
+
+void setStatusNum4(Number pstatusValue) {
+    setStatusNum(4, pstatusValue)
+    Map statusMap = getStatusMap();
+
+    updateAvatar(statusMap.switchStatus, statusMap.statusNum1, statusMap.statusNum2, statusMap.statusNum3, (int)pstatusValue)
+}
+
+Map getStatusMap() {
+    Map statusMap = [:]
+    statusMap.put('switchStatus', ((device.currentValue('switch') == null) ? '' : device.currentValue('switch')))
+    statusMap.put('statusNum1', ((device.currentValue('statusNum1') == null) ? 0 : (int)device.currentValue('statusNum1')))
+    statusMap.put('statusNum2', ((device.currentValue('statusNum2') == null) ? 0 : (int)device.currentValue('statusNum2')))
+    statusMap.put('statusNum3', ((device.currentValue('statusNum3') == null) ? 0 : (int)device.currentValue('statusNum3')))
+    statusMap.put('statusNum4', ((device.currentValue('statusNum4') == null) ? 0 : (int)device.currentValue('statusNum4')))
+
+    return statusMap
+}
+
+void updateAvatar(String pswitch, int pstatus1, int pstatus2, int pstatus3, int pstatus4) {
     String lastUpdate = null
 
-    writeHTML(pswitch);
+    writeHTML(pswitch, pstatus1, pstatus2, pstatus3, pstatus4)
     if (includeIFrame) {
         sendEvent(name: 'iFrame', value: "<div style='height: 100%; width: 100%'><iframe src='http://${location.hub.localIP}:8080/local/${htmlFileName}' style='height: ${iFrameHeight}px; width: ${iFrameWidth}px; border: none;' scrolling=no version=${iFrameCounter()}></iframe><div>")
         lastUpdate = new Date().format('YYYY-MM-dd HH:mm:ss')
@@ -70,7 +140,7 @@ void updateAvatar(String pswitch) {
 
 // HTML File Methods
 
-void writeHTML(String pswitch) {
+void writeHTML(String pswitch, int pstatus1, int pstatus2, int pstatus3, int pstatus4) {
     String htmlContent = """<html>
 <head>
 <style>
@@ -88,7 +158,7 @@ a.avatar-link{
     display: block;
 }
 
-.messages {
+.top-left {
     border-radius: 50%;
     height: 20px;
     position: absolute;
@@ -99,12 +169,34 @@ a.avatar-link{
 	text-align: center;
 }
 
-.notifications {
+.top-right {
     border-radius: 50%;
     height: 20px;
     position: absolute;
     right: 5%;
     top: 5%;
+    width: 20px;
+    background-color: #669600;
+	text-align: center;
+}
+
+.bottom-left {
+    border-radius: 50%;
+    height: 20px;
+    position: absolute;
+    left: 5%;
+    bottom: 5%;
+    width: 20px;
+    background-color: #669600;
+	text-align: center;
+}
+
+.bottom-right {
+    border-radius: 50%;
+    height: 20px;
+    position: absolute;
+    right: 5%;
+    bottom: 5%;
     width: 20px;
     background-color: #669600;
 	text-align: center;
@@ -121,17 +213,26 @@ a.avatar-link{
 <div class="img-box">
     <a class="avatar-link" href="#">
 <img width="${imageWidth}" height="${imageHeight}" alt="avatar" src="${avatarImageURL}" class="user-avatar">
-""";
-    if(pswitch == "on") { htmlContent += """
-<div class="notifications"></div>
-"""; }
+"""
+if (pswitch == 'on' || pstatus1 > 0) { htmlContent += """
+<div class="top-right">${((pstatus1 == null || pstatus1 == 0) ? "" : pstatus1)}</div>
+""" }
+if (pstatus2 > 0) { htmlContent += """
+<div class="top-left">${pstatus2}</div>
+""" }
+if (pstatus3 > 0) { htmlContent += """
+<div class="bottom-right">${pstatus3}</div>
+""" }
+if (pstatus4 > 0) { htmlContent += """
+<div class="bottom-left">${pstatus4}</div>
+""" }
 htmlContent += """   </a>
 </div>
 
 </body>
-</html>""";
-    
-    writeFile(htmlFileName,htmlContent);
+</html>"""
+
+    writeFile(htmlFileName, htmlContent)
 }
 
 void poll() {
