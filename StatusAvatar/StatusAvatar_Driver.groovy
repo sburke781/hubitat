@@ -25,11 +25,14 @@ metadata {
 }
 
 preferences {
-		input name: 'htmlFileName',   type: 'text',   title: 'HTML File Name (inc. file extension, e.g. imageCycle.html)', required: true,  defaultValue: 'imageCycle.html'
-        input name: 'avatarImageURL', type: 'text',   title: 'Image URL',                                                  required: true,  defaultValue: ''
-        input name: 'includeIFrame',  type: 'bool',   title: 'Produce an IFrame attribute for Dashboard display',          required: true,  defaultValue: true
-        input name: 'imageHeight',   type: 'number',  title: 'Height of the avatar image',                                 required: true,  defaultValue: 100
-        input name: 'imageWidth',    type: 'number',  title: 'Width of the avatar image',                                  required: true,  defaultValue: 100
+		input name: 'htmlFileName',     type: 'text',    title: 'HTML File Name (inc. file extension, e.g. imageCycle.html)', required: true,  defaultValue: 'avatar.html'
+        input name: 'avatarImageURL',   type: 'text',    title: 'Image URL',                                                  required: true,  defaultValue: ''
+        input name: 'includeIFrame',    type: 'bool',    title: 'Produce an IFrame attribute for Dashboard display',          required: true,  defaultValue: true
+        input name: 'imageHeight',      type: 'number',  title: 'Height of the avatar image',                                 required: true,  defaultValue: 100
+        input name: 'imageWidth',       type: 'number',  title: 'Width of the avatar image',                                  required: true,  defaultValue: 100
+        input name: 'imageRounding',    type: 'bool',    title: 'Round the avatar image?',                                    required: true,  defaultValue: true
+        input name: 'dotSize',          type: 'number',  title: 'Size (in pixels) of dots displayed',                         required: true,  defaultValue: 20
+        input name: 'dotDefaultColour', type: 'text',    title: 'Default colour for dots displayed (Hex Value)',              required: true,  defaultValue: 669600
 
 		input(name: 'DebugLogging', type: 'bool',   title: 'Enable Debug Logging', displayDuringSetup: true, defaultValue: false)
         input(name: 'WarnLogging',  type: 'bool',   title: 'Enable Warning Logging', displayDuringSetup: true, defaultValue: true)
@@ -154,51 +157,51 @@ a.avatar-link{
 }
 
 .img-box img.user-avatar{
-    border-radius: 50%;
+    ${if (imageRounding) { 'border-radius: 50%;' }}
     display: block;
 }
 
 .top-left {
     border-radius: 50%;
-    height: 20px;
+    height: ${dotSize}px;
     position: absolute;
     left: 5%;
     top: 5%;
-    width: 20px;
-    background-color: #669600;
+    width: ${dotSize}px;
+    background-color: #${dotDefaultColour};
 	text-align: center;
 }
 
 .top-right {
     border-radius: 50%;
-    height: 20px;
+    height: ${dotSize}px;
     position: absolute;
     right: 5%;
     top: 5%;
-    width: 20px;
-    background-color: #669600;
+    width: ${dotSize}px;
+    background-color: #${dotDefaultColour};
 	text-align: center;
 }
 
 .bottom-left {
     border-radius: 50%;
-    height: 20px;
+    height: ${dotSize}px;
     position: absolute;
     left: 5%;
     bottom: 5%;
-    width: 20px;
-    background-color: #669600;
+    width: ${dotSize}px;
+    background-color: #${dotDefaultColour};
 	text-align: center;
 }
 
 .bottom-right {
     border-radius: 50%;
-    height: 20px;
+    height: ${dotSize}px;
     position: absolute;
     right: 5%;
     bottom: 5%;
-    width: 20px;
-    background-color: #669600;
+    width: ${dotSize}px;
+    background-color: #${dotDefaultColour};
 	text-align: center;
 }
 
