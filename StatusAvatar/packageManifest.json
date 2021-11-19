@@ -2,11 +2,11 @@
 	"packageName": "Status Avatar",
 	"minimumHEVersion": "2.2.9.141",
 	"author": "Simon Burke (sburke781)",
-	"version": "1.1.0",
-	"dateReleased": "2021-11-13",
+	"version": "1.2.0",
+	"dateReleased": "2021-11-19",
 	"documentationLink": "",
 	"communityLink": "https://community.hubitat.com/t/release-status-avatar/82908",
-	"releaseNotes": "2021-11-11: 1.0.0 - Initial release\n2021-11-13: 1.1.0 - Added Status Numbers",
+	"releaseNotes": "2021-11-11: 1.0.0 - Initial release\n2021-11-13: 1.1.0 - Added Status Numbers\n2021-11-19: 1.2.0 - Added options for Image Rounding, Dot Size and Default colour",
 	"apps" : [],
 	"drivers" : [
 		{
