@@ -34,6 +34,12 @@ preferences {
         input name: 'dotSize',          type: 'number',  title: 'Size (in pixels) of dots displayed',                         required: true,  defaultValue: 20
         input name: 'dotDefaultColour', type: 'text',    title: 'Default colour for dots displayed (Hex Value)',              required: true,  defaultValue: 669600
 
+        input name: 'avatarLink',       type: 'text',    title: 'URL Link opened when clicking on the avatar image',          required: true,  defaultValue: '#'
+        input name: 'status1Link',      type: 'text',    title: 'URL Link opened when clicking on status 1 dot',              required: true,  defaultValue: '#'
+        input name: 'status2Link',      type: 'text',    title: 'URL Link opened when clicking on status 2 dot',              required: true,  defaultValue: '#'
+        input name: 'status3Link',      type: 'text',    title: 'URL Link opened when clicking on status 3 dot',              required: true,  defaultValue: '#'
+        input name: 'status4Link',      type: 'text',    title: 'URL Link opened when clicking on status 4 dot',              required: true,  defaultValue: '#'
+    
 		input(name: 'DebugLogging', type: 'bool',   title: 'Enable Debug Logging', displayDuringSetup: true, defaultValue: false)
         input(name: 'WarnLogging',  type: 'bool',   title: 'Enable Warning Logging', displayDuringSetup: true, defaultValue: true)
         input(name: 'ErrorLogging', type: 'bool',   title: 'Enable Error Logging', displayDuringSetup: true, defaultValue: true)
@@ -133,7 +139,7 @@ void updateAvatar(String pswitch, int pstatus1, int pstatus2, int pstatus3, int 
 
     writeHTML(pswitch, pstatus1, pstatus2, pstatus3, pstatus4)
     if (includeIFrame) {
-        sendEvent(name: 'iFrame', value: "<div style='height: 100%; width: 100%'><iframe src='http://${location.hub.localIP}:8080/local/${htmlFileName}' style='height: ${iFrameHeight}px; width: ${iFrameWidth}px; border: none;' scrolling=no version=${iFrameCounter()}></iframe><div>")
+        sendEvent(name: 'iFrame', value: "<div style='height: 100%; width: 100%'><iframe src='http://${location.hub.localIP}:8080/local/${htmlFileName}' style='height: ${imageHeight + 15}px; width: ${imageWidth + 15}px; border: none;' scrolling=no version=${iFrameCounter()}></iframe><div>")
         lastUpdate = new Date().format('YYYY-MM-dd HH:mm:ss')
         //device.sendEvent(name: 'lastupdate', value: "${lastUpdate}")
         debugLog('updateAvatar: IFrame attribute updated')
@@ -148,7 +154,8 @@ void writeHTML(String pswitch, int pstatus1, int pstatus2, int pstatus3, int pst
 <head>
 <style>
 .img-box{    
-    
+   left: 0px;
+   top: 0px; 
 }
 
 a.avatar-link{
@@ -165,8 +172,8 @@ a.avatar-link{
     border-radius: 50%;
     height: ${dotSize}px;
     position: absolute;
-    left: 5%;
-    top: 5%;
+    left: 6%;
+    top: 6%;
     width: ${dotSize}px;
     background-color: #${dotDefaultColour};
 	text-align: center;
@@ -176,8 +183,8 @@ a.avatar-link{
     border-radius: 50%;
     height: ${dotSize}px;
     position: absolute;
-    right: 5%;
-    top: 5%;
+    right: 6%;
+    top: 6%;
     width: ${dotSize}px;
     background-color: #${dotDefaultColour};
 	text-align: center;
@@ -187,8 +194,8 @@ a.avatar-link{
     border-radius: 50%;
     height: ${dotSize}px;
     position: absolute;
-    left: 5%;
-    bottom: 5%;
+    left: 6%;
+    bottom: 6%;
     width: ${dotSize}px;
     background-color: #${dotDefaultColour};
 	text-align: center;
@@ -198,36 +205,36 @@ a.avatar-link{
     border-radius: 50%;
     height: ${dotSize}px;
     position: absolute;
-    right: 5%;
-    bottom: 5%;
+    right: 6%;
+    bottom: 6%;
     width: ${dotSize}px;
     background-color: #${dotDefaultColour};
 	text-align: center;
 }
 
 .img-box img.user-avatar[width="${imageWidth}"]{
-   right: 2px;
-   bottom: 2px;
+   left: 0px;
+   top: 0px;
 }
 </style>
 </head>
 
 <body>
 <div class="img-box">
-    <a class="avatar-link" href="#">
+<a class="avatar-link" href="${avatarLink}" target="_blank">
 <img width="${imageWidth}" height="${imageHeight}" alt="avatar" src="${avatarImageURL}" class="user-avatar">
 """
 if (pswitch == 'on' || pstatus1 > 0) { htmlContent += """
-<div class="top-right">${((pstatus1 == null || pstatus1 == 0) ? "" : pstatus1)}</div>
+<div class="top-right"><a href="${status1Link}" target="_blank">${((pstatus1 == null || pstatus1 == 0) ? "" : pstatus1)}</a></div>
 """ }
 if (pstatus2 > 0) { htmlContent += """
-<div class="top-left">${pstatus2}</div>
+<div class="top-left"><a href="${status2Link}" target="_blank">${pstatus2}</a></div>
 """ }
 if (pstatus3 > 0) { htmlContent += """
-<div class="bottom-right">${pstatus3}</div>
+<div class="bottom-right"><a href="${status3Link}" target="_blank">${pstatus3}</a></div>
 """ }
 if (pstatus4 > 0) { htmlContent += """
-<div class="bottom-left">${pstatus4}</div>
+<div class="bottom-left"><a href="${status4Link}" target="_blank">${pstatus4}</a></div>
 """ }
 htmlContent += """   </a>
 </div>
