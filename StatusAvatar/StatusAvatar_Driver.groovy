@@ -25,7 +25,7 @@ metadata {
 }
 
 preferences {
-		input name: 'htmlFileName',     type: 'text',    title: 'HTML File Name (inc. file extension, e.g. imageCycle.html)', required: true,  defaultValue: 'avatar.html'
+		input name: 'htmlFileName',     type: 'text',    title: 'HTML File Name (inc. file extension, e.g. avatar.html)',     required: true,  defaultValue: 'avatar.html'
         input name: 'avatarImageURL',   type: 'text',    title: 'Image URL',                                                  required: true,  defaultValue: ''
         input name: 'includeIFrame',    type: 'bool',    title: 'Produce an IFrame attribute for Dashboard display',          required: true,  defaultValue: true
         input name: 'imageHeight',      type: 'number',  title: 'Height of the avatar image',                                 required: true,  defaultValue: 100
@@ -40,6 +40,12 @@ preferences {
         input name: 'status3Link',      type: 'text',    title: 'URL Link opened when clicking on status 3 dot',              required: true,  defaultValue: '#'
         input name: 'status4Link',      type: 'text',    title: 'URL Link opened when clicking on status 4 dot',              required: true,  defaultValue: '#'
     
+        //input("src", "text", title: "iFrame Url",  required: true)
+        //input("openText", "text", title: "Button text to Open iFrame", defaultValue:"Show",  required: false)
+        input("closeText", "text", title: "Button text to close pop-up iFrame", defaultValue:"Close", required: false)
+        input("popupWidth", "number", title: "Width of pop-up iFrames as a percentage (default: 100)", defaultValue:100, required: false)
+		input("popupHeight", "number", title: "Height of pop-up iFrames as a percentage (default: 100)", defaultValue:100, required: false)
+        
 		input(name: 'DebugLogging', type: 'bool',   title: 'Enable Debug Logging', displayDuringSetup: true, defaultValue: false)
         input(name: 'WarnLogging',  type: 'bool',   title: 'Enable Warning Logging', displayDuringSetup: true, defaultValue: true)
         input(name: 'ErrorLogging', type: 'bool',   title: 'Enable Error Logging', displayDuringSetup: true, defaultValue: true)
@@ -59,21 +65,18 @@ void updated() {
 void refresh() {
     debugLog('refresh: Refreshing status avatar')
     Map statusMap = getStatusMap();
-
     updateAvatar(statusMap.switchStatus, statusMap.statusNum1, statusMap.statusNum2, statusMap.statusNum3, statusMap.statusNum4)
 }
 
 void on() {
     sendEvent(name: 'switch', value: 'on')
     Map statusMap = getStatusMap();
-
     updateAvatar('on', statusMap.statusNum1, statusMap.statusNum2, statusMap.statusNum3, statusMap.statusNum4)
 }
 
 void off() {
     sendEvent(name: 'switch', value: 'off')
     Map statusMap = getStatusMap();
-
     updateAvatar('off', statusMap.statusNum1, statusMap.statusNum2, statusMap.statusNum3, statusMap.statusNum4)
 }
 
@@ -135,37 +138,72 @@ Map getStatusMap() {
 }
 
 void updateAvatar(String pswitch, int pstatus1, int pstatus2, int pstatus3, int pstatus4) {
-    String lastUpdate = null
-
+    String lastUpdate = null;
+    String viFrame = '';
+    //setPopUpIframe();
     writeHTML(pswitch, pstatus1, pstatus2, pstatus3, pstatus4)
     if (includeIFrame) {
-        sendEvent(name: 'iFrame', value: "<div style='height: 100%; width: 100%'><iframe src='http://${location.hub.localIP}:8080/local/${htmlFileName}' style='height: ${imageHeight + 15}px; width: ${imageWidth + 15}px; border: none;' scrolling=no version=${iFrameCounter()}></iframe><div>")
+        viFrame = "<div style='display: flex;justify-content: center;height:100%;margin:0;background-color:Transparent;'><iframe src='http://${location.hub.localIP}/local/${htmlFileName}' style='position:relative;top:0;left:0;height:100%;width:100%;border:none' scrolling=no version=${iFrameCounter()}></iframe><div>";
+        // Pop-Up iFrame
+        viFrame += "<div id=${device.displayName.replaceAll('\\s','')} class='modal' style='display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,.85);z-index:998;'>"
+        // Close Button
+        viFrame += "<button onclick=document.getElementById('${device.displayName.replaceAll('\\s','')}').style.display='none';document.getElementById('${device.displayName.replaceAll('\\s','')}-iframe').src=''; style='float:right;margin:5px;font-size:16px;padding:5px;margin:5px;background-color:rgb(125,125,125)'>${closeText}</button>"
+        // iFrame to be displayed
+        viFrame += "<div style='display: flex;justify-content: center;'><iframe id='${device.displayName.replaceAll('\\s','')}-iframe' src='' style='height:${popupHeight}%;width:${popupWidth}%;border:none;z-index:999;'></iframe></div>"
+        // Closing out the Div
+        viFrame += '</div>'
+        
+        sendEvent(name: 'iFrame', value: viFrame)
         lastUpdate = new Date().format('YYYY-MM-dd HH:mm:ss')
         //device.sendEvent(name: 'lastupdate', value: "${lastUpdate}")
+        
         debugLog('updateAvatar: IFrame attribute updated')
     }
     else { debugLog('updateAvatar: IFrame attribute turned off, no update is needed') }
 }
-
+//width: ${imageWidth + 16}px;
+  //height: ${imageHeight + 16}px;
 // HTML File Methods
 
 void writeHTML(String pswitch, int pstatus1, int pstatus2, int pstatus3, int pstatus4) {
     String htmlContent = """<html>
 <head>
 <style>
-.img-box{    
-   left: 0px;
-   top: 0px; 
+
+html, body, .container {
+    height: 100%;
+}
+.container {
+    display: -webkit-flexbox;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-align: center;
+    -ms-flex-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+    justify-content: center;
 }
 
-a.avatar-link{
+.btn{
     position: relative;
-    display: inline-block;
+    width: 96px;
+    height: 96px;
+    top:0;
+    left:0;
+    ${if (imageRounding) { 'border-radius: 50%;' }}
+    border: Transparent;
+    background-color:Transparent;border:0;
 }
 
-.img-box img.user-avatar{
+.user-avatar{
+    position: relative;
+    width: 80px;
+    height: 80px;
+    top:0;
+    left:0;
     ${if (imageRounding) { 'border-radius: 50%;' }}
-    display: block;
+    border: Transparent;
 }
 
 .top-left {
@@ -177,6 +215,7 @@ a.avatar-link{
     width: ${dotSize}px;
     background-color: #${dotDefaultColour};
 	text-align: center;
+    z-index: 2;
 }
 
 .top-right {
@@ -188,6 +227,7 @@ a.avatar-link{
     width: ${dotSize}px;
     background-color: #${dotDefaultColour};
 	text-align: center;
+    z-index: 2;
 }
 
 .bottom-left {
@@ -199,6 +239,7 @@ a.avatar-link{
     width: ${dotSize}px;
     background-color: #${dotDefaultColour};
 	text-align: center;
+    z-index: 2;
 }
 
 .bottom-right {
@@ -210,20 +251,20 @@ a.avatar-link{
     width: ${dotSize}px;
     background-color: #${dotDefaultColour};
 	text-align: center;
+    z-index: 2;
 }
 
-.img-box img.user-avatar[width="${imageWidth}"]{
-   left: 0px;
-   top: 0px;
-}
 </style>
 </head>
 
 <body>
-<div class="img-box">
-<a class="avatar-link" href="${avatarLink}" target="_blank">
-<img width="${imageWidth}" height="${imageHeight}" alt="avatar" src="${avatarImageURL}" class="user-avatar">
+<div class="container">
+<!-- <a class="avatar-link" href="#" target="_blank"> -->
+<button type="button" alt="avatar" class="btn" onclick="window.parent.document.getElementById('${device.displayName.replaceAll('\\s','')}').style.display='block';window.parent.document.getElementById('${device.displayName.replaceAll('\\s','')}-iframe').src='${avatarLink}'">
+<img class="user-avatar" src="${avatarImageURL}"/>
+
 """
+    //${device.currentValue('avatarIFrameLauncher')}
 if (pswitch == 'on' || pstatus1 > 0) { htmlContent += """
 <div class="top-right"><a href="${status1Link}" target="_blank">${((pstatus1 == null || pstatus1 == 0) ? "" : pstatus1)}</a></div>
 """ }
@@ -236,7 +277,8 @@ if (pstatus3 > 0) { htmlContent += """
 if (pstatus4 > 0) { htmlContent += """
 <div class="bottom-left"><a href="${status4Link}" target="_blank">${pstatus4}</a></div>
 """ }
-htmlContent += """   </a>
+htmlContent += """</button>
+<!--    </a>  -->
 </div>
 
 </body>
@@ -244,6 +286,7 @@ htmlContent += """   </a>
 
     writeFile(htmlFileName, htmlContent)
 }
+
 
 void poll() {
     refresh()
