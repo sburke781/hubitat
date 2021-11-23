@@ -217,7 +217,8 @@ void writeHTML() {
         img.background01 { z-index:1; }
 		img.background02 { z-index:2; }
 		img.background03 { z-index:3; }
-		img.images 		 { z-index:4; }
+        img.background04 { z-index:4; }
+		img.images 		 { z-index:5; }
 		
     </style>
 

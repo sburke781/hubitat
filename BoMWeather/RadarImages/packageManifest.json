@@ -2,11 +2,11 @@
 	"packageName": "BoM Weather Radar Images",
 	"minimumHEVersion": "2.2.9.141",
 	"author": "Simon Burke (sburke781)",
-	"version": "0.1.2",
-	"dateReleased": "2021-11-06",
+	"version": "1.0.0",
+	"dateReleased": "2021-11-23",
 	"documentationLink": "",
 	"communityLink": "https://community.hubitat.com/t/project-australian-bureau-of-meteorology-data/82637",
-	"releaseNotes": "2021-11-06: 0.1.2 - Alpha release",
+	"releaseNotes": "2021-11-06: 0.1.2 - Alpha release\n2021-11-23: 1.0.0 - Stable Release with addition of options for Locations, Topography and Range backgrounds",
 	"apps" : [],
 	"drivers" : [
 		{

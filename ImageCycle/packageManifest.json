@@ -2,11 +2,11 @@
 	"packageName": "Image Cycle",
 	"minimumHEVersion": "2.2.9.141",
 	"author": "Simon Burke (sburke781)",
-	"version": "0.1.1",
-	"dateReleased": "2021-11-06",
+	"version": "1.0.0",
+	"dateReleased": "2021-11-23",
 	"documentationLink": "",
 	"communityLink": "https://community.hubitat.com/t/project-image-cycle-tile-e-g-weather-radar/79742",
-	"releaseNotes": "2021-11-06: 0.1.1 - Alpha release",
+	"releaseNotes": "2021-11-06: 0.1.1 - Alpha release\n2021-11-23: 1.0.0 - Stable Release, including option for up to 4 background images",
 	"apps" : [],
 	"drivers" : [
 		{

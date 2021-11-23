@@ -19,6 +19,10 @@ preferences {
 		input (name: 'idr',          type: 'text',   title: 'Observation ID number (e.g. IDR043)',                      required: true, defaultValue: '')
         input (name: 'dataFileName', type: 'text',   title: 'Data File Name (inc. file extension, e.g. BoMRadar.json)', required: true, defaultValue: 'BoMRadar.json')
 
+        input (name: 'locations',    type: 'bool',   title:'Locations Image', description: 'Include Locations Image?', defaultValue: true,  required: true )
+        input (name: 'range',        type: 'bool',   title:'Range Image', description: 'Include Range Image?',     defaultValue: false, required: true )
+        input (name: 'topography',   type: 'bool',   title:'Topography Image', description: 'Include Topography?',      defaultValue: true,  required: true )
+        
 		input (name: 'AutoPolling',     type: 'bool',   title:'Automatic Polling', description: 'Enable / Disable automatic polling',          defaultValue: true, required: true )
         input (name: 'PollingInterval', type: 'string', title:'Polling Interval',  description: 'Number of minutes between automatic updates', defaultValue: 15,   required: true )
 
@@ -76,9 +80,20 @@ void retrieveImageURLs() {
             def images = lines.findAll { it.startsWith('theImageNames[') }
 
             String backgroundsJson = '{\n'
-
-            backgroundsJson += "\"background01\": \"http://www.bom.gov.au/products/radar_transparencies/${idr}.background.png\",\n"
-		    backgroundsJson += "\"background02\": \"http://www.bom.gov.au/products/radar_transparencies/${idr}.locations.png\"\n"
+            int b = 1
+            backgroundsJson += "\"background0${b}\": \"http://www.bom.gov.au/products/radar_transparencies/${idr}.background.png\"\n"
+		    if (topography) {
+                b++
+                backgroundsJson += ",\"background0${b}\": \"http://www.bom.gov.au/products/radar_transparencies/${idr}.topography.png\"\n"
+            }
+            if (locations) {
+                b++
+                backgroundsJson += ",\"background0${b}\": \"http://www.bom.gov.au/products/radar_transparencies/${idr}.locations.png\"\n"
+            }
+            if (range) {
+                b++
+                backgroundsJson += ",\"background0${b}\": \"http://www.bom.gov.au/products/radar_transparencies/${idr}.range.png\"\n"
+            }
             backgroundsJson += '}'
             debugLog("retrieveImageURLs: background images JSON = ${backgroundsJson}")
 
