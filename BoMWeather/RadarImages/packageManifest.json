@@ -6,7 +6,7 @@
 	"dateReleased": "2021-11-25",
 	"documentationLink": "",
 	"communityLink": "https://community.hubitat.com/t/project-australian-bureau-of-meteorology-data/82637",
-	"releaseNotes": "2021-11-06: 0.1.2 - Alpha release\n2021-11-23: 1.0.0 - Stable Release with addition of options for Locations, Topography and Range backgrounds\n2021-11-23: 1.1.0 - Changed Locations and Range images to the foreground",
+	"releaseNotes": "2021-11-25: 1.1.0 - Changed Locations and Range images to the foreground\n2021-11-23: 1.0.0 - Stable Release with addition of options for Locations, Topography and Range backgrounds\n2021-11-06: 0.1.2 - Alpha release",
 	"apps" : [],
 	"drivers" : [
 		{
