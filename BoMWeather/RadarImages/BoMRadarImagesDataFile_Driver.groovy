@@ -79,23 +79,24 @@ void retrieveImageURLs() {
             String[] lines = shtmlResponse.split('\\r\\n|\\n|\\r')
             def images = lines.findAll { it.startsWith('theImageNames[') }
 
-            String backgroundsJson = '{\n'
-            int b = 1
-            backgroundsJson += "\"background0${b}\": \"http://www.bom.gov.au/products/radar_transparencies/${idr}.background.png\"\n"
+            String staticImagesJson = '{\n'
+            int b = 1 // background image count
+            int f = 0 // foreground image count
+            staticImagesJson += "\"background0${b}\": \"http://www.bom.gov.au/products/radar_transparencies/${idr}.background.png\"\n"
 		    if (topography) {
                 b++
-                backgroundsJson += ",\"background0${b}\": \"http://www.bom.gov.au/products/radar_transparencies/${idr}.topography.png\"\n"
+                staticImagesJson += ",\"background0${b}\": \"http://www.bom.gov.au/products/radar_transparencies/${idr}.topography.png\"\n"
             }
             if (locations) {
-                b++
-                backgroundsJson += ",\"background0${b}\": \"http://www.bom.gov.au/products/radar_transparencies/${idr}.locations.png\"\n"
+                f++
+                staticImagesJson += ",\"foreground0${f}\": \"http://www.bom.gov.au/products/radar_transparencies/${idr}.locations.png\"\n"
             }
             if (range) {
-                b++
-                backgroundsJson += ",\"background0${b}\": \"http://www.bom.gov.au/products/radar_transparencies/${idr}.range.png\"\n"
+                f++
+                staticImagesJson += ",\"foreground0${f}\": \"http://www.bom.gov.au/products/radar_transparencies/${idr}.range.png\"\n"
             }
-            backgroundsJson += '}'
-            debugLog("retrieveImageURLs: background images JSON = ${backgroundsJson}")
+            staticImagesJson += '}'
+            debugLog("retrieveImageURLs: background images JSON = ${staticImagesJson}")
 
             String imagesJson = '{\n'
             int i = 1
@@ -108,7 +109,7 @@ void retrieveImageURLs() {
             imagesJson += '}'
             debugLog("retrieveImageURLs: radar images JSON = ${imagesJson}");
 
-            updateDataFile(backgroundsJson,imagesJson);
+            updateDataFile(staticImagesJson,imagesJson);
             lastUpdate = new Date().format('YYYY-MM-dd HH:mm:ss');
             device.sendEvent(name: 'lastupdate', value: "${lastUpdate}")
         }

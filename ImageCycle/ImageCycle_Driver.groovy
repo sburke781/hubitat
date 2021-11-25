@@ -214,11 +214,15 @@ void writeHTML() {
 			display: 'block';
 			position: absolute;
 		}
-        img.background01 { z-index:1; }
-		img.background02 { z-index:2; }
-		img.background03 { z-index:3; }
-        img.background04 { z-index:4; }
-		img.images 		 { z-index:5; }
+        img.background01 { z-index:1;  }
+		img.background02 { z-index:2;  }
+		img.background03 { z-index:3;  }
+        img.background04 { z-index:4;  }
+		img.images 		 { z-index:20; }
+        img.foreground01 { z-index:31; }
+        img.foreground02 { z-index:32; }
+        img.foreground03 { z-index:33; }
+        img.foreground04 { z-index:34; }
 		
     </style>
 
@@ -238,7 +242,8 @@ void writeHTML() {
 				\$.each( data, function( key, val ) {
 				
 					var img = document.createElement("img");      // IMAGE
-					if (key.includes("background")) { img.className = key;      }
+					if (key.includes("background")) { img.className = key;   }
+                    if (key.includes("foreground")) { img.className = key;   }
 					if (key.includes("image")) 	 { img.className = "images"; }
 					
 					img.src = val;
