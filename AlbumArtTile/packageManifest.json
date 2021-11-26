@@ -1,0 +1,20 @@
+{
+	"packageName": "Album Art Tile",
+	"minimumHEVersion": "2.2.9.141",
+	"author": "Simon Burke (sburke781)",
+	"version": "0.1.0",
+	"dateReleased": "2021-11-26",
+	"documentationLink": "",
+	"communityLink": "https://community.hubitat.com/t/project-album-art-tasker-and-musicbrainz-and-cover-art-archive/80416",
+	"releaseNotes": "2021-11-26: 0.1.0 - Alpha release",
+	"apps" : [],
+	"drivers" : [
+		{
+			"id": "e012ffff-7959-466b-a2ae-3123a3309432",
+			"name": "Album Art Tile Driver",
+			"namespace": "simnet",
+			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/AlbumArtTile/AlbumArtTile_Driver.groovy",
+			"required": true
+		}
+	]
+}

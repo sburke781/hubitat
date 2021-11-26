@@ -22,26 +22,32 @@
 			"tags": [ "Monitoring", "Irrigation", "LAN", "Temperature & Humidity", "Water", "Weather" ],
 			"location": "https://raw.githubusercontent.com/sburke781/ecowitt/main/packageManifest.json",
 			"description": "Ecowitt Wifi Gateway driver for Hubitat Elevation"
-		  }
+		 }
 		,{
 			"name": "BoM Radar Images Data File",
 			"category": "Integrations",
 			"tags": [ "Weather" ],
 			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/BoMWeather/RadarImages/packageManifest.json",
 			"description": "Australia Bureau of Metereology Rain Radar Images Data File"
-		  }
+		 }
 		,{
 			"name": "Image Cycle",
 			"category": "Convenience",
 			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/ImageCycle/packageManifest.json",
 			"description": "Cycles images using a locally stored HTML file and listing of image URLs in local JSON file"
-		  }
+		 }
 		,{
 			"name": "Status Avatar",
 			"category": "Convenience",
 			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/StatusAvatar/packageManifest.json",
 			"description": "Displays an image with decorations to indicate status information"
-		  }
+		 }
+		,{
+			"name": "Album Art Tile",
+			"category": "Convenience",
+			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/AlbumArtTile/packageManifest.json",
+			"description": "Allows for the displays of an album cover image on a dashboard tile by looking up a artist and album name on the MusicBrainz service"
+		 }
 	]
 	
 }
