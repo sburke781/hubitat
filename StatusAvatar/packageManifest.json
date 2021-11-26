@@ -1,0 +1,20 @@
+{
+	"packageName": "Status Avatar",
+	"minimumHEVersion": "2.2.9.141",
+	"author": "Simon Burke (sburke781)",
+	"version": "1.3.0",
+	"dateReleased": "2021-11-20",
+	"documentationLink": "",
+	"communityLink": "https://community.hubitat.com/t/release-status-avatar/82908",
+	"releaseNotes": "2021-11-11: 1.0.0 - Initial release\n2021-11-13: 1.1.0 - Added Status Numbers\n2021-11-19: 1.2.0 - Added options for Image Rounding, Dot Size and Default colour\n2021-11-20: 1.3.0 - Added options for URL links for Avatar and each dot",
+	"apps" : [],
+	"drivers" : [
+		{
+			"id": "e012ffff-7959-466b-a2ae-3123a3309999",
+			"name": "Status Avatar Driver",
+			"namespace": "simnet",
+			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/StatusAvatar/StatusAvatar_Driver.groovy",
+			"required": true
+		}
+	]
+}

@@ -185,4 +185,5 @@ node_modules/sjcl/test/srp_vectors.js
 node_modules/sjcl/test/test.js
 node_modules/sjcl/test/z85_test.js
 node_modules/sjcl/test/z85_vectors.js
+Scripts/test.mjs
 package-lock.json

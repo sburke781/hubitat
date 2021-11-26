@@ -1,0 +1,20 @@
+{
+	"packageName": "Image Cycle",
+	"minimumHEVersion": "2.2.9.141",
+	"author": "Simon Burke (sburke781)",
+	"version": "1.0.0",
+	"dateReleased": "2021-11-23",
+	"documentationLink": "",
+	"communityLink": "https://community.hubitat.com/t/project-image-cycle-tile-e-g-weather-radar/79742",
+	"releaseNotes": "2021-11-25: 1.1.0 - Added option for foreground static images\n2021-11-23: 1.0.0 - Stable Release, including option for up to 4 background images\n2021-11-06: 0.1.1 - Alpha release",
+	"apps" : [],
+	"drivers" : [
+		{
+			"id": "e012ffff-7959-466b-a2ae-3123a3309270",
+			"name": "Image Cycle Driver",
+			"namespace": "simnet",
+			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/ImageCycle/ImageCycle_Driver.groovy",
+			"required": true
+		}
+	]
+}
