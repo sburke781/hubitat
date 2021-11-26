@@ -44,9 +44,9 @@
 		 }
 		,{
 			"name": "Album Art Tile",
-			"category": "Convenience",
+			"tags": ["Dashboards", "Multimedia", "Tools & Utilities"],
 			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/AlbumArtTile/packageManifest.json",
-			"description": "Allows for the displays of an album cover image on a dashboard tile by looking up a artist and album name on the MusicBrainz service"
+			"description": "Allows for the displays of an album cover image on a dashboard tile by looking up a artist and album name on the MusicBrainz and Cover Art Archive online services"
 		 }
 	]
 	

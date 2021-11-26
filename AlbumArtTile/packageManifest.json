@@ -2,11 +2,11 @@
 	"packageName": "Album Art Tile",
 	"minimumHEVersion": "2.2.9.141",
 	"author": "Simon Burke (sburke781)",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"dateReleased": "2021-11-26",
 	"documentationLink": "",
 	"communityLink": "https://community.hubitat.com/t/project-album-art-tasker-and-musicbrainz-and-cover-art-archive/80416",
-	"releaseNotes": "2021-11-26: 0.1.0 - Alpha release",
+	"releaseNotes": "2021-11-26: 0.1.0 - Alpha release\n2021-11-26: 0.1.1 - Tweak to package details",
 	"apps" : [],
 	"drivers" : [
 		{
