@@ -52,7 +52,7 @@ void installed() {
 
 void updated() {
     debugLog('updated: update process called')
-    writeHTML()
+    //writeHTML()
     refresh()
 }
 
@@ -177,6 +177,7 @@ a.avatar-link{
     width: ${dotSize}px;
     background-color: #${dotDefaultColour};
 	text-align: center;
+    z-index: 20;
 }
 
 .top-right {
@@ -188,6 +189,7 @@ a.avatar-link{
     width: ${dotSize}px;
     background-color: #${dotDefaultColour};
 	text-align: center;
+    z-index: 20;
 }
 
 .bottom-left {
@@ -199,6 +201,7 @@ a.avatar-link{
     width: ${dotSize}px;
     background-color: #${dotDefaultColour};
 	text-align: center;
+    z-index: 20;
 }
 
 .bottom-right {
@@ -210,11 +213,13 @@ a.avatar-link{
     width: ${dotSize}px;
     background-color: #${dotDefaultColour};
 	text-align: center;
+    z-index: 20;
 }
 
 .img-box img.user-avatar[width="${imageWidth}"]{
    left: 0px;
    top: 0px;
+   z-index: 10;
 }
 </style>
 </head>
@@ -225,7 +230,7 @@ a.avatar-link{
 <img width="${imageWidth}" height="${imageHeight}" alt="avatar" src="${avatarImageURL}" class="user-avatar">
 """
 if (pswitch == 'on' || pstatus1 > 0) { htmlContent += """
-<div class="top-right"><a href="${status1Link}" target="_blank">${((pstatus1 == null || pstatus1 == 0) ? "" : pstatus1)}</a></div>
+<div class="top-right"><a href="${status1Link}" target="_blank">${if(pstatus1 == null || pstatus1 == 0) { "X" } else {pstatus1}}</a></div>
 """ }
 if (pstatus2 > 0) { htmlContent += """
 <div class="top-left"><a href="${status2Link}" target="_blank">${pstatus2}</a></div>
