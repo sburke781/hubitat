@@ -24,7 +24,15 @@
  *                               1.0.5 - No Change
  *                               1.0.6 - No Change
  *    2021-08-15  Simon Burke    1.0.7 - Added heTempScale attribute and override command to override HE hub temp scale
+ *    2021-12-27  Simon Burke    2.0.0 - Kumo Local Control Alpha
+ *                                          Capture state variables for Kumo Local Control:
+ *                                              Encrypted version of Crypto Serial and Password
+ *                                              Child Unit IP Address
+ *                                          Removal of some debug messages
+ *                                        
  */
+
+
 metadata {
 	        definition (name:      "Unified Thermostat Parent Driver",
                         namespace: "simnet",
@@ -173,10 +181,13 @@ def createChildACUnits(givenUnitsList) {
               createChildDevice("${unit.unitId}", "${unit.unitName}", "AC")
               childDevice = findChildDevice("${unit.unitId}", "AC")
               childDevice.setUnitId("${unit.unitId}")
+              if (unit.containsKey("c")) { childDevice.updateDataValue("c","${unit.c}") }
+              if (unit.containsKey("p")) { childDevice.updateDataValue("p","${unit.p}") }
+              if (unit.containsKey("address")) { childDevice.updateDataValue("address","${unit.address}") }
               //childDevice.initialize()
               runIn(30, "initializeChildDevices", [overwrite: true])
           }
-      
+            //debugLog("createChildACUnits: local command = ${childDevice.prepareLocalCommand_Kumo("Testing")}");
         }
     }
     
@@ -310,16 +321,16 @@ def retrieveAuthCode_KumoCloud() {
         
           httpPost(postParams)
           { resp ->
-              debugLog("retrieveAuthCode_KumoCloud: HTTP Response = ${resp?.data}")
+              //debugLog("retrieveAuthCode_KumoCloud: HTTP Response = ${resp?.data}")
+              
               vnewAuthCode = "${resp?.data[0].token}";
             
         
               debugLog("retrieveAuthCode_KumoCloud: New Auth Code - ${vnewAuthCode}");
               resp?.data[2].children.each { child ->
-                  debugLog("retrieveAuthCode_KumoCloud: Child - ${child}")
+                  //debugLog("retrieveAuthCode_KumoCloud: Child - ${child}")
                   child.zoneTable?.each { unit ->
                     unitsList.add(parseKumoUnit(unit))
-                  
                   }
                   
                   child.children?.each { child2 ->
@@ -343,8 +354,12 @@ def parseKumoUnit(unit) {
  
     def unitDetail  = [:]
     debugLog("parseKumoUnit: Unit (Serial / Label) - ${unit.value.serial} / ${unit.value.label}")
+    
     unitDetail = [unitId   : "${unit.value.serial}",
-                  unitName : "${unit.value.label}"
+                  unitName : "${unit.value.label}",
+                  address  : "${unit.value.address}",
+                  c        : encrypt("${unit.value.cryptoSerial}"),
+                  p        : encrypt("${unit.value.password}")
                      ]
     return unitDetail
 }

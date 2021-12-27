@@ -25,6 +25,9 @@
  *    2021-07-25  Simon Burke    1.0.6      Fahrenheit Conversion - moving temp conversion from setCooling / Heating SetPoint to setTemperature method
  *    2021-08-15  Simon Burke    1.0.7      Added temperature conversion In/Out methods to make use of new temp scale override in parent driver
  *    2021-08-15  Simon Burke    1.0.8      Added Last Command UTC attribute and checked this when determining whether to apply status updates - Kumo Only at the moment
+ *    2021-12-27  Simon Burke    2.0.0      Kumo Local Control - Alpha Version
+ *                                              New Local Control Preference Setting
+ *                                              New prepareLocalCommand method to encode the unit command
  */
 import java.text.DecimalFormat;
 
@@ -37,10 +40,10 @@ metadata {
 
 preferences {
 
-        input(name: "AutoStatusPolling", type: "bool", title:"Automatic Status Polling", description: "Enable / Disable automatic polling of unit status", defaultValue: true, required: true, displayDuringSetup: true)
-        input(name: "StatusPollingInterval", type: "ENUM", multiple: false, options: ["1", "2", "5", "10", "30", "60"], title:"Status Polling Interval", description: "Number of minutes between automatic status updates", defaultValue: 10, required: true, displayDuringSetup: true)		
-		input(name: "FansTextOrNumbers", type: "bool", title: "Fan Modes: Text or Numbers?", description: "Use Text for Fan Modes (ON) or Numbers (OFF)?", defaultValue: true, required: true, displayDuringSetup: true)
-        
+        input(name: "AutoStatusPolling",     type: "bool", title: "Automatic Status Polling",     description: "Enable / Disable automatic polling of unit status", defaultValue: true, required: true, displayDuringSetup: true)
+        input(name: "StatusPollingInterval", type: "ENUM", title: "Status Polling Interval",      description: "Number of minutes between automatic status updates", multiple: false, options: ["1", "2", "5", "10", "30", "60"], defaultValue: 10, required: true, displayDuringSetup: true)		
+		input(name: "FansTextOrNumbers",     type: "bool", title: "Fan Modes: Text or Numbers?",  description: "Use Text for Fan Modes (ON) or Numbers (OFF)?", defaultValue: true, required: true, displayDuringSetup: true)
+        input(name: "LocalControl",          type: "bool", title: "Local Control",                description: "Communicate via LAN (ON, Kumo Only) or Cloud (OFF)?", defaultValue: false, required: true, displayDuringSetup: true)
     }
         
         
@@ -1082,6 +1085,7 @@ def on_MELCloud() {
 
 def on_KumoCloud() {
     unitCommand_KumoCloud("{\"power\":1}")
+    
 }
 
 def on_MELView() {
@@ -1102,6 +1106,7 @@ def off() {
 def off_KumoCloud() {
     
     unitCommand_KumoCloud("{\"power\":0}")
+    //{'mode':'off'};
 }
 
 def off_MELCloud() {
@@ -1134,6 +1139,7 @@ def heat() {
 def heat_KumoCloud() {
 
     unitCommand_KumoCloud("{\"power\":1,\"operationMode\":1}")
+    //{'mode': 'heat'};
 }
 
 def heat_MELCloud() {
@@ -1164,6 +1170,7 @@ def dry() {
 def dry_KumoCloud() {
     
     unitCommand_KumoCloud("{\"power\":1,\"operationMode\":2}")
+    //{'mode':'dry'};
 }
 
 def dry_MELCloud() {
@@ -1194,6 +1201,7 @@ def cool() {
 def cool_KumoCloud() {
     
     unitCommand_KumoCloud("{\"power\":1,\"operationMode\":3}")
+    //{'mode': 'cool'};
 }
 
 def cool_MELCloud() {
@@ -1224,7 +1232,8 @@ def fan() {
 
 def fan_KumoCloud() {
     
-    unitCommand_KumoCloud("{\"power\":1,\"operationMode\":7}")  
+    unitCommand_KumoCloud("{\"power\":1,\"operationMode\":7}")
+    //{'mode':'vent', 'fanSpeed':'superQuiet'};
 }
 
 def fan_MELCloud() {
@@ -1255,6 +1264,7 @@ def auto() {
 def auto_KumoCloud() {
     
     unitCommand_KumoCloud("{\"power\":1,\"operationMode\":8}")
+    //{'mode': 'auto'};
 }
 
 def auto_MELCloud() {
@@ -1319,6 +1329,53 @@ def unitCommand_KumoCloud(pCommand) {
 	}
     
 }
+
+
+                      
+def prepareLocalCommand_Kumo(String pcommand) {
+    
+    byte[] decodedPassBytes = decrypt(getDataValue("p")).decodeBase64();
+
+    String decodedPassHex = '';
+    String hex = '';
+    for(int i=0; i < decodedPassBytes.length; i++) {
+        hex = String.format("%02X", decodedPassBytes[i] & 0xFF);
+        if(hex != "00") { decodedPassHex += hex }
+    }
+    decodedPassHex += bytesToHex(pcommand.getBytes());
+
+    java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+    byte[] passHashBytes = digest.digest(hexStringToByteArray(decodedPassHex));
+
+    //ToDo: Change W to a fixed variable
+    byte[] WBytes = hexStringToByteArray(getW_Kumo());
+    int[] intermediate = new int[88];
+    for (int i = 0; i < 32; i++) {
+        intermediate[i] = WBytes[i] & 0xFF;
+        intermediate[i + 32] = passHashBytes[i] & 0xFF;
+    }
+    intermediate[64] = 8;
+    intermediate[65] = 64;
+    intermediate[66] = 0; //S_PARAM
+
+    // convert cryptoSerial to byte array
+    byte[] cryptoSerialHex = hexStringToByteArray(decrypt(getDataValue("c")));
+
+    intermediate[79] = cryptoSerialHex[8] & 0xFF;
+    for (int i = 0; i < 4; i++) {
+        intermediate[i + 80] = cryptoSerialHex[i + 4] & 0xFF;
+        intermediate[i + 84] = cryptoSerialHex[i] & 0xFF;
+    }
+
+    String intermediateHex = "";
+    for (int i = 0; i < intermediate.length; i++) {
+        intermediateHex += String.format("%02x", intermediate[i] & 0xFF);
+    }
+
+    return bytesToHex(digest.digest(hexStringToByteArray(intermediateHex)));
+
+}
+
 
 def unitCommand_MELView(pCommand) {
     // Re-usable method that submits a command to the MELView Service, based on the command text passed in
@@ -1458,4 +1515,31 @@ def convertTemperature(String pTemp, String pSourceScale, String pTargetScale) {
         }
     }
     return vTemp
+}
+
+String bytesToHex(byte[] bytes) {
+    byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes("US-ASCII");
+    byte[] hexChars = new byte[bytes.length * 2];
+    for (int j = 0; j < bytes.length; j++) {
+        int v = bytes[j] & 0xFF;
+        hexChars[j * 2] = HEX_ARRAY[v >>> 4];
+        hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+    }
+    return new String(hexChars, "UTF-8");
+}
+
+/* s must be an even-length string. */
+byte[] hexStringToByteArray(String s) {
+    int len = s.length();
+    byte[] data = new byte[len / 2];
+    for (int i = 0; i < len; i += 2) {
+        data[i / 2] = (byte) ((Integer.parseInt(s.charAt(i).toString(), 16) << 4)
+                             + Integer.parseInt(s.charAt(i+1).toString(), 16));
+    }
+    return data;
+}
+
+String getW_Kumo() {
+    
+ return '44c73283b498d432ff25f5c8e06a016aef931e68f0a00ea710e36e6338fb22db';   
 }
