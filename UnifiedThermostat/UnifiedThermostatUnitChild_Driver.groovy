@@ -1329,9 +1329,60 @@ def unitCommand_KumoCloud(pCommand) {
 	}
     
 }
+/*
+  // Execute a command locally on a Kumo unit
+  void unitCommand_Kumo_Local(String pcommand) {
+    String post_data = '{"c":{"indoorUnit":{"status":' + pcommand + '}}}';
+    debugLog('unitCommand_Kumo_Local: post_data = ', post_data);
+    
+    
+    
+    //String data = await this.directRequest(post_data, serial);
+
+    // catch any errors that fetch throws - i.e. timeout
+    try {
+      const response = await fetchTimeout(url, {
+        method: 'PUT',
+       // headers: {'Accept': 'application/json, text/plain, * / *',
+          'Content-Type': 'application/json'},
+        body: post_data,
+      }, 2000, 'Time out on local IP connection.');
+      // check response from server
+      if (response.status >= 200 && response.status <= 299) {
+        data = await response.json();
+      } else {
+        this.log.warn('Kumo API: response error from device: %s', serial);
+        return null; 
+      } 
+    } catch(error) {
+      // if fetch throws error 
+      this.log.warn('queryDevice_Direct error: %s.', error);
+      return null;  
+    }
+    
+    if (!data || data == '{ _api_error: \'device_authentication_error\' }') {
+      this.log.warn('Kumo API: error direct querying device: %s.', serial);
+      return null;
+    }
+
+    this.log.debug(util.inspect(data, { colors: true, sorted: true, depth: 3 }));
+    return data;
 
 
-                      
+
+
+
+
+
+    if(!data) {
+      this.log.warn('Kumo API: Failed to send command directly to device (Serial: %s).', serial);
+      return false;
+    }
+
+    this.log.debug(util.inspect(data, { colors: true, sorted: true, depth: 3 }));
+    return true;
+  }
+   */                   
 def prepareLocalCommand_Kumo(String pcommand) {
     
     byte[] decodedPassBytes = decrypt(getDataValue("p")).decodeBase64();
