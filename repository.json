@@ -48,6 +48,12 @@
 			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/AlbumArtTile/packageManifest.json",
 			"description": "Allows for the displays of an album cover image on a dashboard tile by looking up a artist and album name on the MusicBrainz and Cover Art Archive online services"
 		 }
+		 ,{
+			"name": "SensorPush Gateway Driver",
+			"tags": ["Integrations"],
+			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/SensorPush/packageManifest.json",
+			"description": "Retrieves SensorPush temperature and humidity sensor readings from the SensorPush cloud storage"
+		 }
 	]
 	
 }
