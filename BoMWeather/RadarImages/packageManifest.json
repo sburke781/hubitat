@@ -2,11 +2,11 @@
 	"packageName": "BoM Weather Radar Images",
 	"minimumHEVersion": "2.2.9.141",
 	"author": "Simon Burke (sburke781)",
-	"version": "1.1.0",
-	"dateReleased": "2021-11-25",
+	"version": "1.2.0",
+	"dateReleased": "2021-12-28",
 	"documentationLink": "",
-	"communityLink": "https://community.hubitat.com/t/project-australian-bureau-of-meteorology-data/82637",
-	"releaseNotes": "2021-11-25: 1.1.0 - Changed Locations and Range images to the foreground\n2021-11-23: 1.0.0 - Stable Release with addition of options for Locations, Topography and Range backgrounds\n2021-11-06: 0.1.2 - Alpha release",
+	"communityLink": "https://community.hubitat.com/t/release-australian-bureau-of-meteorology-data-radar-images-data-file/82637",
+	"releaseNotes": "2021-12-28: 1.2.0 - HTTP calls changes to Asynchronous\n2021-11-25: 1.1.0 - Changed Locations and Range images to the foreground\n2021-11-23: 1.0.0 - Stable Release with addition of options for Locations, Topography and Range backgrounds\n2021-11-06: 0.1.2 - Alpha release",
 	"apps" : [],
 	"drivers" : [
 		{
