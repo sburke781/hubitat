@@ -6,14 +6,14 @@
 	"dateReleased": "2021-12-28",
 	"documentationLink": "",
 	"communityLink": "https://community.hubitat.com/t/release-sensorpush-gateway-driver/66051",
-	"releaseNotes": "2021-12-28: 1.0.1 - Changes to HTTP calls to make then asynchronous\n2021-12-28: 1.0.0 - Released into HPM\nFeb '21: Made available on HE Community",
+	"releaseNotes": "2021-12-28: 1.0.1 - Changes to HTTP calls to make then asynchronous\n2021-12-28: 1.0.0 - Released in HPM\nFeb '21: Made available on HE Community",
 	"apps" : [],
 	"drivers" : [
 		{
 			"id": "e012ffff-7959-466b-a2ae-3123a3309999",
 			"name": "SensorPush Gateway Driver",
 			"namespace": "simnet",
-			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/SensorPush/SensorPushGateway_Driver.groovy",
+			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/SensorPush/SensorPushGateway_driver.groovy",
 			"required": true
 		}
 	]
