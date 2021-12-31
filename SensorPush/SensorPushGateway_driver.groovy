@@ -44,6 +44,8 @@
  *
  * 2021-05-16  Simon Burke	Additional fix to CRON setup
  * 2021-12-28  Simon Burke  Changed HTTP calls to be asynchronous
+ * 2021-12-31  Simon Burke  Fix for null json returned in samples (included callback method in getAccessToken())
+ *                          Made same fix for sensors to include callback method in async call
  * 
  */
 metadata {
@@ -244,7 +246,7 @@ def getAccessToken(){
 	]
            
 	try {
-        asynchttpPost(postParams)                
+        asynchttpPost('getAccessTokenCallback',postParams)
 	}
 	catch (Exception e) {
         errorLog("getAccessToken: Unable to query sensorpush cloud: ${e}")
@@ -275,7 +277,7 @@ def sensors() {
 	]
            
 	try {
-        asynchttpPost(postParams)
+        asynchttpPost('sensorsCallback',postParams)
 
 	}
 	catch (Exception e) {
