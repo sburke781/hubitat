@@ -54,6 +54,12 @@
 			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/SensorPush/packageManifest.json",
 			"description": "Retrieves SensorPush temperature and humidity sensor readings from the SensorPush cloud storage"
 		 }
+		,{
+			"name": "TV HeadEnd EPG Importer",
+			"tags": ["Integrations"],
+			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/TVHE_EPG_Importer/packageManifest.json",
+			"description": "Retrieves current EPG details from an instance of TV HeadEnd, typically installed on a raspberry pi with a TV Hat"
+		 }
 	]
 	
 }
