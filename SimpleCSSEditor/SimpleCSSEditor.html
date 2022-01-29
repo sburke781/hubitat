@@ -1,0 +1,362 @@
+<html>
+
+<head>
+<style>
+html,
+body {
+	height: 100%;
+}
+
+body {
+	margin: 0;
+	background: linear-gradient(45deg, #49a09d, #5f2c82);
+	font-family: sans-serif;
+	font-weight: 100;
+}
+
+.container {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+table {
+	width: 800px;
+	border-collapse: collapse;
+	overflow: hidden;
+	box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+th,
+td {
+	padding: 15px;
+	background-color: rgba(255,255,255,0.2);
+	color: #fff;
+}
+
+th {
+	text-align: left;
+}
+
+thead {
+	th {
+		background-color: #55608f;
+	}
+}
+
+tbody {
+	tr {
+		&:hover {
+			background-color: rgba(255,255,255,0.3);
+		}
+	}
+	td {
+		position: relative;
+		&:hover {
+			&:before {
+				content: "";
+				position: absolute;
+				left: 0;
+				right: 0;
+				top: -9999px;
+				bottom: -9999px;
+				background-color: rgba(255,255,255,0.2);
+				z-index: -1;
+			}
+		}
+	}
+}
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+<script>
+
+function hexToRgb(hex) {
+    var bigint = parseInt(hex, 16);
+    var r = (bigint >> 16) & 255;
+    var g = (bigint >> 8) & 255;
+    var b = bigint & 255;
+
+    return r + "," + g + "," + b;
+}
+
+function componentToHex(c) {
+  var hex = c.toString(16);
+  return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgbToHex(r, g, b) {
+  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
+function getDashName() {
+
+  return window.parent.document.getElementsByClassName("dashName")[0].innerHTML.trim().replace(" ","_");
+}
+
+function readInSettings() {
+		var dashName = getDashName();
+		
+			$.ajax({
+			  dataType: "json",
+			  url: "http://" + location.hostname + "/local/" + dashName + ".json",
+			  success: function (data) { 
+
+				  
+				  $.each( data, function( key, val ) {
+					if(key == "tiles") {
+						
+						for (var tile in data.tiles) {
+							var tileId = data.tiles[tile].id;
+							document.getElementById(tileId + "_name").value = data.tiles[tile].name;
+							document.getElementById(tileId + "_group").value = data.tiles[tile].group;
+							document.getElementById(tileId + "_notes").value = data.tiles[tile].notes;
+							document.getElementById(tileId + "_exportCSS").checked = data.tiles[tile].exportCSS;
+							document.getElementById(tileId + "_hideTitle").checked = data.tiles[tile].hideTitle;
+							document.getElementById(tileId + "_z-index").value = data.tiles[tile].zIndex;
+							const bgColorRgba = data.tiles[tile].bgColor.split(",");
+							document.getElementById(tileId + "_bg-color").value = rgbToHex(parseInt(bgColorRgba[0]), parseInt(bgColorRgba[1]), parseInt(bgColorRgba[2]));
+							document.getElementById(tileId + "_bg-alpha").value = bgColorRgba[3];
+							
+						}
+
+					}
+				  });
+			  }
+			}).fail(function(jqXHR, textStatus, errorThrown) {
+						console.error(jqXHR, textStatus, errorThrown);
+						console.error(jqXHR.responseJSON);
+						if (errorThrown == 'Not Found') { alert("Warning: The CSS Settings JSON file was not found"); }
+						else { alert("Error reading CSS Settings JSON File: " + errorThrown); }
+					});	
+		
+	} // end of readInSettings()
+	
+</script>
+<script>
+
+function createTileTable(tileId) {
+	
+	var tileTemplate = window.parent.document.getElementById(tileId).className.split(" ")[1];
+	tileTemplate = tileTemplate[0].toUpperCase() + tileTemplate.slice(1);
+	var tileList = document.getElementById("tileList");
+	
+	var tbl = document.createElement("table");
+	var tableHTML = '';
+	tableHTML  = '	<tr style="background-color: rgba(30,0,200,0.6)" >';
+	tableHTML += '		<td colspan="2" style="color: white">' + tileId + '</td>';
+	tableHTML += '	</tr>';
+	
+	tableHTML += '	<tr>';
+	tableHTML += '		<td>Name</td>';
+	tableHTML += '		<td><input id="' + tileId + '_name" type="text" /></td>';
+	tableHTML += '</tr>';
+	
+	tableHTML += '	<tr>';
+	tableHTML += '		<td>Template</td>';
+	tableHTML += '		<td>' + tileTemplate + '</td>';
+	tableHTML += '</tr>';
+	
+	tableHTML += '<tr>';
+	tableHTML += '	<td>Group</td>';
+	tableHTML += '	<td><input id="' + tileId + '_group" type="text" /></td>';
+	tableHTML += '</tr>';
+	
+	tableHTML += '<tr>';
+	tableHTML += '	<td>Notes</td>';
+	tableHTML += '	<td><textarea id="' + tileId + '_notes" cols="25" rows="6" maxlength="255" /></textarea></td>';
+	tableHTML += '</tr>';
+	
+	tableHTML += '<tr>';
+	tableHTML += '	<td>Export Tile CSS?</td>';
+	tableHTML += '	<td><input id="' + tileId + '_exportCSS" type="checkbox"/></td>';
+	tableHTML += '</tr>';
+	
+	tableHTML += '<tr>';
+	tableHTML += '	<td>Hide Title?</td>';
+	tableHTML += '	<td><input id="' + tileId + '_hideTitle" type="checkbox"/></td>';
+	tableHTML += '</tr>';
+	
+	tableHTML += '<tr>';
+	tableHTML += '	<td>Order (Z-Index)</td>';
+	tableHTML += '	<td><input id="' + tileId + '_z-index" type="number" min="0" max="999"/></td>';
+	tableHTML += '</tr>';
+	
+	tableHTML += '<tr>';
+	tableHTML += '	<td style="padding-right: 10px">Background</td>';
+	tableHTML += '	<td><input id="' + tileId + '_bg-color" type="color"/> Transparency: <input id="' + tileId + '_bg-alpha" type="number" min="0" max="1" step="0.1" value="1" /></td>';
+	tableHTML += '</tr>';
+	tbl.innerHTML = tableHTML;
+  tileList.appendChild(tbl);
+
+}
+
+$(document).ready(function () {
+	var x = window.parent.document.getElementsByClassName("tile");
+	
+	var i;
+	// For Each Tile in the dashboard
+	for (i = 0; i < x.length; i++) {
+		createTileTable(x[i].id);
+	}	
+	readInSettings();
+	
+});
+</script>
+</head>
+<body>
+	<button onClick="writeCSS();">Update CSS File</button>
+	<div id="tileList">
+	</div>
+	
+</body>
+
+
+
+<script>
+
+
+
+
+function writeCSS() {
+
+var dashName = getDashName();
+var url = "http://" + location.hostname + ":8080/hub/fileManager/upload";
+
+var xhr = new XMLHttpRequest();
+xhr.open("POST", url);
+
+xhr.setRequestHeader("Content-Type", "multipart/form-data; boundary=----WebKitFormBoundaryDtoO2QfPwfhTjOuS");
+
+xhr.onreadystatechange = function () {
+   if (xhr.readyState === 4) {
+      console.log(xhr.responseText);
+   }};
+
+var data = '------WebKitFormBoundaryDtoO2QfPwfhTjOuS\n';
+data += 'Content-Disposition: form-data; name="uploadFile"; filename="' + dashName + '.css"\n';
+data += 'Content-Type: text/plain\n\n';
+
+var x = window.parent.document.getElementsByClassName("tile");
+var i;
+// For Each Tile in the dashboard
+for (i = 0; i < x.length; i++) {
+	var exportCSS = document.getElementById(`${x[i].id}_exportCSS`);
+	if (exportCSS.checked) {
+		var hideTitle = document.getElementById(`${x[i].id}_hideTitle`);
+		if(hideTitle.checked) {
+		  data = data + `	#${x[i].id} .tile-title {visibility: hidden; display: none;}
+`;
+		}
+		
+		var zIndex = document.getElementById(`${x[i].id}_z-index`);
+		if(zIndex.value != "") {
+		  data = data + `	#${x[i].id} {z-index: ${zIndex.value}; !important;}
+`;
+		}
+		
+		var bgColor = document.getElementById(`${x[i].id}_bg-color`);
+		var bgAlpha = document.getElementById(`${x[i].id}_bg-alpha`);
+		if(bgColor.value != "#000000") {
+		  if(bgAlpha.value != "" && bgAlpha.value != "1") {
+			data = data + `	#${x[i].id} { background-color: rgba(${hexToRgb(bgColor.value.replace('#',''))},${bgAlpha.value}) !important; }
+`;
+		  }
+		  else {
+			data = data + `	#${x[i].id} { background-color: rgb(${hexToRgb(bgColor.value.replace('#',''))}) !important; }
+`;
+		  }
+		}
+	}
+}
+
+
+data = data + `
+
+------WebKitFormBoundaryDtoO2QfPwfhTjOuS
+Content-Disposition: form-data; name="folder"
+
+
+------WebKitFormBoundaryDtoO2QfPwfhTjOuS--`;
+
+xhr.send(data);
+
+writeSettings();
+
+} //end of writeCSS()
+
+
+function writeSettings() {
+
+var dashName = getDashName();
+var url = "http://" + location.hostname + ":8080/hub/fileManager/upload";
+
+var xhr = new XMLHttpRequest();
+xhr.open("POST", url);
+
+xhr.setRequestHeader("Content-Type", "multipart/form-data; boundary=----WebKitFormBoundaryDtoO2QfPwfhTjOuS");
+
+xhr.onreadystatechange = function () {
+   if (xhr.readyState === 4) {
+      console.log(xhr.responseText);
+   }};
+
+var data = '------WebKitFormBoundaryDtoO2QfPwfhTjOuS\n';
+data += 'Content-Disposition: form-data; name="uploadFile"; filename="' + dashName + '.json"\n';
+data += 'Content-Type: text/plain\n\n';
+
+var x = window.parent.document.getElementsByClassName("tile");
+var i;
+
+data += '{"tiles" : [\n';
+
+// For Each Tile in the dashboard
+for (i = 0; i < x.length; i++) {
+	
+	var id = "${x[i].id}";
+	var nameEl = document.getElementById(x[i].id + '_name');
+	var groupEl = document.getElementById(x[i].id + '_group');
+	var notesEl = document.getElementById(x[i].id + '_notes');
+	var exportCSSEl = document.getElementById(x[i].id + '_exportCSS');
+	var hideTitleEl = document.getElementById(x[i].id + '_hideTitle');
+	var zIndexEl = document.getElementById(x[i].id + '_z-index');
+	var bgColorEl = document.getElementById(x[i].id + '_bg-color');
+	var bgAlphaEl = document.getElementById(x[i].id + '_bg-alpha');
+	var rgbaColorVal = hexToRgb(bgColorEl.value.replace("#","")) + ',' + bgAlphaEl.value;
+	data += JSON.stringify({id : x[i].id, name : nameEl.value, group : groupEl.value, notes : notesEl.value, exportCSS : exportCSSEl.checked, hideTitle : hideTitleEl.checked, zIndex : zIndexEl.value, bgColor : rgbaColorVal});
+	
+	/*data += '	{\n';
+	data += '	   "id":	"' + x[i].id + '"\n';
+	data += '	 , "name":	"' + nameVal + '"\n';
+	data += '	 , "group":	"' + groupVal + '"\n';
+	data += '	 , "notes":	"' + notesVal + '"\n';
+	data += '	 , "exportCSS":	"' + exportCSSEl.checked + '"\n';
+	data += '	 , "hideTitle":	"' + titleCheck + '"\n';
+	data += '	 , "zIndex":	"' + zIndex.value + '"\n';
+	data += '	 , "bgColor":	"' + hexToRgb(bgColorEl.value.replace("#","")) + ',' + bgAlphaEl.value + '"\n';
+	data += '	}';
+	*/
+	if( i < (x.length - 1) ) { data += ',\n' }
+
+	  }
+data += '\n  ]\n}\n';
+
+data = data + `
+
+------WebKitFormBoundaryDtoO2QfPwfhTjOuS
+Content-Disposition: form-data; name="folder"
+
+
+------WebKitFormBoundaryDtoO2QfPwfhTjOuS--`;
+
+xhr.send(data);
+
+} // end of writeSettings()
+
+
+
+
+
+</script>
+
+</html>
