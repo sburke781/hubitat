@@ -1,73 +1,36 @@
 <html>
 
 <head>
+
 <style>
-html,
-body {
-	height: 100%;
-}
+ table { 
+    width: 500px; 
+    border-collapse: collapse; 
+    margin:30px auto;
+    }
+/* Zebra striping */
+tr:nth-of-type(even) { 
+    background: #bfbfbf; 
+    }
+tr:nth-of-type(odd) { 
+    background: #eeeeee; 
+    }
+th { 
+    background: #3498db; 
+    color: white; 
+    font-weight: bold; 
+    }
+td, th { 
+    padding: 10px; 
+    border: 0px; 
+    text-align: left; 
+    font-size: 12px;
+    }
+	
+	
 
-body {
-	margin: 0;
-	background: linear-gradient(45deg, #49a09d, #5f2c82);
-	font-family: sans-serif;
-	font-weight: 100;
-}
-
-.container {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-}
-
-table {
-	width: 800px;
-	border-collapse: collapse;
-	overflow: hidden;
-	box-shadow: 0 0 20px rgba(0,0,0,0.1);
-}
-
-th,
-td {
-	padding: 15px;
-	background-color: rgba(255,255,255,0.2);
-	color: #fff;
-}
-
-th {
-	text-align: left;
-}
-
-thead {
-	th {
-		background-color: #55608f;
-	}
-}
-
-tbody {
-	tr {
-		&:hover {
-			background-color: rgba(255,255,255,0.3);
-		}
-	}
-	td {
-		position: relative;
-		&:hover {
-			&:before {
-				content: "";
-				position: absolute;
-				left: 0;
-				right: 0;
-				top: -9999px;
-				bottom: -9999px;
-				background-color: rgba(255,255,255,0.2);
-				z-index: -1;
-			}
-		}
-	}
-}
 </style>
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
 <script>
 
@@ -94,6 +57,18 @@ function getDashName() {
   return window.parent.document.getElementsByClassName("dashName")[0].innerHTML.trim().replace(" ","_");
 }
 
+function dashHeaderClick(radio) {
+	if(radio.value == 'Normal') {
+		document.getElementById('hideDashBack').disabled = false;
+		document.getElementById('hideDashTitle').disabled = false;
+	}
+	else
+	{
+		document.getElementById('hideDashBack').disabled = true;
+		document.getElementById('hideDashTitle').disabled = true;
+	}
+}
+
 function readInSettings() {
 		var dashName = getDashName();
 		
@@ -104,6 +79,7 @@ function readInSettings() {
 
 				  
 				  $.each( data, function( key, val ) {
+				  
 					if(key == "tiles") {
 						
 						for (var tile in data.tiles) {
@@ -113,6 +89,18 @@ function readInSettings() {
 							document.getElementById(tileId + "_notes").value = data.tiles[tile].notes;
 							document.getElementById(tileId + "_exportCSS").checked = data.tiles[tile].exportCSS;
 							document.getElementById(tileId + "_hideTitle").checked = data.tiles[tile].hideTitle;
+							document.getElementById(tileId + "_radius").value = data.tiles[tile].borderRadius;
+							
+							//"borders" : { "All": {"thick":"","thickOth":"","style":"solid","color":"208,98,98,1"}
+							
+							$.each( data.tiles[tile].borders, function( borderKey, borderVal ) {
+								
+								document.getElementById(tileId + "_border" + borderKey).checked = true;
+								$.each( borderVal, function( borderPosKey, borderPosVal ) {
+									document.getElementById(tileId + '_border' + borderKey + borderPosKey.charAt(0).toUpperCase() + borderPosKey.slice(1)).value = borderPosVal;
+								});
+							});
+							
 							document.getElementById(tileId + "_z-index").value = data.tiles[tile].zIndex;
 							const bgColorRgba = data.tiles[tile].bgColor.split(",");
 							document.getElementById(tileId + "_bg-color").value = rgbToHex(parseInt(bgColorRgba[0]), parseInt(bgColorRgba[1]), parseInt(bgColorRgba[2]));
@@ -120,6 +108,18 @@ function readInSettings() {
 							
 						}
 
+					}
+					
+					if(key == "dashboard") {
+					
+						$.each( val, function( dashKey, dashVal ) {
+						
+							if( dashKey == 'dashHeader' ) { document.getElementById('dashHeader' + dashVal).checked = true }
+							
+							if ((dashKey == 'hideDashBack'
+							 || dashKey == 'hideDashTitle')
+							&&	dashVal == true )		  { document.getElementById(dashKey).checked = true }
+						})
 					}
 				  });
 			  }
@@ -132,81 +132,273 @@ function readInSettings() {
 		
 	} // end of readInSettings()
 	
-</script>
-<script>
 
-function createTileTable(tileId) {
+function createDashboardInputs() {
+
+	var tableHTML = '';
+	tableHTML += '<thead>';
+	//style="background-color: rgba(30,0,200,0.6)"
+	tableHTML += '<tr>';
+	tableHTML += '<th colspan="2">Dashboard</th>';
+	tableHTML += '</tr>';
+	tableHTML += '</thead>';
+
+	tableHTML += '<tbody>';
+	tableHTML += '<tr>';
+	tableHTML += '<td>Dashboard Header and Controls</td>';
+	
+//	tableHTML += '<td><input id="hideDashHeader" type="checkbox"/></td>';
+	tableHTML += '<td>';
+	tableHTML += '<input type="radio" id="dashHeaderNormal" name="dashHeader" onclick="dashHeaderClick(this);" value="Normal">';
+	tableHTML += '<label for="dashHeaderNormal">Normal Display</label><br/>';
+	
+	tableHTML += '<input type="checkbox" id="hideDashBack" />';
+	tableHTML += '<label for="hideDashBack">	Hide Back (Hubitat) Icon?</label><br/>';
+	tableHTML += '<input type="checkbox" id="hideDashTitle" />';
+	tableHTML += '<label for="hideDashTitle">	Hide Title?</label><br/>';
+	
+	tableHTML += '<input type="radio" id="dashHeaderHidden" name="dashHeader" onclick="dashHeaderClick(this);" value="Hidden">';
+	tableHTML += '<label for="dashHeaderHidden">Hidden</label><br/>';
+	tableHTML += '<input type="radio" id="dashHeaderTopRight" name="dashHeader" onclick="dashHeaderClick(this);" value="TopRight">';
+	tableHTML += '<label for="dashHeaderTopRight">Top Right</label><br/>';
+	tableHTML += '<input type="radio" id="dashHeaderBottomRight" name="dashHeader" onclick="dashHeaderClick(this);" value="BottomRight">';
+	tableHTML += '<label for="dashHeaderBottomRight">Bottom Right</label><br/>';
+	tableHTML += '<input type="radio" id="dashHeaderTopLeft" name="dashHeader" onclick="dashHeaderClick(this);" value="TopLeft">';
+	tableHTML += '<label for="dashHeaderTopLeft">Top Left</label><br/>';
+	tableHTML += '<input type="radio" id="dashHeaderBottomLeft" name="dashHeader" onclick="dashHeaderClick(this);" value="BottomLeft">';
+	tableHTML += '<label for="dashHeaderBottomLeft">Bottom Left</label><br/>';
+	tableHTML += '</td>';
+	
+	tableHTML += '</tr>';
+	tableHTML += '</tbody>';
+	return tableHTML;
+}
+
+function createTileInputs(tileId) {
 	
 	var tileTemplate = window.parent.document.getElementById(tileId).className.split(" ")[1];
 	tileTemplate = tileTemplate[0].toUpperCase() + tileTemplate.slice(1);
-	var tileList = document.getElementById("tileList");
-	
-	var tbl = document.createElement("table");
+		
 	var tableHTML = '';
-	tableHTML  = '	<tr style="background-color: rgba(30,0,200,0.6)" >';
-	tableHTML += '		<td colspan="2" style="color: white">' + tileId + '</td>';
-	tableHTML += '	</tr>';
 	
-	tableHTML += '	<tr>';
-	tableHTML += '		<td>Name</td>';
-	tableHTML += '		<td><input id="' + tileId + '_name" type="text" /></td>';
+	tableHTML += '<thead>';
+	//style="background-color: rgba(30,0,200,0.6)"
+	tableHTML += '<tr>';
+	tableHTML += '<th colspan="2">Tile ' + tileId + '</th>';
 	tableHTML += '</tr>';
+	tableHTML += '</thead>';
 	
-	tableHTML += '	<tr>';
-	tableHTML += '		<td>Template</td>';
-	tableHTML += '		<td>' + tileTemplate + '</td>';
+	tableHTML += '<tbody>';
+	tableHTML += '<tr>';
+	tableHTML += '<td>Name</td>';
+	tableHTML += '<td><input id="' + tileId + '_name" type="text" /></td>';
 	tableHTML += '</tr>';
 	
 	tableHTML += '<tr>';
-	tableHTML += '	<td>Group</td>';
-	tableHTML += '	<td><input id="' + tileId + '_group" type="text" /></td>';
+	tableHTML += '<td>Template</td>';
+	tableHTML += '<td>' + tileTemplate + '</td>';
 	tableHTML += '</tr>';
 	
-	tableHTML += '<tr>';
-	tableHTML += '	<td>Notes</td>';
-	tableHTML += '	<td><textarea id="' + tileId + '_notes" cols="25" rows="6" maxlength="255" /></textarea></td>';
-	tableHTML += '</tr>';
+	tableHTML += '<tr>\n';
+	tableHTML += '<td>Group</td>\n';
+	tableHTML += '<td><input id="' + tileId + '_group" type="text" /></td>\n';
+	tableHTML += '</tr>\n';
 	
-	tableHTML += '<tr>';
-	tableHTML += '	<td>Export Tile CSS?</td>';
-	tableHTML += '	<td><input id="' + tileId + '_exportCSS" type="checkbox"/></td>';
-	tableHTML += '</tr>';
+	tableHTML += '<tr>\n';
+	tableHTML += '<td>Notes</td>\n';
+	tableHTML += '<td><textarea id="' + tileId + '_notes" cols="25" rows="6" maxlength="255" /></textarea></td>\n';
+	tableHTML += '</tr>\n';
 	
-	tableHTML += '<tr>';
-	tableHTML += '	<td>Hide Title?</td>';
-	tableHTML += '	<td><input id="' + tileId + '_hideTitle" type="checkbox"/></td>';
-	tableHTML += '</tr>';
+	tableHTML += '<tr>\n';
+	tableHTML += '<td>Export Tile CSS?</td>\n';
+	tableHTML += '<td><input id="' + tileId + '_exportCSS" type="checkbox"/></td>\n';
+	tableHTML += '</tr>\n';
 	
-	tableHTML += '<tr>';
-	tableHTML += '	<td>Order (Z-Index)</td>';
-	tableHTML += '	<td><input id="' + tileId + '_z-index" type="number" min="0" max="999"/></td>';
-	tableHTML += '</tr>';
+	tableHTML += '<tr>\n';
+	tableHTML += '<td>Hide Title?</td>\n';
+	tableHTML += '<td><input id="' + tileId + '_hideTitle" type="checkbox"/></td>\n';
+	tableHTML += '</tr>\n';
 	
-	tableHTML += '<tr>';
-	tableHTML += '	<td style="padding-right: 10px">Background</td>';
-	tableHTML += '	<td><input id="' + tileId + '_bg-color" type="color"/> Transparency: <input id="' + tileId + '_bg-alpha" type="number" min="0" max="1" step="0.1" value="1" /></td>';
-	tableHTML += '</tr>';
-	tbl.innerHTML = tableHTML;
-  tileList.appendChild(tbl);
+	tableHTML += '<tr>\n';
+	tableHTML += '<td>Borders</td>\n';
+	tableHTML += '<td>\n';
+	tableHTML += '	<label for="' + tileId + '_radius">Rounding: </label>\n';
+	tableHTML += '	<input id="' + tileId + '_radius" type="number" min="0" max="30"/> pixels<br/><br/>\n';
+	
+	tableHTML += '	<input id="' + tileId + '_borderAll" type="checkbox"/>\n';
+	tableHTML += '	<label for="' + tileId + '_borderAll">All</label><br/>\n';
+	
+	tableHTML += '	<label for="' + tileId + '_borderAllThick">Thickness:</label>\n';
+	tableHTML += '	<select name="' + tileId + '_borderAllThick" id="' + tileId + '_borderAllThick">\n';
+	tableHTML += '		<option value=""></option>\n';
+	tableHTML += '		<option value="thin">Thin</option>\n';
+	tableHTML += '		<option value="medium">Medium</option>\n';
+	tableHTML += '		<option value="thick">Thick</option>\n';
+	tableHTML += '		<option value="other">Other</option>\n';
+	tableHTML += '	</select>\n';
+	tableHTML += '	<input id="' + tileId + '_borderAllThickOth" type="number" min="0" max="10"/> pixels<br/>\n';
+	
+	tableHTML += '	<label for="' + tileId + '_borderAllStyle">Style:</label>\n';
+	tableHTML += '	<select name="' + tileId + '_borderAllStyle" id="' + tileId + '_borderAllStyle">\n';
+	tableHTML += '		<option value=""></option>\n';
+	tableHTML += '		<option value="none">None</option>\n';
+	tableHTML += '		<option value="dotted">Dotted</option>\n';
+	tableHTML += '		<option value="dashed">Dashed</option>\n';
+	tableHTML += '		<option value="solid">Solid</option>\n';
+	tableHTML += '		<option value="double">Double</option>\n';
+	tableHTML += '	</select><br/>\n';
+	
+	tableHTML += '	<label for="' + tileId + '_borderAllColor">Color:</label>\n';
+	tableHTML += '  <input id="' + tileId + '_borderAllColor" type="color"/> Transparency: <input id="' + tileId + '_borderAllColorAlpha" type="number" min="0" max="1" step="0.1" value="1" /><br/><br/>\n';
+	
+	// Colour
+	tableHTML += '	<input id="' + tileId + '_borderLeft" type="checkbox"/>\n';
+	tableHTML += '	<label for="' + tileId + '_borderLeft">Left</label><br/>';
 
+	tableHTML += '	<label for="' + tileId + '_borderLeftThick">Thickness:</label>\n';
+	tableHTML += '	<select name="' + tileId + '_borderLeftThick" id="' + tileId + '_borderLeftThick">\n';
+	tableHTML += '		<option value=""></option>\n';
+	tableHTML += '		<option value="thin">Thin</option>\n';
+	tableHTML += '		<option value="medium">Medium</option>\n';
+	tableHTML += '		<option value="thick">Thick</option>\n';
+	tableHTML += '		<option value="other">Other</option>\n';
+	tableHTML += '	</select>\n';
+	tableHTML += '	<input id="' + tileId + '_borderLeftThickOth" type="number" min="0" max="10"/> pixels<br/>\n';
+
+	tableHTML += '	<label for="' + tileId + '_borderLeftStyle">Style:</label>\n';
+	tableHTML += '	<select name="' + tileId + '_borderLeftStyle" id="' + tileId + '_borderLeftStyle">\n';
+	tableHTML += '		<option value=""></option>\n';
+	tableHTML += '		<option value="none">None</option>\n';
+	tableHTML += '		<option value="dotted">Dotted</option>\n';
+	tableHTML += '		<option value="dashed">Dashed</option>\n';
+	tableHTML += '		<option value="solid">Solid</option>\n';
+	tableHTML += '		<option value="double">Double</option>\n';
+	tableHTML += '	</select><br/><br/>\n';
+
+	tableHTML += '	<label for="' + tileId + '_borderLeftColor">Color:</label>\n';
+	tableHTML += '  <input id="' + tileId + '_borderLeftColor" type="color"/> Transparency: <input id="' + tileId + '_borderLeftColorAlpha" type="number" min="0" max="1" step="0.1" value="1" /><br/><br/>\n';
+
+	tableHTML += '	<input id="' + tileId + '_borderRight" type="checkbox"/>\n';
+	tableHTML += '	<label for="' + tileId + '_borderRight">Right</label><br/>';
+	
+	tableHTML += '	<label for="' + tileId + '_borderRightThick">Thickness:</label>\n';
+	tableHTML += '	<select name="' + tileId + '_borderRightThick" id="' + tileId + '_borderRightThick">\n';
+	tableHTML += '		<option value=""></option>\n';
+	tableHTML += '		<option value="thin">Thin</option>\n';
+	tableHTML += '		<option value="medium">Medium</option>\n';
+	tableHTML += '		<option value="thick">Thick</option>\n';
+	tableHTML += '		<option value="other">Other</option>\n';
+	tableHTML += '	</select>\n';
+	tableHTML += '	<input id="' + tileId + '_borderRightThickOth" type="number" min="0" max="10"/> pixels<br/>\n';
+	
+	tableHTML += '	<label for="' + tileId + '_borderRightStyle">Style:</label>\n';
+	tableHTML += '	<select name="' + tileId + '_borderRightStyle" id="' + tileId + '_borderRightStyle">\n';
+	tableHTML += '		<option value=""></option>\n';
+	tableHTML += '		<option value="none">None</option>\n';
+	tableHTML += '		<option value="dotted">Dotted</option>\n';
+	tableHTML += '		<option value="dashed">Dashed</option>\n';
+	tableHTML += '		<option value="solid">Solid</option>\n';
+	tableHTML += '		<option value="double">Double</option>\n';
+	tableHTML += '	</select><br/><br/>\n';
+	
+	tableHTML += '	<label for="' + tileId + '_borderRightColor">Color:</label>\n';
+	tableHTML += '  <input id="' + tileId + '_borderRightColor" type="color"/> Transparency: <input id="' + tileId + '_borderRightColorAlpha" type="number" min="0" max="1" step="0.1" value="1" /><br/><br/>\n';
+	
+	tableHTML += '	<input id="' + tileId + '_borderTop" type="checkbox"/>\n';
+	tableHTML += '	<label for="' + tileId + '_borderTop">Top</label><br/>';
+	
+	tableHTML += '	<label for="' + tileId + '_borderTopThick">Thickness:</label>\n';
+	tableHTML += '	<select name="' + tileId + '_borderTopThick" id="' + tileId + '_borderTopThick">\n';
+	tableHTML += '		<option value=""></option>\n';
+	tableHTML += '		<option value="thin">Thin</option>\n';
+	tableHTML += '		<option value="medium">Medium</option>\n';
+	tableHTML += '		<option value="thick">Thick</option>\n';
+	tableHTML += '		<option value="other">Other</option>\n';
+	tableHTML += '	</select>\n';
+	tableHTML += '	<input id="' + tileId + '_borderTopThickOth" type="number" min="0" max="10"/> pixels<br/>\n';
+	
+	tableHTML += '	<label for="' + tileId + '_borderTopStyle">Style:</label>\n';
+	tableHTML += '	<select name="' + tileId + '_borderTopStyle" id="' + tileId + '_borderTopStyle">\n';
+	tableHTML += '		<option value=""></option>\n';
+	tableHTML += '		<option value="none">None</option>\n';
+	tableHTML += '		<option value="dotted">Dotted</option>\n';
+	tableHTML += '		<option value="dashed">Dashed</option>\n';
+	tableHTML += '		<option value="solid">Solid</option>\n';
+	tableHTML += '		<option value="double">Double</option>\n';
+	tableHTML += '	</select><br/><br/>\n';
+	
+	tableHTML += '	<label for="' + tileId + '_borderTopColor">Color:</label>\n';
+	tableHTML += '  <input id="' + tileId + '_borderTopColor" type="color"/> Transparency: <input id="' + tileId + '_borderTopColorAlpha" type="number" min="0" max="1" step="0.1" value="1" /><br/><br/>\n';
+	
+	tableHTML += '	<input id="' + tileId + '_borderBottom" type="checkbox"/>\n';
+	tableHTML += '	<label for="' + tileId + '_borderBottom">Bottom</label><br/>';
+	
+	tableHTML += '	<label for="' + tileId + '_borderBottomThick">Thickness:</label>\n';
+	tableHTML += '	<select name="' + tileId + '_borderBottomThick" id="' + tileId + '_borderBottomThick">\n';
+	tableHTML += '		<option value=""></option>\n';
+	tableHTML += '		<option value="thin">Thin</option>\n';
+	tableHTML += '		<option value="medium">Medium</option>\n';
+	tableHTML += '		<option value="thick">Thick</option>\n';
+	tableHTML += '		<option value="other">Other</option>\n';
+	tableHTML += '	</select>\n';
+	tableHTML += '	<input id="' + tileId + '_borderBottomThickOth" type="number" min="0" max="10"/> pixels<br/>\n';
+	
+	tableHTML += '	<label for="' + tileId + '_borderBottomStyle">Style:</label>\n';
+	tableHTML += '	<select name="' + tileId + '_borderBottomStyle" id="' + tileId + '_borderBottomStyle">\n';
+	tableHTML += '		<option value=""></option>\n';
+	tableHTML += '		<option value="none">None</option>\n';
+	tableHTML += '		<option value="dotted">Dotted</option>\n';
+	tableHTML += '		<option value="dashed">Dashed</option>\n';
+	tableHTML += '		<option value="solid">Solid</option>\n';
+	tableHTML += '		<option value="double">Double</option>\n';
+	tableHTML += '	</select><br/><br/>\n';
+	
+	tableHTML += '	<label for="' + tileId + '_borderBottomColor">Color:</label>\n';
+	tableHTML += '  <input id="' + tileId + '_borderBottomColor" type="color"/> Transparency: <input id="' + tileId + '_borderBottomColorAlpha" type="number" min="0" max="1" step="0.1" value="1" /><br/><br/>\n';
+	
+	tableHTML += '</td>\n';
+	tableHTML += '</tr>\n';
+	
+	
+	
+	tableHTML += '<tr>\n';
+	tableHTML += '<td>Order (Z-Index)</td>\n';
+	tableHTML += '<td><input id="' + tileId + '_z-index" type="number" min="0" max="999"/></td>\n';
+	tableHTML += '</tr>\n';
+	
+	tableHTML += '<tr>\n';
+	tableHTML += '<td style="padding-right: 10px">Background</td>\n';
+	tableHTML += '<td><input id="' + tileId + '_bg-color" type="color"/> Transparency: <input id="' + tileId + '_bg-alpha" type="number" min="0" max="1" step="0.1" value="1" /></td>\n';
+	tableHTML += '</tr>\n';
+	tableHTML += '</tbody>\n';
+	return tableHTML;
 }
 
 $(document).ready(function () {
+	
+	var dashboardSettings = document.getElementById("dashboardSettings");
+	var settingsHTML = '';
+	settingsHTML += createDashboardInputs();
 	var x = window.parent.document.getElementsByClassName("tile");
 	
 	var i;
 	// For Each Tile in the dashboard
 	for (i = 0; i < x.length; i++) {
-		createTileTable(x[i].id);
+		settingsHTML += createTileInputs(x[i].id);
 	}	
+	dashboardSettings.innerHTML = settingsHTML;
 	readInSettings();
 	
 });
 </script>
 </head>
 <body>
-	<button onClick="writeCSS();">Update CSS File</button>
-	<div id="tileList">
+	<div class="container">
+		<button onClick="writeCSS();">Update CSS File</button>
+	
+		<div class="form-control">
+			<table id="dashboardSettings"/>
+		</div>
 	</div>
 	
 </body>
@@ -216,7 +408,28 @@ $(document).ready(function () {
 <script>
 
 
-
+function getTileBorderCSS(tileId, borderPos) {
+	var thickEl		= document.getElementById(tileId + '_border' + borderPos + 'Thick');
+	var thickOthEl	= document.getElementById(tileId + '_border' + borderPos + 'ThickOth');
+	var thickVal = thickEl.value;
+	var thickOthVal = thickOthEl.value;
+	if(thickVal != '' && thickVal != 'other') { thickOthVal = ''; }
+	else { if (thickOthVal != '') {
+			thickVal = '';
+			thickOthVal = thickOthVal + 'px'; }
+	}
+	var style		= document.getElementById(tileId + '_border' + borderPos + 'Style');
+	var color		= document.getElementById(tileId + '_border' + borderPos + 'Color');
+	
+	var colorAlpha	= document.getElementById(tileId + '_border' + borderPos + 'ColorAlpha');
+	colorString = 'rgba(' + hexToRgb(color.value.replace("#","")) + ',' + colorAlpha.value + ')';
+	var borderPosStr = '';
+	if (borderPos == 'All') { borderPosStr = 'border'; }
+	else { borderPosStr = 'border-' + borderPos.toLowerCase(); }
+	//#tile-97 { border-bottom: 3px solid gray;
+	return '	#' + tileId + ' { ' + borderPosStr + ': ' + thickVal + thickOthVal + ' ' + style.value + ' ' + colorString + ';}'
+	
+}
 
 function writeCSS() {
 
@@ -237,22 +450,86 @@ var data = '------WebKitFormBoundaryDtoO2QfPwfhTjOuS\n';
 data += 'Content-Disposition: form-data; name="uploadFile"; filename="' + dashName + '.css"\n';
 data += 'Content-Type: text/plain\n\n';
 
+data += '/* Dashboard Settings */\n';
+
+var dashHeader = document.querySelector('input[name="dashHeader"]:checked')?.value;
+var hideDashBack = document.getElementById('hideDashBack');
+var hideDashTitle = document.getElementById('hideDashTitle');
+	
+if (dashHeader == 'hidden') { 
+	data += '.wrapper { height: 100%; margin-top: 0; padding-top: 0; } \n';
+	data += '.dashboard div .header>.flex-auto.justify-end, .dashboard div .header>.flex-auto.justify-end>.flex { visibility: hidden; display: none; }\n';
+}
+
+else {
+
+	if (dashHeader == 'Normal') {
+		if (hideDashBack.checked) { data += '.dashBack { display: none; } \n'; }
+		if (hideDashTitle.checked) { data += '.dashName { display: none; } \n'; }
+	}
+	else {
+
+		if (dashHeader == 'TopRight') {
+
+			data += '.dashboard div .header { position: fixed; top: 0; right: 1em; z-index: 999; opacity: .2; zoom: .6; -moz-transform:scale(.6); }\n';
+			data += '.dashboard div .header>.flex-auto.justify-end, .dashboard div .header>.flex-auto.justify-end>.flex { display: block; }\n';
+		}
+		if (dashHeader == 'BottomRight') {
+
+			data += '.dashboard div .header { position: fixed; bottom: 0; right: 1em; z-index: 999; opacity: .2; zoom: .6; -moz-transform:scale(.6); }\n';
+			data += '.dashboard div .header>.flex-auto.justify-end, .dashboard div .header>.flex-auto.justify-end>.flex { display: block; }\n';
+		}
+		if (dashHeader == 'TopLeft') {
+
+			data += '.dashboard div .header { position: fixed; top: 0; left: 1em; z-index: 999; opacity: .2; zoom: .6; -moz-transform:scale(.6); }\n';
+			data += '.dashboard div .header>.flex-auto.justify-end, .dashboard div .header>.flex-auto.justify-end>.flex { display: block; }\n';
+		}
+		if (dashHeader == 'BottomLeft') {
+
+			data += '.dashboard div .header { position: fixed; bottom: 0; left: 1em; z-index: 999; opacity: .2; zoom: .6; -moz-transform:scale(.6); }\n';
+			data += '.dashboard div .header>.flex-auto.justify-end, .dashboard div .header>.flex-auto.justify-end>.flex { display: block; }\n';
+		}
+		
+		data += '.dashBack { display: none; } \n';
+		data += '.dashName { display: none; } \n';
+	}
+
+}
+
+data += '/* Tile Settings */\n';
+
 var x = window.parent.document.getElementsByClassName("tile");
 var i;
 // For Each Tile in the dashboard
 for (i = 0; i < x.length; i++) {
 	var exportCSS = document.getElementById(`${x[i].id}_exportCSS`);
 	if (exportCSS.checked) {
+		data += '/* ' + x[i].id + ' Settings */\n';
 		var hideTitle = document.getElementById(`${x[i].id}_hideTitle`);
 		if(hideTitle.checked) {
-		  data = data + `	#${x[i].id} .tile-title {visibility: hidden; display: none;}
+		  data += `	#${x[i].id} .tile-title {visibility: hidden; display: none;}
 `;
 		}
 		
 		var zIndex = document.getElementById(`${x[i].id}_z-index`);
 		if(zIndex.value != "") {
-		  data = data + `	#${x[i].id} {z-index: ${zIndex.value}; !important;}
+		  data += `	#${x[i].id} {z-index: ${zIndex.value}; !important;}
 `;
+		}
+		
+		var borderRadius = document.getElementById(`${x[i].id}_radius`);
+		if(borderRadius.value != "" && borderRadius.value != 0) {
+		  data += `	#${x[i].id} { border-radius: ${borderRadius.value}px !important; }
+`;
+		}
+		
+		if (document.getElementById(`${x[i].id}_borderAll`).checked) { data += getTileBorderCSS(x[i].id, 'All') + '\n'; }
+		else {
+		
+			if (document.getElementById(`${x[i].id}_borderLeft`).checked)	{ data += getTileBorderCSS(x[i].id, 'Left') + '\n'; }
+			if (document.getElementById(`${x[i].id}_borderRight`).checked)	{ data += getTileBorderCSS(x[i].id, 'Right') + '\n'; }
+			if (document.getElementById(`${x[i].id}_borderTop`).checked) 	{ data += getTileBorderCSS(x[i].id, 'Top') + '\n'; }
+			if (document.getElementById(`${x[i].id}_borderBottom`).checked)	{ data += getTileBorderCSS(x[i].id, 'Bottom') + '\n'; }
 		}
 		
 		var bgColor = document.getElementById(`${x[i].id}_bg-color`);
@@ -286,6 +563,19 @@ writeSettings();
 } //end of writeCSS()
 
 
+
+function getTileBorderJSON(tileId, borderPos) {
+
+	var thick		= document.getElementById(tileId + '_border' + borderPos + 'Thick');
+	var thickOth	= document.getElementById(tileId + '_border' + borderPos + 'ThickOth');
+	var style		= document.getElementById(tileId + '_border' + borderPos + 'Style');
+	var color		= document.getElementById(tileId + '_border' + borderPos + 'Color');
+	var colorAlpha	= document.getElementById(tileId + '_border' + borderPos + 'ColorAlpha');
+	//var rgbaColorVal = hexToRgb(color.value.replace("#","")) + ',' + colorAlpha.value;
+	return JSON.stringify({ thick : thick.value , thickOth : thickOth.value , style : style.value, color : color.value, colorAlpha : colorAlpha.value });
+}
+
+
 function writeSettings() {
 
 var dashName = getDashName();
@@ -305,10 +595,23 @@ var data = '------WebKitFormBoundaryDtoO2QfPwfhTjOuS\n';
 data += 'Content-Disposition: form-data; name="uploadFile"; filename="' + dashName + '.json"\n';
 data += 'Content-Type: text/plain\n\n';
 
+
+var dashHeader = document.querySelector('input[name="dashHeader"]:checked')?.value;
+var hideDashBack = (document.getElementById('hideDashBack').checked) ? true : false;
+var hideDashTitle = (document.getElementById('hideDashTitle').checked) ? true : false;
+
+data += '{';
+
+data += ' "dashboard" : { "dashHeader" : "' + dashHeader + '"\n';
+data += '				, "hideDashBack" : ' + hideDashBack + '\n';
+data += '				, "hideDashTitle" : ' + hideDashTitle + '\n';
+data += '				}\n';
+
+
 var x = window.parent.document.getElementsByClassName("tile");
 var i;
 
-data += '{"tiles" : [\n';
+data += ',"tiles" : [\n';
 
 // For Each Tile in the dashboard
 for (i = 0; i < x.length; i++) {
@@ -319,23 +622,34 @@ for (i = 0; i < x.length; i++) {
 	var notesEl = document.getElementById(x[i].id + '_notes');
 	var exportCSSEl = document.getElementById(x[i].id + '_exportCSS');
 	var hideTitleEl = document.getElementById(x[i].id + '_hideTitle');
+	var borderRadiusEl = document.getElementById(x[i].id + '_radius');
 	var zIndexEl = document.getElementById(x[i].id + '_z-index');
 	var bgColorEl = document.getElementById(x[i].id + '_bg-color');
 	var bgAlphaEl = document.getElementById(x[i].id + '_bg-alpha');
 	var rgbaColorVal = hexToRgb(bgColorEl.value.replace("#","")) + ',' + bgAlphaEl.value;
-	data += JSON.stringify({id : x[i].id, name : nameEl.value, group : groupEl.value, notes : notesEl.value, exportCSS : exportCSSEl.checked, hideTitle : hideTitleEl.checked, zIndex : zIndexEl.value, bgColor : rgbaColorVal});
 	
-	/*data += '	{\n';
-	data += '	   "id":	"' + x[i].id + '"\n';
-	data += '	 , "name":	"' + nameVal + '"\n';
-	data += '	 , "group":	"' + groupVal + '"\n';
-	data += '	 , "notes":	"' + notesVal + '"\n';
-	data += '	 , "exportCSS":	"' + exportCSSEl.checked + '"\n';
-	data += '	 , "hideTitle":	"' + titleCheck + '"\n';
-	data += '	 , "zIndex":	"' + zIndex.value + '"\n';
-	data += '	 , "bgColor":	"' + hexToRgb(bgColorEl.value.replace("#","")) + ',' + bgAlphaEl.value + '"\n';
-	data += '	}';
-	*/
+	var borderJson = '{ ';
+	
+	if (document.getElementById(`${x[i].id}_borderAll`).checked) { borderJson += '"All": ' + getTileBorderJSON(x[i].id, 'All'); }
+	else {
+	
+		if (document.getElementById(`${x[i].id}_borderLeft`).checked)	{ if (borderJson != '{ ') { borderJson += ','; }
+																		  borderJson += '"Left": ' + getTileBorderJSON(x[i].id, 'Left') + '\n';
+																		}
+		if (document.getElementById(`${x[i].id}_borderRight`).checked)	{ if (borderJson != '{ ') { borderJson += ','; }
+																		  borderJson += '"Right": ' + getTileBorderJSON(x[i].id, 'Right') + '\n';
+																		}
+		if (document.getElementById(`${x[i].id}_borderTop`).checked) 	{ if (borderJson != '{ ') { borderJson += ','; }
+																		  borderJson += '"Top": ' + getTileBorderJSON(x[i].id, 'Top') + '\n';
+																		}
+		if (document.getElementById(`${x[i].id}_borderBottom`).checked)	{ if (borderJson != '{ ') { borderJson += ','; }
+																		  borderJson += '"Bottom": ' + getTileBorderJSON(x[i].id, 'Bottom') + '\n';
+																		}
+	}
+	borderJson += '}\n';
+	data += '{ ';
+	data += '"id" : "' + x[i].id + '", "name" : "' + nameEl.value + '", "group" : "' + groupEl.value + '", "notes" : "' + notesEl.value + '", "exportCSS" : ' + exportCSSEl.checked + ', "hideTitle" : ' + hideTitleEl.checked + ', "borderRadius" : "' + borderRadiusEl.value + '", "borders" : ' + borderJson + ', "zIndex" : "' + zIndexEl.value + '", "bgColor" : "' + rgbaColorVal + '" }';
+	
 	if( i < (x.length - 1) ) { data += ',\n' }
 
 	  }
