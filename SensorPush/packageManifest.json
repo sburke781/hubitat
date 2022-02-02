@@ -2,11 +2,11 @@
 	"packageName": "SensorPush Gateway Driver",
 	"minimumHEVersion": "2.2.9.141",
 	"author": "Simon Burke (sburke781)",
-	"version": "1.0.2",
-	"dateReleased": "2021-12-28",
+	"version": "1.0.3",
+	"dateReleased": "2022-02-02",
 	"documentationLink": "",
 	"communityLink": "https://community.hubitat.com/t/release-sensorpush-gateway-driver/66051",
-	"releaseNotes": "2021-12-31: 1.0.2 - Fix for null returned from getJson() in samples callback\n2021-12-28: 1.0.1 - Changes to HTTP calls to make then asynchronous\n2021-12-28: 1.0.0 - Released in HPM\nFeb '21: Made available on HE Community",
+	"releaseNotes": "2022-02-02: 1.0.3 - Fix Certificate signing / SSL issue\n2021-12-31: 1.0.2 - Fix for null returned from getJson() in samples callback\n2021-12-28: 1.0.1 - Changes to HTTP calls to make then asynchronous\n2021-12-28: 1.0.0 - Released in HPM\nFeb '21: Made available on HE Community",
 	"apps" : [],
 	"drivers" : [
 		{

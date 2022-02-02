@@ -46,6 +46,7 @@
  * 2021-12-28  Simon Burke  Changed HTTP calls to be asynchronous
  * 2021-12-31  Simon Burke  Fix for null json returned in samples (included callback method in getAccessToken())
  *                          Made same fix for sensors to include callback method in async call
+ * 2022-02-02  Simon Burke  Added ignore SSL issues to HTTP calls after certificate appears to be signed by any untrusted party
  * 
  */
 metadata {
@@ -135,7 +136,8 @@ def samples() {
         headers: headers,
         contentType: "application/json",
         requestContentType: "application/json",
-		body : bodyJson
+		body : bodyJson,
+        ignoreSSLIssues: true
 	]
            
 	try {
@@ -212,7 +214,8 @@ def getAuthToken() {
         headers: headers,
         contentType: "application/json",
         requestContentType: "application/json",
-		body : bodyJson
+		body : bodyJson,
+        ignoreSSLIssues: true
 	]
            
 	try {
@@ -242,7 +245,8 @@ def getAccessToken(){
         headers: headers,
         contentType: "application/json",
         requestContentType: "application/json",
-		body : bodyJson
+		body : bodyJson,
+        ignoreSSLIssues: true
 	]
            
 	try {
@@ -273,7 +277,8 @@ def sensors() {
         headers: headers,
         contentType: "application/json",
         requestContentType: "application/json",
-		body : bodyJson
+		body : bodyJson,
+        ignoreSSLIssues: true
 	]
            
 	try {
