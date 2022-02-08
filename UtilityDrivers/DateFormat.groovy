@@ -20,6 +20,7 @@
  *    2021-02-10  Simon Burke    Addition of Scheduling
  *    2021-02-21  Raul Martin    Adding html format for dashboard
  *    2021-02-22  Raul Martin    Adding Timezones
+ *    2022-02-08  jshimota        centered, added debug disable
  *
  */
 metadata {
@@ -31,6 +32,7 @@ metadata {
 	}
 
 	preferences {
+	        input name: "debugEnable", type: "bool", title: "Enable debug logging", defaultValue: false
 		input(name: "timeZone", type: "enum", title: "Select TimeZone:", description: "", multiple: false, required: true, defaultValue:getLocation().timeZone.getID(), options: TimeZone.getAvailableIDs())
 		input(name: "dateFormat", type: "string", title:"Date Format", description: "Enter the date format to apply for display purposes", defaultValue: "EEEE d MMMM, yyyy", required: true, displayDuringSetup: true)
 		input(name: "timeFormat", type: "string", title:"Time Format", description: "Enter the time format to apply for display purposes", defaultValue: "HH:mm", required: false, displayDuringSetup: true)
@@ -45,7 +47,7 @@ def refresh() {
 }
 
 def updated() {
-    log.debug("updated: AutoPolling = ${AutoUpdate}, StatusPollingInterval = ${AutoUpdateInterval}")
+    if (debugEnable) log.debug("updated: AutoPolling = ${AutoUpdate}, StatusPollingInterval = ${AutoUpdateInterval}")
     updatePolling()
 }
 
@@ -62,7 +64,7 @@ def runCmd() {
 
     proposedFormattedDate = simpleDateFormatForDate.format(now);
     proposedFormattedTime = simpleDateFormatForTime.format(now);
-    proposedHtmlFriendlyDateTime = "<span class=\"timeFormat\">${proposedFormattedTime}</span> <span class=\"dateFormat\">${proposedFormattedDate}</span>"
+    proposedHtmlFriendlyDateTime = "<span class=\"timeFormat\"><center>${proposedFormattedTime}</center></span><span class=\"dateFormat\"><center>${proposedFormattedDate}</center></span>"
 
     sendEvent(name: "formattedDate", value : proposedFormattedDate);
     sendEvent(name: "formattedTime", value : proposedFormattedTime);
@@ -74,14 +76,14 @@ def getSchedule() { }
 def updatePolling() {
 
    def sched
-   log.debug("updatePolling: Updating Automatic Polling called, about to unschedule refresh")
+    if (debugEnable) log.debug("updatePolling: Updating Automatic Polling called, about to unschedule refresh")
    unschedule("refresh")
-   log.debug("updatePolling: Unscheduleing refresh complete")
+    if (debugEnable) log.debug("updatePolling: Unscheduleing refresh complete")
 
    if(AutoUpdate == true) {
 
        sched = "2/${AutoUpdateInterval} * * ? * * *"
-       log.debug("updatePolling: Setting up schedule with settings: schedule(\"${sched}\",refresh)")
+    if (debugEnable) log.debug("updatePolling: Setting up schedule with settings: schedule(\"${sched}\",refresh)")
        try{
 
            schedule("${sched}","refresh")
@@ -90,7 +92,7 @@ def updatePolling() {
            log.error("updatePolling: Error - " + e)
        }
 
-       log.debug("updatePolling: Scheduled refresh set")
+   	if (debugEnable) log.debug("updatePolling: Scheduled refresh set")
    }
-   else { log.debug("updatePolling: Automatic status polling disabled")  }
+   else { if (debugEnable) log.debug("updatePolling: Automatic status polling disabled")  }
 }
