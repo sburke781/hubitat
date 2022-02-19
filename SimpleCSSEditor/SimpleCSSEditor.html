@@ -101,7 +101,7 @@ td {
 }
 
 /* Style the collapsible content. Note: hidden by default */
-.borderContent, .textContent, .tileContent {
+.borderContent, .textContent, .tileContent, .iconsContent {
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.4s ease-out;
@@ -197,6 +197,18 @@ function readInSettings() {
 										}
 								});
 							});
+							
+							
+							// Icons
+							$.each( data.tiles[tile].icons, function( iconKey, iconVal ) {
+									var element = document.getElementById(tileId + '_icons' + iconKey.charAt(0).toUpperCase() + iconKey.slice(1));
+									if (element != null) {
+										if (element.type == 'checkbox' || element.type == 'radio') { element.checked = iconVal; }
+										else { element.value = iconVal; }
+									}
+							});
+							
+							
 							document.getElementById(tileId + "_z-index").value = data.tiles[tile].zIndex;
 							const bgColorRgba = data.tiles[tile].bgColor.split(",");
 							document.getElementById(tileId + "_bg-color").value = rgbToHex(parseInt(bgColorRgba[0]), parseInt(bgColorRgba[1]), parseInt(bgColorRgba[2]));
@@ -276,8 +288,24 @@ function createDashboardInputs() {
 	return tableHTML;
 }
 
+function createIconsControlsInputs(tileId) {
+	
+	var tableHTML = '';
+	
+	tableHTML += '	<tr>\n';
+	tableHTML += '	<td style="vertical-align: top;"><input id="' + tileId + '_iconsIconHide" type="checkbox" />\n';
+	tableHTML += '	<label for="' + tileId + '_iconsIconHide">Hide Icon</label></td>\n';
+	tableHTML += '	<td></td>\n';
+	tableHTML += '	</tr>\n';
 
-
+	tableHTML += '	<tr>\n';
+	tableHTML += '	<td style="vertical-align: top;"><input id="' + tileId + '_iconsDimmerHide" type="checkbox" />\n';
+	tableHTML += '	<label for="' + tileId + '_iconsDimmerHide">Hide Slider / Dimmer</label></td>\n';
+	tableHTML += '	<td></td>\n';
+	tableHTML += '	</tr>\n';
+	
+	return tableHTML;
+}
 
 function createBorderPosInputs(tileId, borderPos) {
 
@@ -548,6 +576,30 @@ function createTileInputs(tileId) {
 	tableHTML += '</td>\n';
 	tableHTML += '</tr>\n';
 	
+	// End of Text
+
+	// Icons and Controls
+	tableHTML += '<tr class="tileTR">';
+	tableHTML += '<td onClick="expandSetting(document.getElementById(\'' + tileId + '_iconsButton\'),\'' + tileId + '\',\'icons\', \'yes\')" style="vertical-align: top;">';
+	
+	tableHTML += '<button id="' + tileId + '_iconsButton" type="button" class="collapsible" onClick="expandSetting(this,\'' + tileId + '\',\'icons\', \'yes\')">Icons and Controls</button></td>';
+	
+	tableHTML += '<td style="padding: 0px;">';
+	tableHTML += '<div id="' + tileId + '_iconsContent" class="iconsContent">';
+	
+	tableHTML += '<table>';
+	tableHTML += '<col style="width: 200px;"/>\n';
+	tableHTML += '<col style="width: 300px;"/>\n';
+	
+	tableHTML += createIconsControlsInputs(tileId);	
+	
+	tableHTML += '</table>';
+	tableHTML += '</div>\n';
+	tableHTML += '</td>\n';
+	tableHTML += '</tr>\n';
+	
+	// End of Icons and Controls	
+	
 	tableHTML += '<tr class="tileTR">';
 	tableHTML += '<td>Name</td>';
 	tableHTML += '<td><input id="' + tileId + '_name" type="text" /></td>';
@@ -801,6 +853,9 @@ for (i = 0; i < x.length; i++) {
 		if (document.getElementById(`${x[i].id}_textSecondary`).checked) { data += getTileTextCSS(x[i].id, 'Secondary'); }
 		if (document.getElementById(`${x[i].id}_textTertiary`).checked)	 { data += getTileTextCSS(x[i].id, 'Tertiary'); }
 		
+		if (document.getElementById(`${x[i].id}_iconsIconHide`).checked)	 { data += '	#' + x[i].id + ' .material-icons { display: none; !important; }\n'; }
+		if (document.getElementById(`${x[i].id}_iconsDimmerHide`).checked)	 { data += '	#' + x[i].id + ' .tile-primary > div.dimmer { display: none; !important; }\n'; }
+		
 		var bgColor = document.getElementById(`${x[i].id}_bg-color`);
 		var bgAlpha = document.getElementById(`${x[i].id}_bg-alpha`);
 		if(bgColor.value != "#000000") {
@@ -901,7 +956,7 @@ data += '{';
 data += ' "dashboard" : { "dashHeader" : "' + dashHeader + '"\n';
 data += '				, "hideDashBack" : ' + hideDashBack + '\n';
 data += '				, "hideDashTitle" : ' + hideDashTitle + '\n';
-data += '				}\n';
+data += '		}\n';
 
 
 var x = window.parent.document.getElementsByClassName("tile");
@@ -926,44 +981,52 @@ for (i = 0; i < x.length; i++) {
 	
 	var borderJson = '{ ';
 	
-	if (document.getElementById(`${x[i].id}_borderAll`).checked) { borderJson += '"All": ' + getTileBorderJSON(x[i].id, 'All'); }
+	if (document.getElementById(`${x[i].id}_borderAll`).checked) { borderJson += '\n				"All": ' + getTileBorderJSON(x[i].id, 'All'); }
 	else {
 	
 		if (document.getElementById(`${x[i].id}_borderLeft`).checked)	{ if (borderJson != '{ ') { borderJson += ','; }
-																		  borderJson += '"Left": ' + getTileBorderJSON(x[i].id, 'Left') + '\n';
+																		  borderJson += '\n				"Left": ' + getTileBorderJSON(x[i].id, 'Left') + '\n';
 																		}
 		if (document.getElementById(`${x[i].id}_borderRight`).checked)	{ if (borderJson != '{ ') { borderJson += ','; }
-																		  borderJson += '"Right": ' + getTileBorderJSON(x[i].id, 'Right') + '\n';
+																		  borderJson += '\n				"Right": ' + getTileBorderJSON(x[i].id, 'Right') + '\n';
 																		}
 		if (document.getElementById(`${x[i].id}_borderTop`).checked) 	{ if (borderJson != '{ ') { borderJson += ','; }
-																		  borderJson += '"Top": ' + getTileBorderJSON(x[i].id, 'Top') + '\n';
+																		  borderJson += '\n				"Top": ' + getTileBorderJSON(x[i].id, 'Top') + '\n';
 																		}
 		if (document.getElementById(`${x[i].id}_borderBottom`).checked)	{ if (borderJson != '{ ') { borderJson += ','; }
-																		  borderJson += '"Bottom": ' + getTileBorderJSON(x[i].id, 'Bottom') + '\n';
+																		  borderJson += '\n				"Bottom": ' + getTileBorderJSON(x[i].id, 'Bottom') + '\n';
 																		}
 	}
-	borderJson += '}\n';
+	borderJson += '		}';
 	
 	
 	// Text Title
 		
 	var textJson = '{ ';
-	if (document.getElementById(x[i].id + '_textTitle').checked) { textJson += '"Title": ' + getTileTextJSON(x[i].id, 'Title'); }
+	if (document.getElementById(x[i].id + '_textTitle').checked) { textJson += '\n				"Title": ' + getTileTextJSON(x[i].id, 'Title'); }
 	if (document.getElementById(x[i].id + '_textPrimary').checked) { if (textJson != '{ ') { textJson += ','; }
-																	 textJson += '"Primary": ' + getTileTextJSON(x[i].id, 'Primary');
+																	 textJson += '\n				"Primary": ' + getTileTextJSON(x[i].id, 'Primary');
 																	}
 	if (document.getElementById(x[i].id + '_textSecondary').checked) {
 																		if (textJson != '{ ') { textJson += ','; }
-																		textJson += '"Secondary": ' + getTileTextJSON(x[i].id, 'Secondary');
+																		textJson += '\n				"Secondary": ' + getTileTextJSON(x[i].id, 'Secondary');
 																	}
 	if (document.getElementById(x[i].id + '_textTertiary').checked) {
 																		if (textJson != '{ ') { textJson += ','; }
-																		textJson += '"Tertiary": ' + getTileTextJSON(x[i].id, 'Tertiary');
+																		textJson += '\n				"Tertiary": ' + getTileTextJSON(x[i].id, 'Tertiary');
 																	}
-	textJson += '}\n';
-	 
-	data += '{ ';
-	data += '"id" : "' + x[i].id + '", "name" : "' + nameEl.value + '", "group" : "' + groupEl.value + '", "notes" : "' + notesEl.value + '", "exportCSS" : ' + exportCSSEl.checked + ', "hideTitle" : ' + hideTitleEl.checked + ', "borderRadius" : "' + borderRadiusEl.value + '", "borders" : ' + borderJson + ', "text" : ' + textJson + ', "zIndex" : "' + zIndexEl.value + '", "bgColor" : "' + rgbaColorVal + '" }';
+	textJson += '\n			}';
+
+	var iconHide	= document.getElementById(x[i].id + '_iconsIconHide').checked
+	var dimmerHide	= document.getElementById(x[i].id + '_iconsDimmerHide').checked
+	
+	var iconsJson = '{ ';
+	iconsJson += '"iconHide" : ' + iconHide + ', "dimmerHide" : ' + dimmerHide;
+	
+	iconsJson += ' }';
+	
+	data += '	{ ';
+	data += '"id" : "' + x[i].id + '", "name" : "' + nameEl.value + '", "group" : "' + groupEl.value + '", "notes" : "' + notesEl.value + '", "exportCSS" : ' + exportCSSEl.checked + ', "hideTitle" : ' + hideTitleEl.checked + ', "borderRadius" : "' + borderRadiusEl.value + '",\n		"borders" : ' + borderJson + ',\n		"text" : ' + textJson + ',\n		"icons" : ' + iconsJson + '\n		,"zIndex" : "' + zIndexEl.value + '", "bgColor" : "' + rgbaColorVal + '"\n	}';
 	
 	if( i < (x.length - 1) ) { data += ',\n' }
 
