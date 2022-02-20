@@ -766,8 +766,6 @@ function getTileTextCSS(tileId, srcTileId, textPos) {
 	var vFontColorAlpha	= document.getElementById(srcTileId + '_text' + textPos + 'FontColorAlpha').value;
 	var colorString = 'rgba(' + hexToRgb(vFontColorVal.replace("#","")) + ',' + vFontColorAlpha + ')';
 	
-	//#tile-18 div>div { justify-content: left !important; }
-
 	var adjustAlignment = document.getElementById(srcTileId + '_text' + textPos + 'Align').checked;
 	var alignVal = document.getElementById(srcTileId + '_text' + textPos + 'AlignVal').value;
 	
@@ -976,7 +974,10 @@ function getTileTextJSON(tileId, textType) {
 	var vFontColorVal	= document.getElementById(tileId + '_text' + textType + 'FontColorVal').value;
 	var vFontColorAlpha	= document.getElementById(tileId + '_text' + textType + 'FontColorAlpha').value;
 	
-	return JSON.stringify({ hide : textContentsHide , replace : textContentsReplace , addTo : textContentsAddTo , replaceText : replaceTextVal, beforeText : beforeTextVal , afterText : afterTextVal , fontSize : adjustFontSize , fontSizeVal : vfontSizeVal , fontFamily : adjustFontFamily , fontFamilyVal : vFontFamilyVal , fontFamilyOther : vFontFamilyOther , fontBold : vFontBold , fontItalic : vFontItalic , fontUnderline : vFontUnderline , fontColor : vFontColor , fontColorVal : vFontColorVal , fontColorAlpha : vFontColorAlpha });
+	var adjustAlignment = document.getElementById(tileId + '_text' + textType + 'Align').checked;
+	var alignVal = document.getElementById(tileId + '_text' + textType + 'AlignVal').value;
+	
+	return JSON.stringify({ hide : textContentsHide , replace : textContentsReplace , addTo : textContentsAddTo , replaceText : replaceTextVal, beforeText : beforeTextVal , afterText : afterTextVal , fontSize : adjustFontSize , fontSizeVal : vfontSizeVal , fontFamily : adjustFontFamily , fontFamilyVal : vFontFamilyVal , fontFamilyOther : vFontFamilyOther , fontBold : vFontBold , fontItalic : vFontItalic , fontUnderline : vFontUnderline , align : adjustAlignment , alignVal : alignVal , fontColor : vFontColor , fontColorVal : vFontColorVal , fontColorAlpha : vFontColorAlpha });
 }
 
 function writeSettings() {
@@ -1067,6 +1068,10 @@ for (i = 0; i < x.length; i++) {
 	if (document.getElementById(x[i].id + '_textTertiary').checked) {
 																		if (textJson != '{ ') { textJson += ','; }
 																		textJson += '\n				"Tertiary": ' + getTileTextJSON(x[i].id, 'Tertiary');
+																	}
+	if (document.getElementById(x[i].id + '_textTextTile').checked) {
+																		if (textJson != '{ ') { textJson += ','; }
+																		textJson += '\n				"TextTile": ' + getTileTextJSON(x[i].id, 'TextTile');
 																	}
 	textJson += '\n			}';
 
