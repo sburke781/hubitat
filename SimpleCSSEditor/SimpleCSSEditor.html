@@ -3,31 +3,110 @@
 <head>
 
 <style>
+
+html {
+	font-family: verdana;
+}
+
  table { 
-    width: 500px; 
     border-collapse: collapse; 
-    margin:30px auto;
+    margin: 0px 0px 0px 0px;
     }
+
 /* Zebra striping */
+/*
 tr:nth-of-type(even) { 
     background: #bfbfbf; 
     }
 tr:nth-of-type(odd) { 
     background: #eeeeee; 
     }
+
+*/
+
+/* Zebra striping */
+.tileTR:nth-of-type(even), .tileTRAlt:nth-of-type(odd) { 
+    background: #bfbfbf; 
+    }
+	
+.tileTR:nth-of-type(odd), .tileTRAlt:nth-of-type(even) { 
+    background: #eeeeee; 
+    }
+	
+	
+
+
 th { 
-    background: #3498db; 
+    background: rgba(39, 109, 140,0.50); 
     color: white; 
-    font-weight: bold; 
     }
 td, th { 
-    padding: 10px; 
+    padding: 10px;
     border: 0px; 
     text-align: left; 
-    font-size: 12px;
     }
-	
-	
+
+td {
+	font-size: 12px;
+}
+
+.tileContent {
+	display: block;
+	padding-bottom: 10px;
+	width: 700px;
+}
+
+.dashboardHeading, .tileHeading {
+	font-weight: normal;
+	font-size: 14px;
+	color: white;
+	background-color: transparent;
+	border: none;
+	padding-left: 5px;
+	margin: 0px;
+	text-align: left;
+	outline: none;
+}
+
+.templateName {
+	font-style: italic;
+	font-weight: normal;
+	font-size: 10px;
+	color: white;
+}
+
+
+
+.collapsible {
+  background-color: transparent;
+  border: none;
+  padding: 0px;
+  margin: 0px;
+  text-align: left;
+  outline: none;
+  font-size: 12px;
+}
+
+.collapsible:after {
+  content: '\02795'; /* Unicode character for "plus" sign (+) */
+  font-size: 10px;
+  float: right;
+  margin-left: 5px;
+}
+
+
+.active:after {
+  content: "\2796"; /* Unicode character for "minus" sign (-) */
+  font-size: 10px;
+}
+
+/* Style the collapsible content. Note: hidden by default */
+.borderContent, .textContent, .tileContent, .iconsContent {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease-out;
+}	
+
 
 </style>
 
@@ -84,28 +163,60 @@ function readInSettings() {
 						
 						for (var tile in data.tiles) {
 							var tileId = data.tiles[tile].id;
-							document.getElementById(tileId + "_name").value = data.tiles[tile].name;
-							document.getElementById(tileId + "_group").value = data.tiles[tile].group;
-							document.getElementById(tileId + "_notes").value = data.tiles[tile].notes;
-							document.getElementById(tileId + "_exportCSS").checked = data.tiles[tile].exportCSS;
-							document.getElementById(tileId + "_hideTitle").checked = data.tiles[tile].hideTitle;
-							document.getElementById(tileId + "_radius").value = data.tiles[tile].borderRadius;
-							
-							//"borders" : { "All": {"thick":"","thickOth":"","style":"solid","color":"208,98,98,1"}
-							
-							$.each( data.tiles[tile].borders, function( borderKey, borderVal ) {
+							var tileEl = window.parent.document.getElementById(tileId);
+							if (tileEl != null) {
+								document.getElementById(tileId + "_name").value = data.tiles[tile].name;
+								document.getElementById(tileId + "_group").value = data.tiles[tile].group;
+								document.getElementById(tileId + "_notes").value = data.tiles[tile].notes;
+								document.getElementById(tileId + "_exportCSS").checked = data.tiles[tile].exportCSS;
+								document.getElementById(tileId + "_CSSTemplate").value = data.tiles[tile].cssTemplate;
+								document.getElementById(tileId + "_hideTitle").checked = data.tiles[tile].hideTitle;
+								document.getElementById(tileId + "_radius").value = data.tiles[tile].borderRadius;
 								
-								document.getElementById(tileId + "_border" + borderKey).checked = true;
-								$.each( borderVal, function( borderPosKey, borderPosVal ) {
-									document.getElementById(tileId + '_border' + borderKey + borderPosKey.charAt(0).toUpperCase() + borderPosKey.slice(1)).value = borderPosVal;
+								// Borders
+								
+								$.each( data.tiles[tile].borders, function( borderKey, borderVal ) {
+										var borderCheckbox = document.getElementById(tileId + "_border" + borderKey);
+										borderCheckbox.checked = true;
+										expandSetting(borderCheckbox, tileId, 'border_' + borderKey, 'no');
+										$.each( borderVal, function( borderPosKey, borderPosVal ) {
+											var element = document.getElementById(tileId + '_border' + borderKey + borderPosKey.charAt(0).toUpperCase() + borderPosKey.slice(1));
+											if(element.type == 'checkbox') { element.checked = borderPosVal; }
+											else { element.value = borderPosVal; }
+									});
 								});
-							});
-							
-							document.getElementById(tileId + "_z-index").value = data.tiles[tile].zIndex;
-							const bgColorRgba = data.tiles[tile].bgColor.split(",");
-							document.getElementById(tileId + "_bg-color").value = rgbToHex(parseInt(bgColorRgba[0]), parseInt(bgColorRgba[1]), parseInt(bgColorRgba[2]));
-							document.getElementById(tileId + "_bg-alpha").value = bgColorRgba[3];
-							
+								
+								// Text
+								$.each( data.tiles[tile].text, function( textKey, textVal ) {
+										var textCheckbox = document.getElementById(tileId + "_text" + textKey);
+										textCheckbox.checked = true;
+										expandSetting(textCheckbox, tileId, 'text_' + textKey, 'no');
+										
+										$.each( textVal, function( textPosKey, textPosVal ) {
+											var element = document.getElementById(tileId + '_text' + textKey + textPosKey.charAt(0).toUpperCase() + textPosKey.slice(1));
+											if (element != null) {
+												if (element.type == 'checkbox' || element.type == 'radio') { element.checked = textPosVal; }
+												else { element.value = textPosVal; }
+											}
+									});
+								});
+								
+								
+								// Icons
+								$.each( data.tiles[tile].icons, function( iconKey, iconVal ) {
+										var element = document.getElementById(tileId + '_icons' + iconKey.charAt(0).toUpperCase() + iconKey.slice(1));
+										if (element != null) {
+											if (element.type == 'checkbox' || element.type == 'radio') { element.checked = iconVal; }
+											else { element.value = iconVal; }
+										}
+								});
+								
+								
+								document.getElementById(tileId + "_z-index").value = data.tiles[tile].zIndex;
+								const bgColorRgba = data.tiles[tile].bgColor.split(",");
+								document.getElementById(tileId + "_bg-color").value = rgbToHex(parseInt(bgColorRgba[0]), parseInt(bgColorRgba[1]), parseInt(bgColorRgba[2]));
+								document.getElementById(tileId + "_bg-alpha").value = bgColorRgba[3];
+							}
 						}
 
 					}
@@ -136,25 +247,30 @@ function readInSettings() {
 function createDashboardInputs() {
 
 	var tableHTML = '';
+	
+	tableHTML += '<table id="dashboardSettings" >\n';
+	tableHTML += '<col style="width: 200px;"/>\n';
+	tableHTML += '<col style="width: 500px;"/>\n';
+	
+	
+	
 	tableHTML += '<thead>';
-	//style="background-color: rgba(30,0,200,0.6)"
 	tableHTML += '<tr>';
-	tableHTML += '<th colspan="2">Dashboard</th>';
+	tableHTML += '<th colspan="2"><span class="dashboardHeading">Dashboard</span></th>';
 	tableHTML += '</tr>';
 	tableHTML += '</thead>';
 
 	tableHTML += '<tbody>';
-	tableHTML += '<tr>';
-	tableHTML += '<td>Dashboard Header and Controls</td>';
+	tableHTML += '<tr class="tileTR">';
+	tableHTML += '<td style="vertical-align: top;">Dashboard Header and Controls</td>';
 	
-//	tableHTML += '<td><input id="hideDashHeader" type="checkbox"/></td>';
 	tableHTML += '<td>';
 	tableHTML += '<input type="radio" id="dashHeaderNormal" name="dashHeader" onclick="dashHeaderClick(this);" value="Normal">';
 	tableHTML += '<label for="dashHeaderNormal">Normal Display</label><br/>';
 	
-	tableHTML += '<input type="checkbox" id="hideDashBack" />';
-	tableHTML += '<label for="hideDashBack">	Hide Back (Hubitat) Icon?</label><br/>';
-	tableHTML += '<input type="checkbox" id="hideDashTitle" />';
+	tableHTML += '<input type="checkbox" id="hideDashBack" style="margin-left: 40px"/>';
+	tableHTML += '<label for="hideDashBack">Hide Back (Hubitat) Icon?</label><br/>';
+	tableHTML += '<input type="checkbox" id="hideDashTitle" style="margin-left: 40px"/>';
 	tableHTML += '<label for="hideDashTitle">	Hide Title?</label><br/>';
 	
 	tableHTML += '<input type="radio" id="dashHeaderHidden" name="dashHeader" onclick="dashHeaderClick(this);" value="Hidden">';
@@ -171,6 +287,226 @@ function createDashboardInputs() {
 	
 	tableHTML += '</tr>';
 	tableHTML += '</tbody>';
+	tableHTML += '</table>\n';
+	return tableHTML;
+}
+
+function createIconsControlsInputs(tileId) {
+	
+	var tableHTML = '';
+	
+	tableHTML += '	<tr>\n';
+	tableHTML += '	<td style="vertical-align: top;"><input id="' + tileId + '_iconsIconHide" type="checkbox" />\n';
+	tableHTML += '	<label for="' + tileId + '_iconsIconHide">Hide Icon</label></td>\n';
+	tableHTML += '	<td></td>\n';
+	tableHTML += '	</tr>\n';
+
+	tableHTML += '	<tr>\n';
+	tableHTML += '	<td style="vertical-align: top;"><input id="' + tileId + '_iconsDimmerHide" type="checkbox" />\n';
+	tableHTML += '	<label for="' + tileId + '_iconsDimmerHide">Hide Slider / Dimmer</label></td>\n';
+	tableHTML += '	<td></td>\n';
+	tableHTML += '	</tr>\n';
+	
+	return tableHTML;
+}
+
+function createBorderPosInputs(tileId, borderPos) {
+
+	var tableHTML = '';
+	
+	tableHTML += '	<tr>\n';
+	tableHTML += '	<td><input id="' + tileId + '_border' + borderPos + '" type="checkbox" onclick="expandSetting(this, \'' + tileId + '\', \'border_' + borderPos + '\', \'no\')"/>\n';
+	tableHTML += '	<label for="' + tileId + '_border' + borderPos + '">' + borderPos + '</label></td>\n';
+	tableHTML += '	<td></td>\n';
+	tableHTML += '	</tr>\n';
+	
+	tableHTML += '<tr>';
+	tableHTML += '<td colspan="2"  style="padding: 0px;">';
+	
+	tableHTML += '<div id="' + tileId + '_border_' + borderPos + 'Content" class="textContent" >\n';
+	tableHTML += '<table>\n';
+	tableHTML += '<col style="width: 200px;"/>\n';
+	tableHTML += '<col style="width: 300px;"/>\n';
+	
+	tableHTML += '	<tr>\n';
+	tableHTML += '	<td style="vertical-align: top; text-align: right; "><label for="' + tileId + '_border' + borderPos + 'Thick">Thickness:</label></td>\n';
+	tableHTML += '	<td><select name="' + tileId + '_border' + borderPos + 'Thick" id="' + tileId + '_border' + borderPos + 'Thick">\n';
+	tableHTML += '		<option value=""></option>\n';
+	tableHTML += '		<option value="thin">Thin</option>\n';
+	tableHTML += '		<option value="medium">Medium</option>\n';
+	tableHTML += '		<option value="thick">Thick</option>\n';
+	tableHTML += '		<option value="other">Other</option>\n';
+	tableHTML += '	</select>\n';
+	tableHTML += '	<input id="' + tileId + '_border' + borderPos + 'ThickOth" type="number" min="0" max="10"/> pixels</td>\n';
+	tableHTML += '	</tr>\n';
+	
+	tableHTML += '	<tr>\n';
+	tableHTML += '	<td style="vertical-align: top; text-align: right; "><label for="' + tileId + '_border' + borderPos + 'Style">Style:</label></td>\n';
+	tableHTML += '	<td><select name="' + tileId + '_border' + borderPos + 'Style" id="' + tileId + '_border' + borderPos + 'Style">\n';
+	tableHTML += '		<option value=""></option>\n';
+	tableHTML += '		<option value="none">None</option>\n';
+	tableHTML += '		<option value="dotted">Dotted</option>\n';
+	tableHTML += '		<option value="dashed">Dashed</option>\n';
+	tableHTML += '		<option value="solid">Solid</option>\n';
+	tableHTML += '		<option value="double">Double</option>\n';
+	tableHTML += '	</select></td>\n';
+	tableHTML += '	</tr>\n';
+	
+	
+	tableHTML += '	<tr>\n';
+	tableHTML += '	<td style="vertical-align: top; text-align: right; "><label for="' + tileId + '_border' + borderPos + 'Color">Color:</label></td>\n';
+	tableHTML += '  <td><input id="' + tileId + '_border' + borderPos + 'Color" type="color"/> Transparency: <input id="' + tileId + '_border' + borderPos + 'ColorAlpha" type="number" min="0" max="1" step="0.1" value="1" /></td>\n';
+	tableHTML += '	</tr>\n';
+	
+	tableHTML += '	</td>\n';
+	tableHTML += '	</tr>\n';
+	tableHTML += '	</table>\n';
+	tableHTML += '</div>';
+	tableHTML += '	</td>\n';
+	tableHTML += '	</tr>\n';
+	
+	return tableHTML;
+}
+
+
+// /html/body/div/div/div/div[2]/div[7]/div[1]/div
+
+//document.querySelector("#tile-7 > div.flex.flex-col.w-full.text-center.h-full > div")
+
+function createTileTextPosInputs(tileId, textPos) {
+
+	var contentsVal = '';
+	var contentsEl;
+	var tileEl = window.parent.document.getElementById(tileId);
+	if (tileEl != null) {
+		if (textPos != 'TextTile') { contentsEls = tileEl.getElementsByClassName("tile-" + textPos.toLowerCase()); }
+		else { contentsEls = tileEl.getElementsByTagName("div")[0].getElementsByTagName("div"); }
+		if(contentsEls && contentsEls.length > 0) { contentsVal = contentsEls[0].textContent; }
+	}
+	contentsVal = (contentsVal == null || contentsVal == '') ? '<i>Blank</i>' : contentsVal;
+	
+	var tableHTML = '';
+	
+	tableHTML += '<tr class="tileTR">';
+	tableHTML += '<td><input id="' + tileId + '_text' + textPos + '" onclick="expandSetting(this, \'' + tileId + '\', \'text_' + textPos + '\', \'no\')" type="checkbox"/>';
+	tableHTML += '<label for="' + tileId + '_text' + textPos + '">' + textPos + '</label></td>';	
+	tableHTML += '<td>' + contentsVal + '</td>';
+	tableHTML += '</tr>';
+	
+	tableHTML += '<tr class="tileTRAlt">';
+	tableHTML += '<td colspan="2"  style="padding: 0px;">';
+	
+	tableHTML += '<div id="' + tileId + '_text_' + textPos + 'Content" class="textContent" >\n';
+	tableHTML += '<table>\n';
+	tableHTML += '<col style="width: 200px;"/>\n';
+	tableHTML += '<col style="width: 300px;"/>\n';
+	
+	tableHTML += '<tr>';
+	tableHTML += '<td style="vertical-align: top; padding-left: 30px;"><input type="radio" id="' + tileId + '_text' + textPos + 'Default" name="' + tileId + '_text' + textPos + 'Option" value="Default" checked="checked">\n';
+	tableHTML += '<label for="' + tileId + '_text' + textPos + 'Default">Default</label>\n';
+	tableHTML += '</td>\n';
+	tableHTML += '<td></td>\n';
+	tableHTML += '</tr>\n';
+	
+	tableHTML += '<tr>';
+	tableHTML += '<td style="vertical-align: top; padding-left: 30px;"><input type="radio" id="' + tileId + '_text' + textPos + 'Hide" name="' + tileId + '_text' + textPos + 'Option" value="Hide">\n';
+	tableHTML += '<label for="' + tileId + '_text' + textPos + 'Hide">Hide</label>\n';
+	tableHTML += '</td>\n';
+	tableHTML += '<td></td>\n';
+	tableHTML += '</tr>\n';
+	
+	tableHTML += '	<tr>\n';
+	tableHTML += '	<td style="vertical-align: top; padding-left: 30px;"><input type="radio" id="' + tileId + '_text' + textPos + 'Replace" name="' + tileId + '_text' + textPos + 'Option" value="Replace">\n';
+	tableHTML += '	<label for="' + tileId + '_text' + textPos + 'Replace">Replace:</label>\n';
+	tableHTML += '	</td>\n';
+	tableHTML += '	<td>\n';
+	tableHTML += '  <input id="' + tileId + '_text' + textPos + 'ReplaceText" type="text" />\n';
+	tableHTML += '	</td>\n';
+	tableHTML += '	</tr>\n';
+	
+	tableHTML += '	<tr>\n';
+	tableHTML += '	<td style="vertical-align: top; padding-left: 30px;"><input type="radio" id="' + tileId + '_text' + textPos + 'AddTo" name="' + tileId + '_text' + textPos + 'Option" value="AddTo">\n';
+	tableHTML += '	<label for="' + tileId + '_text' + textPos + 'AddTo">Add Text:</label>\n';
+	tableHTML += '	</td>\n';
+	tableHTML += '	<td>\n';
+	tableHTML += '	<label for="' + tileId + '_text' + textPos + 'BeforeText">Before:</label>';
+	tableHTML += '  <input id="' + tileId + '_text' + textPos + 'BeforeText" type="text" /><br/>\n';
+	tableHTML += '	<label for="' + tileId + '_text' + textPos + 'AfterText">After:</label>';
+	tableHTML += '  <input id="' + tileId + '_text' + textPos + 'AfterText" type="text" /><br/>\n';
+	
+	tableHTML += '	</td>\n';
+	tableHTML += '	</tr>\n';
+	
+	tableHTML += '	<tr>\n';
+	tableHTML += '	<td style="vertical-align: top; text-align: left; padding-left: 30px;"><input id="' + tileId + '_text' + textPos + 'FontFamily" type="checkbox" /><label for="' + tileId + '_text' + textPos + 'FontFamily">Font Family:</label></td>\n';
+	tableHTML += '	<td><select name="' + tileId + '_text' + textPos + 'FontFamilyVal" id="' + tileId + '_text' + textPos + 'FontFamilyVal">\n';
+	tableHTML += '		<option value=""></option>\n';
+	tableHTML += '		<option value="Arial" style="font-family: Arial;">Arial</option>\n';
+	tableHTML += '		<option value="Arial Black" style="font-family: \'Arial Black\';">Arial Black</option>\n';
+	tableHTML += '		<option value="Verdana" style="font-family: Verdana;">Verdana</option>\n';
+	tableHTML += '		<option value="Tahoma" style="font-family: Tahoma;">Tahoma</option>\n';
+	tableHTML += '		<option value="Trebuchet MS" style="font-family: \'Trebuchet MS\';">Trebuchet MS</option>\n';
+	tableHTML += '		<option value="Impact" style="font-family: Impact;">Impact</option>\n';
+	tableHTML += '		<option value="Times New Roman" style="font-family: \'Times New Roman\';">Times New Roman</option>\n';
+	tableHTML += '		<option value="Didot" style="font-family: Didot;">Didot</option>\n';
+	tableHTML += '		<option value="Georgia" style="font-family: Georgia;">Georgia</option>\n';
+	tableHTML += '		<option value="American Typewriter" style="font-family: \'American Typewriter\';">American Typewriter</option>\n';
+	tableHTML += '		<option value="Andalé Mono" style="font-family: \'Andalé Mono\';">Andalé Mono</option>\n';
+	tableHTML += '		<option value="Courier" style="font-family: Courier;">Courier</option>\n';
+	tableHTML += '		<option value="Lucida Console" style="font-family: \'Lucida Console\';">Lucida Console</option>\n';
+	tableHTML += '		<option value="Monaco" style="font-family: Monaco;">Monaco</option>\n';
+	tableHTML += '		<option value="Bradley Hand" style="font-family: \'Bradley Hand\';">Bradley Hand</option>\n';
+	tableHTML += '		<option value="Brush Script MT" style="font-family: \'Brush Script MT\';">Brush Script MT</option>\n';
+	tableHTML += '		<option value="Luminari" style="font-family: Luminari;">Luminari</option>\n';
+	tableHTML += '		<option value="Comic Sans MS" style="font-family: \'Comic Sans MS\';">Comic Sans MS</option>\n';
+	tableHTML += '		<option value="Other">Other...</option>\n';
+	tableHTML += '	</select><br/>';
+	tableHTML += '  <input id="' + tileId + '_text' + textPos + 'FontFamilyOther" type="text" />\n';
+	tableHTML += '	</td>\n';
+	tableHTML += '	</tr>\n';
+
+
+
+	tableHTML += '	<tr>\n';
+	tableHTML += '	<td style="vertical-align: top; padding-left: 30px;">Font Style: </td>\n';
+	tableHTML += '	<td>';
+	tableHTML += '	<input id="' + tileId + '_text' + textPos + 'FontBold" type="checkbox" /><label for="' + tileId + '_text' + textPos + 'FontBold">Bold</label><br/>';
+	tableHTML += '	<input id="' + tileId + '_text' + textPos + 'FontItalic" type="checkbox" /><label for="' + tileId + '_text' + textPos + 'FontItalic">Italic</label><br/>';
+	tableHTML += '	<input id="' + tileId + '_text' + textPos + 'FontUnderline" type="checkbox" /><label for="' + tileId + '_text' + textPos + 'FontUnderline">Underline</label>';
+	tableHTML += '	</td>\n';
+	tableHTML += '	</tr>\n';
+
+	
+	tableHTML += '	<tr>\n';
+	tableHTML += '	<td style="vertical-align: top; padding-left: 30px;"><input id="' + tileId + '_text' + textPos + 'FontSize" type="checkbox" />\n';
+	tableHTML += '	<label for="' + tileId + '_text' + textPos + 'FontSize">Font Size: </label></td>\n';
+	tableHTML += '	<td><input id="' + tileId + '_text' + textPos + 'FontSizeVal" type="number" min="0" max="50" step="1" /> px</td>\n';
+	tableHTML += '	</tr>\n';
+
+	tableHTML += '	<tr>\n';
+	tableHTML += '	<td style="vertical-align: top; text-align: left; padding-left: 30px;"><input id="' + tileId + '_text' + textPos + 'FontColor" type="checkbox" /><label for="' + tileId + '_text' + textPos + 'FontColor">Font Color:</label></td>\n';
+	tableHTML += '  <td><input id="' + tileId + '_text' + textPos + 'FontColorVal" type="color"/> Transparency: <input id="' + tileId + '_text' + textPos + 'FontColorAlpha" type="number" min="0" max="1" step="0.1" value="1" /></td>\n';
+	tableHTML += '	</tr>\n';
+
+	// Text Alignment Setting
+
+	tableHTML += '	<tr>\n';
+	tableHTML += '	<td style="vertical-align: top; text-align: left; padding-left: 30px;"><input id="' + tileId + '_text' + textPos + 'Align" type="checkbox" /><label for="' + tileId + '_text' + textPos + 'Align">Alignment:</label></td>\n';
+	tableHTML += '	<td><select name="' + tileId + '_text' + textPos + 'AlignVal" id="' + tileId + '_text' + textPos + 'AlignVal">\n';
+	tableHTML += '		<option value=""></option>\n';
+	tableHTML += '		<option value="Left" >Left</option>\n';
+	tableHTML += '		<option value="Center" >Center</option>\n';
+	tableHTML += '		<option value="Right" >Right</option>\n';
+	tableHTML += '	</select><br/>';
+	tableHTML += '	</td>\n';
+	tableHTML += '	</tr>\n';
+
+	
+	tableHTML += '	</table>\n';
+	tableHTML += '</div>';
+	tableHTML += '	</td>\n';
+	tableHTML += '	</tr>\n';
+		
 	return tableHTML;
 }
 
@@ -181,212 +517,157 @@ function createTileInputs(tileId) {
 		
 	var tableHTML = '';
 	
-	tableHTML += '<thead>';
-	//style="background-color: rgba(30,0,200,0.6)"
-	tableHTML += '<tr>';
-	tableHTML += '<th colspan="2">Tile ' + tileId + '</th>';
-	tableHTML += '</tr>';
-	tableHTML += '</thead>';
+	tableHTML += '<table>\n';
+	tableHTML += '<col style="width: 200px;"/>\n';
+	tableHTML += '<col style="width: 500px;"/>\n';
+	tableHTML += '<thead>\n';
+	tableHTML += '<th onClick="expandSetting(this,\'' + tileId + '\',\'tile\', \'no\')">\n';
+	tableHTML += '<input id="' + tileId + '_exportCSS" type="checkbox"/><button type="button" class="tileHeading" onClick="expandSetting(this,\'' + tileId + '\',\'tile\', \'no\')"><span>' + tileId + '</span></button><br/>\n';
+	tableHTML += '<span class="templateName" style="padding-left: 24px">' + tileTemplate + '</span>\n';
+	tableHTML += '</th><th style="text-align:right;"><select id="' + tileId + '_CSSTemplate" /></th>\n';
+	tableHTML += '</thead>\n';
+	tableHTML += '</table>\n';
 	
-	tableHTML += '<tbody>';
-	tableHTML += '<tr>';
-	tableHTML += '<td>Name</td>';
-	tableHTML += '<td><input id="' + tileId + '_name" type="text" /></td>';
-	tableHTML += '</tr>';
-	
-	tableHTML += '<tr>';
-	tableHTML += '<td>Template</td>';
-	tableHTML += '<td>' + tileTemplate + '</td>';
-	tableHTML += '</tr>';
-	
-	tableHTML += '<tr>\n';
-	tableHTML += '<td>Group</td>\n';
-	tableHTML += '<td><input id="' + tileId + '_group" type="text" /></td>\n';
-	tableHTML += '</tr>\n';
-	
-	tableHTML += '<tr>\n';
-	tableHTML += '<td>Notes</td>\n';
-	tableHTML += '<td><textarea id="' + tileId + '_notes" cols="25" rows="6" maxlength="255" /></textarea></td>\n';
-	tableHTML += '</tr>\n';
-	
-	tableHTML += '<tr>\n';
-	tableHTML += '<td>Export Tile CSS?</td>\n';
-	tableHTML += '<td><input id="' + tileId + '_exportCSS" type="checkbox"/></td>\n';
-	tableHTML += '</tr>\n';
-	
-	tableHTML += '<tr>\n';
+	tableHTML += '<div id="' + tileId + '_tileContent" class="tileContent">\n';
+	tableHTML += '<table>\n';
+	tableHTML += '<col style="width: 200px;"/>\n';
+	tableHTML += '<col style="width: 500px;"/>\n';
+	tableHTML += '<tbody >\n';
+	tableHTML += '<tr class="tileTR">\n';
 	tableHTML += '<td>Hide Title?</td>\n';
 	tableHTML += '<td><input id="' + tileId + '_hideTitle" type="checkbox"/></td>\n';
 	tableHTML += '</tr>\n';
 	
-	tableHTML += '<tr>\n';
-	tableHTML += '<td>Borders</td>\n';
-	tableHTML += '<td>\n';
-	tableHTML += '	<label for="' + tileId + '_radius">Rounding: </label>\n';
-	tableHTML += '	<input id="' + tileId + '_radius" type="number" min="0" max="30"/> pixels<br/><br/>\n';
-	
-	tableHTML += '	<input id="' + tileId + '_borderAll" type="checkbox"/>\n';
-	tableHTML += '	<label for="' + tileId + '_borderAll">All</label><br/>\n';
-	
-	tableHTML += '	<label for="' + tileId + '_borderAllThick">Thickness:</label>\n';
-	tableHTML += '	<select name="' + tileId + '_borderAllThick" id="' + tileId + '_borderAllThick">\n';
-	tableHTML += '		<option value=""></option>\n';
-	tableHTML += '		<option value="thin">Thin</option>\n';
-	tableHTML += '		<option value="medium">Medium</option>\n';
-	tableHTML += '		<option value="thick">Thick</option>\n';
-	tableHTML += '		<option value="other">Other</option>\n';
-	tableHTML += '	</select>\n';
-	tableHTML += '	<input id="' + tileId + '_borderAllThickOth" type="number" min="0" max="10"/> pixels<br/>\n';
-	
-	tableHTML += '	<label for="' + tileId + '_borderAllStyle">Style:</label>\n';
-	tableHTML += '	<select name="' + tileId + '_borderAllStyle" id="' + tileId + '_borderAllStyle">\n';
-	tableHTML += '		<option value=""></option>\n';
-	tableHTML += '		<option value="none">None</option>\n';
-	tableHTML += '		<option value="dotted">Dotted</option>\n';
-	tableHTML += '		<option value="dashed">Dashed</option>\n';
-	tableHTML += '		<option value="solid">Solid</option>\n';
-	tableHTML += '		<option value="double">Double</option>\n';
-	tableHTML += '	</select><br/>\n';
-	
-	tableHTML += '	<label for="' + tileId + '_borderAllColor">Color:</label>\n';
-	tableHTML += '  <input id="' + tileId + '_borderAllColor" type="color"/> Transparency: <input id="' + tileId + '_borderAllColorAlpha" type="number" min="0" max="1" step="0.1" value="1" /><br/><br/>\n';
-	
-	// Colour
-	tableHTML += '	<input id="' + tileId + '_borderLeft" type="checkbox"/>\n';
-	tableHTML += '	<label for="' + tileId + '_borderLeft">Left</label><br/>';
-
-	tableHTML += '	<label for="' + tileId + '_borderLeftThick">Thickness:</label>\n';
-	tableHTML += '	<select name="' + tileId + '_borderLeftThick" id="' + tileId + '_borderLeftThick">\n';
-	tableHTML += '		<option value=""></option>\n';
-	tableHTML += '		<option value="thin">Thin</option>\n';
-	tableHTML += '		<option value="medium">Medium</option>\n';
-	tableHTML += '		<option value="thick">Thick</option>\n';
-	tableHTML += '		<option value="other">Other</option>\n';
-	tableHTML += '	</select>\n';
-	tableHTML += '	<input id="' + tileId + '_borderLeftThickOth" type="number" min="0" max="10"/> pixels<br/>\n';
-
-	tableHTML += '	<label for="' + tileId + '_borderLeftStyle">Style:</label>\n';
-	tableHTML += '	<select name="' + tileId + '_borderLeftStyle" id="' + tileId + '_borderLeftStyle">\n';
-	tableHTML += '		<option value=""></option>\n';
-	tableHTML += '		<option value="none">None</option>\n';
-	tableHTML += '		<option value="dotted">Dotted</option>\n';
-	tableHTML += '		<option value="dashed">Dashed</option>\n';
-	tableHTML += '		<option value="solid">Solid</option>\n';
-	tableHTML += '		<option value="double">Double</option>\n';
-	tableHTML += '	</select><br/><br/>\n';
-
-	tableHTML += '	<label for="' + tileId + '_borderLeftColor">Color:</label>\n';
-	tableHTML += '  <input id="' + tileId + '_borderLeftColor" type="color"/> Transparency: <input id="' + tileId + '_borderLeftColorAlpha" type="number" min="0" max="1" step="0.1" value="1" /><br/><br/>\n';
-
-	tableHTML += '	<input id="' + tileId + '_borderRight" type="checkbox"/>\n';
-	tableHTML += '	<label for="' + tileId + '_borderRight">Right</label><br/>';
-	
-	tableHTML += '	<label for="' + tileId + '_borderRightThick">Thickness:</label>\n';
-	tableHTML += '	<select name="' + tileId + '_borderRightThick" id="' + tileId + '_borderRightThick">\n';
-	tableHTML += '		<option value=""></option>\n';
-	tableHTML += '		<option value="thin">Thin</option>\n';
-	tableHTML += '		<option value="medium">Medium</option>\n';
-	tableHTML += '		<option value="thick">Thick</option>\n';
-	tableHTML += '		<option value="other">Other</option>\n';
-	tableHTML += '	</select>\n';
-	tableHTML += '	<input id="' + tileId + '_borderRightThickOth" type="number" min="0" max="10"/> pixels<br/>\n';
-	
-	tableHTML += '	<label for="' + tileId + '_borderRightStyle">Style:</label>\n';
-	tableHTML += '	<select name="' + tileId + '_borderRightStyle" id="' + tileId + '_borderRightStyle">\n';
-	tableHTML += '		<option value=""></option>\n';
-	tableHTML += '		<option value="none">None</option>\n';
-	tableHTML += '		<option value="dotted">Dotted</option>\n';
-	tableHTML += '		<option value="dashed">Dashed</option>\n';
-	tableHTML += '		<option value="solid">Solid</option>\n';
-	tableHTML += '		<option value="double">Double</option>\n';
-	tableHTML += '	</select><br/><br/>\n';
-	
-	tableHTML += '	<label for="' + tileId + '_borderRightColor">Color:</label>\n';
-	tableHTML += '  <input id="' + tileId + '_borderRightColor" type="color"/> Transparency: <input id="' + tileId + '_borderRightColorAlpha" type="number" min="0" max="1" step="0.1" value="1" /><br/><br/>\n';
-	
-	tableHTML += '	<input id="' + tileId + '_borderTop" type="checkbox"/>\n';
-	tableHTML += '	<label for="' + tileId + '_borderTop">Top</label><br/>';
-	
-	tableHTML += '	<label for="' + tileId + '_borderTopThick">Thickness:</label>\n';
-	tableHTML += '	<select name="' + tileId + '_borderTopThick" id="' + tileId + '_borderTopThick">\n';
-	tableHTML += '		<option value=""></option>\n';
-	tableHTML += '		<option value="thin">Thin</option>\n';
-	tableHTML += '		<option value="medium">Medium</option>\n';
-	tableHTML += '		<option value="thick">Thick</option>\n';
-	tableHTML += '		<option value="other">Other</option>\n';
-	tableHTML += '	</select>\n';
-	tableHTML += '	<input id="' + tileId + '_borderTopThickOth" type="number" min="0" max="10"/> pixels<br/>\n';
-	
-	tableHTML += '	<label for="' + tileId + '_borderTopStyle">Style:</label>\n';
-	tableHTML += '	<select name="' + tileId + '_borderTopStyle" id="' + tileId + '_borderTopStyle">\n';
-	tableHTML += '		<option value=""></option>\n';
-	tableHTML += '		<option value="none">None</option>\n';
-	tableHTML += '		<option value="dotted">Dotted</option>\n';
-	tableHTML += '		<option value="dashed">Dashed</option>\n';
-	tableHTML += '		<option value="solid">Solid</option>\n';
-	tableHTML += '		<option value="double">Double</option>\n';
-	tableHTML += '	</select><br/><br/>\n';
-	
-	tableHTML += '	<label for="' + tileId + '_borderTopColor">Color:</label>\n';
-	tableHTML += '  <input id="' + tileId + '_borderTopColor" type="color"/> Transparency: <input id="' + tileId + '_borderTopColorAlpha" type="number" min="0" max="1" step="0.1" value="1" /><br/><br/>\n';
-	
-	tableHTML += '	<input id="' + tileId + '_borderBottom" type="checkbox"/>\n';
-	tableHTML += '	<label for="' + tileId + '_borderBottom">Bottom</label><br/>';
-	
-	tableHTML += '	<label for="' + tileId + '_borderBottomThick">Thickness:</label>\n';
-	tableHTML += '	<select name="' + tileId + '_borderBottomThick" id="' + tileId + '_borderBottomThick">\n';
-	tableHTML += '		<option value=""></option>\n';
-	tableHTML += '		<option value="thin">Thin</option>\n';
-	tableHTML += '		<option value="medium">Medium</option>\n';
-	tableHTML += '		<option value="thick">Thick</option>\n';
-	tableHTML += '		<option value="other">Other</option>\n';
-	tableHTML += '	</select>\n';
-	tableHTML += '	<input id="' + tileId + '_borderBottomThickOth" type="number" min="0" max="10"/> pixels<br/>\n';
-	
-	tableHTML += '	<label for="' + tileId + '_borderBottomStyle">Style:</label>\n';
-	tableHTML += '	<select name="' + tileId + '_borderBottomStyle" id="' + tileId + '_borderBottomStyle">\n';
-	tableHTML += '		<option value=""></option>\n';
-	tableHTML += '		<option value="none">None</option>\n';
-	tableHTML += '		<option value="dotted">Dotted</option>\n';
-	tableHTML += '		<option value="dashed">Dashed</option>\n';
-	tableHTML += '		<option value="solid">Solid</option>\n';
-	tableHTML += '		<option value="double">Double</option>\n';
-	tableHTML += '	</select><br/><br/>\n';
-	
-	tableHTML += '	<label for="' + tileId + '_borderBottomColor">Color:</label>\n';
-	tableHTML += '  <input id="' + tileId + '_borderBottomColor" type="color"/> Transparency: <input id="' + tileId + '_borderBottomColorAlpha" type="number" min="0" max="1" step="0.1" value="1" /><br/><br/>\n';
-	
-	tableHTML += '</td>\n';
-	tableHTML += '</tr>\n';
-	
-	
-	
-	tableHTML += '<tr>\n';
+	tableHTML += '<tr class="tileTR">\n';
 	tableHTML += '<td>Order (Z-Index)</td>\n';
 	tableHTML += '<td><input id="' + tileId + '_z-index" type="number" min="0" max="999"/></td>\n';
 	tableHTML += '</tr>\n';
 	
-	tableHTML += '<tr>\n';
+	tableHTML += '<tr class="tileTR">\n';
 	tableHTML += '<td style="padding-right: 10px">Background</td>\n';
 	tableHTML += '<td><input id="' + tileId + '_bg-color" type="color"/> Transparency: <input id="' + tileId + '_bg-alpha" type="number" min="0" max="1" step="0.1" value="1" /></td>\n';
 	tableHTML += '</tr>\n';
+	
+	
+	// Borders
+	
+	tableHTML += '<tr class="tileTR">\n';
+	
+	tableHTML += '<td onClick="expandSetting(document.getElementById(\'' + tileId + '_bordersButton\'),\'' + tileId + '\',\'border\', \'yes\')" style="vertical-align: top;">\n';
+	tableHTML += '<button id="' + tileId + '_bordersButton" type="button" class="collapsible" >Borders</button>\n';
+	tableHTML += '</td>\n';
+	
+	tableHTML += '<td>\n';
+	tableHTML += '<div id="' + tileId + '_borderContent" class="borderContent">\n';
+	tableHTML += '	<label for="' + tileId + '_radius">Rounding: </label>\n';
+	tableHTML += '	<input id="' + tileId + '_radius" type="number" min="0" max="30"/> pixels<br/><br/>\n';
+	
+	tableHTML += '	<table>\n';
+	tableHTML += '<col style="width: 200px;"/>\n';
+	tableHTML += '<col style="width: 300px;"/>\n';
+	tableHTML += createBorderPosInputs(tileId, 'All');
+	tableHTML += createBorderPosInputs(tileId, 'Left');
+	tableHTML += createBorderPosInputs(tileId, 'Right');
+	tableHTML += createBorderPosInputs(tileId, 'Top');
+	tableHTML += createBorderPosInputs(tileId, 'Bottom');
+	tableHTML += '	</table>\n';
+	tableHTML += '</div>\n';
+	tableHTML += '</td>\n';
+	tableHTML += '</tr>\n';
+	
+	// End of Borders
+	
+	// Text
+	tableHTML += '<tr class="tileTR">';
+	tableHTML += '<td onClick="expandSetting(document.getElementById(\'' + tileId + '_textButton\'),\'' + tileId + '\',\'text\', \'yes\')" style="vertical-align: top;">';
+	
+	tableHTML += '<button id="' + tileId + '_textButton" type="button" class="collapsible" onClick="expandSetting(this,\'' + tileId + '\',\'text\', \'yes\')">Text</button></td>';
+	
+	tableHTML += '<td style="padding: 0px;">';
+	tableHTML += '<div id="' + tileId + '_textContent" class="textContent">';
+	
+	tableHTML += '<table>';
+	tableHTML += '<col style="width: 200px;"/>\n';
+	tableHTML += '<col style="width: 300px;"/>\n';
+	tableHTML += createTileTextPosInputs(tileId, 'Title');
+	tableHTML += createTileTextPosInputs(tileId, 'Primary');
+	tableHTML += createTileTextPosInputs(tileId, 'Secondary');
+	tableHTML += createTileTextPosInputs(tileId, 'Tertiary');
+	tableHTML += createTileTextPosInputs(tileId, 'TextTile');
+	tableHTML += '</table>';
+	tableHTML += '</div>\n';
+	tableHTML += '</td>\n';
+	tableHTML += '</tr>\n';
+	
+	// End of Text
+
+	// Icons and Controls
+	tableHTML += '<tr class="tileTR">';
+	tableHTML += '<td onClick="expandSetting(document.getElementById(\'' + tileId + '_iconsButton\'),\'' + tileId + '\',\'icons\', \'yes\')" style="vertical-align: top;">';
+	
+	tableHTML += '<button id="' + tileId + '_iconsButton" type="button" class="collapsible" onClick="expandSetting(this,\'' + tileId + '\',\'icons\', \'yes\')">Icons and Controls</button></td>';
+	
+	tableHTML += '<td style="padding: 0px;">';
+	tableHTML += '<div id="' + tileId + '_iconsContent" class="iconsContent">';
+	
+	tableHTML += '<table>';
+	tableHTML += '<col style="width: 200px;"/>\n';
+	tableHTML += '<col style="width: 300px;"/>\n';
+	
+	tableHTML += createIconsControlsInputs(tileId);	
+	
+	tableHTML += '</table>';
+	tableHTML += '</div>\n';
+	tableHTML += '</td>\n';
+	tableHTML += '</tr>\n';
+	
+	// End of Icons and Controls	
+	
+	tableHTML += '<tr class="tileTR">';
+	tableHTML += '<td>Name</td>';
+	tableHTML += '<td><input id="' + tileId + '_name" type="text" /></td>';
+	tableHTML += '</tr>';
+		
+	tableHTML += '<tr class="tileTR">\n';
+	tableHTML += '<td>Group</td>\n';
+	tableHTML += '<td><input id="' + tileId + '_group" type="text" /></td>\n';
+	tableHTML += '</tr>\n';
+	
+	tableHTML += '<tr class="tileTR">\n';
+	tableHTML += '<td style="vertical-align: top;">Notes</td>\n';
+	tableHTML += '<td><textarea id="' + tileId + '_notes" cols="25" rows="6" maxlength="255" style="width: 100%; max-width: 100%;" /></textarea></td>\n';
+	tableHTML += '</tr>\n';
+	
 	tableHTML += '</tbody>\n';
+	tableHTML += '</table>\n';
+	tableHTML += '</div>\n'; // End of Tile Content div
 	return tableHTML;
 }
 
 $(document).ready(function () {
 	
-	var dashboardSettings = document.getElementById("dashboardSettings");
+	var dashboardSettings = document.getElementById("dashboardSettings-div");
+	var tileListOptions = '<option value="" >Copy CSS Template...</option>\n';
 	var settingsHTML = '';
 	settingsHTML += createDashboardInputs();
 	var x = window.parent.document.getElementsByClassName("tile");
 	
 	var i;
 	// For Each Tile in the dashboard
+	// Build up the input and other elements
 	for (i = 0; i < x.length; i++) {
 		settingsHTML += createTileInputs(x[i].id);
-	}	
-	dashboardSettings.innerHTML = settingsHTML;
+		tileListOptions += '<option value="' + x[i].id + '" >' + x[i].id + '</option>\n';
+	}
+	// Add the Tile and Dashboard Settings to the settings DIV
+	dashboardSettings.innerHTML += settingsHTML;
+	
+	// Go back over 
+	for (i = 0; i < x.length; i++) {
+		var tileCSSTemplates = document.getElementById(x[i].id + '_CSSTemplate');
+		tileCSSTemplates.innerHTML += tileListOptions;
+	}
+	
 	readInSettings();
 	
 });
@@ -394,10 +675,10 @@ $(document).ready(function () {
 </head>
 <body>
 	<div class="container">
-		<button onClick="writeCSS();">Update CSS File</button>
+		
 	
-		<div class="form-control">
-			<table id="dashboardSettings"/>
+		<div id="dashboardSettings-div" class="form-control" style="width: 700px; margin-left: auto; margin-right: auto;">
+			<button onClick="writeCSS();">Save Settings & Export CSS</button><br/><br/>
 		</div>
 	</div>
 	
@@ -408,9 +689,9 @@ $(document).ready(function () {
 <script>
 
 
-function getTileBorderCSS(tileId, borderPos) {
-	var thickEl		= document.getElementById(tileId + '_border' + borderPos + 'Thick');
-	var thickOthEl	= document.getElementById(tileId + '_border' + borderPos + 'ThickOth');
+function getTileBorderCSS(tileId, srcTileId, borderPos) {
+	var thickEl		= document.getElementById(srcTileId + '_border' + borderPos + 'Thick');
+	var thickOthEl	= document.getElementById(srcTileId + '_border' + borderPos + 'ThickOth');
 	var thickVal = thickEl.value;
 	var thickOthVal = thickOthEl.value;
 	if(thickVal != '' && thickVal != 'other') { thickOthVal = ''; }
@@ -418,17 +699,97 @@ function getTileBorderCSS(tileId, borderPos) {
 			thickVal = '';
 			thickOthVal = thickOthVal + 'px'; }
 	}
-	var style		= document.getElementById(tileId + '_border' + borderPos + 'Style');
-	var color		= document.getElementById(tileId + '_border' + borderPos + 'Color');
+	var style		= document.getElementById(srcTileId + '_border' + borderPos + 'Style');
+	var color		= document.getElementById(srcTileId + '_border' + borderPos + 'Color');
 	
-	var colorAlpha	= document.getElementById(tileId + '_border' + borderPos + 'ColorAlpha');
+	var colorAlpha	= document.getElementById(srcTileId + '_border' + borderPos + 'ColorAlpha');
 	colorString = 'rgba(' + hexToRgb(color.value.replace("#","")) + ',' + colorAlpha.value + ')';
 	var borderPosStr = '';
 	if (borderPos == 'All') { borderPosStr = 'border'; }
 	else { borderPosStr = 'border-' + borderPos.toLowerCase(); }
 	//#tile-97 { border-bottom: 3px solid gray;
-	return '	#' + tileId + ' { ' + borderPosStr + ': ' + thickVal + thickOthVal + ' ' + style.value + ' ' + colorString + ';}'
+	return '	#' + tileId + ' { ' + borderPosStr + ': ' + thickVal + thickOthVal + ' ' + style.value + ' ' + colorString + '; }\n'
 	
+}
+
+function getTileTextCSS(tileId, srcTileId, textPos) {
+
+	var textCSS = '';
+	
+	if (textPos != 'TextTile') {
+		var hide		= document.getElementById(srcTileId + '_text' + textPos + 'Hide').checked;
+		var replace		= document.getElementById(srcTileId + '_text' + textPos + 'Replace').checked;
+		var addTo 		= document.getElementById(srcTileId + '_text' + textPos + 'AddTo').checked;
+		if(hide) {
+			textCSS += '	#' + tileId + ' .tile-' + textPos.toLowerCase() + ' { ';
+			textCSS += 'display: none; visibility: hidden; ';
+			textCSS += '}\n';
+		}
+		else
+		{
+			if(replace) {
+				var replaceText		= document.getElementById(srcTileId + '_text' + textPos + 'ReplaceText').value;
+				textCSS += '	#' + tileId + ' .tile-' + textPos.toLowerCase() + ' { ';
+				textCSS += 'visibility: hidden; ';
+				textCSS += '}\n';
+				textCSS += '	#' + tileId + ' .tile-' + textPos.toLowerCase() + ':after { visibility: visible !important; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); overflow: hidden; white-space: nowrap !important; content: "' + replaceText + '" !important; }\n';
+				
+			}
+			else
+			{
+				if(addTo) {
+					var before	= document.getElementById(srcTileId + '_text' + textPos + 'BeforeText').value;
+					var after	= document.getElementById(srcTileId + '_text' + textPos + 'AfterText').value;
+					if(before != '') { textCSS += '	#' + tileId + ' .tile-' + textPos.toLowerCase() + ':before{ visibility: visible !important; content: "' + before + '" !important; }\n'; }
+					if(after != '') { textCSS += '	#' + tileId + ' .tile-' + textPos.toLowerCase() + ':after { visibility: visible !important; content: "' + after + '" !important; }\n'; }
+				}
+			}
+		}
+	}
+	
+	//Fonts and Text Styling
+	
+	var adjustFontSize		= document.getElementById(srcTileId + '_text' + textPos + 'FontSize').checked;
+	var fontSizeVal			= document.getElementById(srcTileId + '_text' + textPos + 'FontSizeVal').value;
+	
+	var adjustFontFamily	= document.getElementById(srcTileId + '_text' + textPos + 'FontFamily').checked;
+	var vFontFamilyVal		= document.getElementById(srcTileId + '_text' + textPos + 'FontFamilyVal').value;
+	var vFontFamilyOther	= document.getElementById(srcTileId + '_text' + textPos + 'FontFamilyOther').value;
+	var vFontFamilyUsed		= (vFontFamilyOther != '') ? vFontFamilyOther : vFontFamilyVal;
+	
+	var vFontBold			= document.getElementById(srcTileId + '_text' + textPos + 'FontBold').checked;
+	var vFontItalic			= document.getElementById(srcTileId + '_text' + textPos + 'FontItalic').checked;
+	var vFontUnderline		= document.getElementById(srcTileId + '_text' + textPos + 'FontUnderline').checked;
+	
+	var vFontColor			= document.getElementById(srcTileId + '_text' + textPos + 'FontColor').checked;
+	var vFontColorVal	= document.getElementById(srcTileId + '_text' + textPos + 'FontColorVal').value;
+	var vFontColorAlpha	= document.getElementById(srcTileId + '_text' + textPos + 'FontColorAlpha').value;
+	var colorString = 'rgba(' + hexToRgb(vFontColorVal.replace("#","")) + ',' + vFontColorAlpha + ')';
+	
+	var adjustAlignment = document.getElementById(srcTileId + '_text' + textPos + 'Align').checked;
+	var alignVal = document.getElementById(srcTileId + '_text' + textPos + 'AlignVal').value;
+	
+	if (adjustFontFamily || adjustFontSize || vFontBold || vFontItalic || vFontUnderline || vFontColor) {
+		if (textPos != 'TextTile') { textCSS += '	#' + tileId + ' .tile-' + textPos.toLowerCase() + ' {\n'; }
+		else { textCSS += '	#' + tileId + ' div>div ' + ' {\n'; }
+		
+		var settings = '';
+		if (adjustFontFamily) { settings += '		font-family: \'' + vFontFamilyUsed + '\' !important;\n'; }
+		if (adjustFontSize) { settings += '		font-size: ' + fontSizeVal + 'px !important;\n'; }
+		if (vFontBold) { settings += '		font-weight: bold !important;\n'; }
+		if (vFontItalic) { settings += '		font-style: italic !important;\n'; }
+		if (vFontUnderline) { settings += '		text-decoration: underline !important;\n'; }
+		if (vFontColor) { settings += '		color: ' + colorString + ' !important;\n'; }
+		
+		if (adjustAlignment) {
+			if (textPos != 'TextTile') { settings += '		text-align: ' + alignVal + ' !important;\n'; }
+			else { settings += '		justify-content: ' + alignVal + ' !important;\n'; }
+		}
+		
+		textCSS += settings + '	}\n';
+	}
+	
+	return textCSS;
 }
 
 function writeCSS() {
@@ -450,105 +811,118 @@ var data = '------WebKitFormBoundaryDtoO2QfPwfhTjOuS\n';
 data += 'Content-Disposition: form-data; name="uploadFile"; filename="' + dashName + '.css"\n';
 data += 'Content-Type: text/plain\n\n';
 
-data += '/* Dashboard Settings */\n';
+data += '/* *********  Dashboard Settings  ********* */\n';
 
 var dashHeader = document.querySelector('input[name="dashHeader"]:checked')?.value;
 var hideDashBack = document.getElementById('hideDashBack');
 var hideDashTitle = document.getElementById('hideDashTitle');
 	
 if (dashHeader == 'hidden') { 
-	data += '.wrapper { height: 100%; margin-top: 0; padding-top: 0; } \n';
-	data += '.dashboard div .header>.flex-auto.justify-end, .dashboard div .header>.flex-auto.justify-end>.flex { visibility: hidden; display: none; }\n';
+	data += '	.wrapper { height: 100%; margin-top: 0; padding-top: 0; } \n';
+	data += '	.dashboard div .header>.flex-auto.justify-end, .dashboard div .header>.flex-auto.justify-end>.flex { visibility: hidden; display: none; }\n';
 }
 
 else {
 
 	if (dashHeader == 'Normal') {
-		if (hideDashBack.checked) { data += '.dashBack { display: none; } \n'; }
-		if (hideDashTitle.checked) { data += '.dashName { display: none; } \n'; }
+		if (hideDashBack.checked) { data += '	.dashBack { display: none; } \n'; }
+		if (hideDashTitle.checked) { data += '	.dashName { display: none; } \n'; }
 	}
 	else {
 
 		if (dashHeader == 'TopRight') {
 
-			data += '.dashboard div .header { position: fixed; top: 0; right: 1em; z-index: 999; opacity: .2; zoom: .6; -moz-transform:scale(.6); }\n';
-			data += '.dashboard div .header>.flex-auto.justify-end, .dashboard div .header>.flex-auto.justify-end>.flex { display: block; }\n';
+			data += '	.dashboard div .header { position: fixed; top: 0; right: 1em; z-index: 999; opacity: .2; zoom: .6; -moz-transform:scale(.6); }\n';
+			data += '	.dashboard div .header>.flex-auto.justify-end, .dashboard div .header>.flex-auto.justify-end>.flex { display: block; }\n';
 		}
 		if (dashHeader == 'BottomRight') {
 
-			data += '.dashboard div .header { position: fixed; bottom: 0; right: 1em; z-index: 999; opacity: .2; zoom: .6; -moz-transform:scale(.6); }\n';
-			data += '.dashboard div .header>.flex-auto.justify-end, .dashboard div .header>.flex-auto.justify-end>.flex { display: block; }\n';
+			data += '	.dashboard div .header { position: fixed; bottom: 0; right: 1em; z-index: 999; opacity: .2; zoom: .6; -moz-transform:scale(.6); }\n';
+			data += '	.dashboard div .header>.flex-auto.justify-end, .dashboard div .header>.flex-auto.justify-end>.flex { display: block; }\n';
 		}
 		if (dashHeader == 'TopLeft') {
 
-			data += '.dashboard div .header { position: fixed; top: 0; left: 1em; z-index: 999; opacity: .2; zoom: .6; -moz-transform:scale(.6); }\n';
-			data += '.dashboard div .header>.flex-auto.justify-end, .dashboard div .header>.flex-auto.justify-end>.flex { display: block; }\n';
+			data += '	.dashboard div .header { position: fixed; top: 0; left: 1em; z-index: 999; opacity: .2; zoom: .6; -moz-transform:scale(.6); }\n';
+			data += '	.dashboard div .header>.flex-auto.justify-end, .dashboard div .header>.flex-auto.justify-end>.flex { display: block; }\n';
 		}
 		if (dashHeader == 'BottomLeft') {
 
-			data += '.dashboard div .header { position: fixed; bottom: 0; left: 1em; z-index: 999; opacity: .2; zoom: .6; -moz-transform:scale(.6); }\n';
-			data += '.dashboard div .header>.flex-auto.justify-end, .dashboard div .header>.flex-auto.justify-end>.flex { display: block; }\n';
+			data += '	.dashboard div .header { position: fixed; bottom: 0; left: 1em; z-index: 999; opacity: .2; zoom: .6; -moz-transform:scale(.6); }\n';
+			data += '	.dashboard div .header>.flex-auto.justify-end, .dashboard div .header>.flex-auto.justify-end>.flex { display: block; }\n';
 		}
 		
-		data += '.dashBack { display: none; } \n';
-		data += '.dashName { display: none; } \n';
+		data += '	.dashBack { display: none; } \n';
+		data += '	.dashName { display: none; } \n';
 	}
 
 }
 
-data += '/* Tile Settings */\n';
+	data += '\n\n/* *********  Tile Settings   *********  */\n';
 
-var x = window.parent.document.getElementsByClassName("tile");
-var i;
-// For Each Tile in the dashboard
-for (i = 0; i < x.length; i++) {
-	var exportCSS = document.getElementById(`${x[i].id}_exportCSS`);
-	if (exportCSS.checked) {
-		data += '/* ' + x[i].id + ' Settings */\n';
-		var hideTitle = document.getElementById(`${x[i].id}_hideTitle`);
-		if(hideTitle.checked) {
-		  data += `	#${x[i].id} .tile-title {visibility: hidden; display: none;}
-`;
-		}
+	var x = window.parent.document.getElementsByClassName("tile");
+	var i;
+	// For Each Tile in the dashboard
+	for (i = 0; i < x.length; i++) {
+		var tileId = x[i].id;
+		var cssTemp = document.getElementById(tileId + '_CSSTemplate').value;
+		var srcTileId = (cssTemp != 'default' && cssTemp != '') ? cssTemp : tileId;
+		var exportCSS = document.getElementById(tileId + '_exportCSS');
+		if (exportCSS.checked) {
+			data += '\n\n/* ' + tileId + ' Settings */\n';
+			var hideTitle = document.getElementById(srcTileId + '_hideTitle');
+			if(hideTitle.checked) {
+			  data += '	#' + tileId + ' .tile-title { visibility: hidden; display: none; }\n';
+			}
 		
-		var zIndex = document.getElementById(`${x[i].id}_z-index`);
-		if(zIndex.value != "") {
-		  data += `	#${x[i].id} {z-index: ${zIndex.value}; !important;}
-`;
-		}
+			var zIndex = document.getElementById(srcTileId + '_z-index');
+			if(zIndex.value != "") {
+			  data += '	#' + tileId + ' { z-index: ' + zIndex.value + '; !important; }\n';
+			}
 		
-		var borderRadius = document.getElementById(`${x[i].id}_radius`);
-		if(borderRadius.value != "" && borderRadius.value != 0) {
-		  data += `	#${x[i].id} { border-radius: ${borderRadius.value}px !important; }
-`;
-		}
+			// Borders
+			var borderRadius = document.getElementById(`${srcTileId}_radius`);
+			if(borderRadius.value != "") {
+			  data += '	#' + tileId + ' { border-radius: ' + borderRadius.value + 'px !important; }\n';
+			}
 		
-		if (document.getElementById(`${x[i].id}_borderAll`).checked) { data += getTileBorderCSS(x[i].id, 'All') + '\n'; }
-		else {
-		
-			if (document.getElementById(`${x[i].id}_borderLeft`).checked)	{ data += getTileBorderCSS(x[i].id, 'Left') + '\n'; }
-			if (document.getElementById(`${x[i].id}_borderRight`).checked)	{ data += getTileBorderCSS(x[i].id, 'Right') + '\n'; }
-			if (document.getElementById(`${x[i].id}_borderTop`).checked) 	{ data += getTileBorderCSS(x[i].id, 'Top') + '\n'; }
-			if (document.getElementById(`${x[i].id}_borderBottom`).checked)	{ data += getTileBorderCSS(x[i].id, 'Bottom') + '\n'; }
-		}
-		
-		var bgColor = document.getElementById(`${x[i].id}_bg-color`);
-		var bgAlpha = document.getElementById(`${x[i].id}_bg-alpha`);
-		if(bgColor.value != "#000000") {
-		  if(bgAlpha.value != "" && bgAlpha.value != "1") {
-			data = data + `	#${x[i].id} { background-color: rgba(${hexToRgb(bgColor.value.replace('#',''))},${bgAlpha.value}) !important; }
+			if (document.getElementById(`${srcTileId}_borderAll`).checked) { data += getTileBorderCSS(tileId, srcTileId, 'All') + '\n'; }
+			else {
+			
+				if (document.getElementById(`${srcTileId}_borderLeft`).checked)		{ data += getTileBorderCSS(tileId, srcTileId, 'Left'); }
+				if (document.getElementById(`${srcTileId}_borderRight`).checked)	{ data += getTileBorderCSS(tileId, srcTileId, 'Right'); }
+				if (document.getElementById(`${srcTileId}_borderTop`).checked) 		{ data += getTileBorderCSS(tileId, srcTileId, 'Top'); }
+				if (document.getElementById(`${srcTileId}_borderBottom`).checked)	{ data += getTileBorderCSS(tileId, srcTileId, 'Bottom'); }
+			}
+			
+			// Text
+			if (document.getElementById(srcTileId + '_textTitle').checked)		{ data += getTileTextCSS(tileId, srcTileId, 'Title'); }
+			if (document.getElementById(srcTileId + '_textPrimary').checked)	{ data += getTileTextCSS(tileId, srcTileId, 'Primary'); }
+			if (document.getElementById(srcTileId + '_textSecondary').checked)	{ data += getTileTextCSS(tileId, srcTileId, 'Secondary'); }
+			if (document.getElementById(srcTileId + '_textTertiary').checked)	{ data += getTileTextCSS(tileId, srcTileId, 'Tertiary'); }
+			if (document.getElementById(srcTileId + '_textTextTile').checked)	{ data += getTileTextCSS(tileId, srcTileId, 'TextTile'); }
+			
+			// Icons and Controls
+			if (document.getElementById(srcTileId + '_iconsIconHide').checked)		{ data += '	#' + tileId + ' .material-icons { display: none; !important; }\n'; }
+			if (document.getElementById(srcTileId + '_iconsDimmerHide').checked)	{ data += '	#' + tileId + ' .tile-primary > div.dimmer { display: none; !important; }\n'; }
+			
+			// General Tile Settings
+			var bgColor = document.getElementById(srcTileId + '_bg-color');
+			var bgAlpha = document.getElementById(srcTileId + '_bg-alpha');
+			if(bgColor.value != "#000000") {
+			  if(bgAlpha.value != "" && bgAlpha.value != "1") {
+				data += `	#${tileId} { background-color: rgba(${hexToRgb(bgColor.value.replace('#',''))},${bgAlpha.value}) !important; }
 `;
-		  }
-		  else {
-			data = data + `	#${x[i].id} { background-color: rgb(${hexToRgb(bgColor.value.replace('#',''))}) !important; }
+			  }
+			  else {
+				data += `	#${tileId} { background-color: rgb(${hexToRgb(bgColor.value.replace('#',''))}) !important; }
 `;
-		  }
+			  }
+			}
 		}
 	}
-}
 
 
-data = data + `
+	data = data + ` 
 
 ------WebKitFormBoundaryDtoO2QfPwfhTjOuS
 Content-Disposition: form-data; name="folder"
@@ -556,9 +930,9 @@ Content-Disposition: form-data; name="folder"
 
 ------WebKitFormBoundaryDtoO2QfPwfhTjOuS--`;
 
-xhr.send(data);
+	xhr.send(data);
 
-writeSettings();
+	writeSettings();
 
 } //end of writeCSS()
 
@@ -575,6 +949,36 @@ function getTileBorderJSON(tileId, borderPos) {
 	return JSON.stringify({ thick : thick.value , thickOth : thickOth.value , style : style.value, color : color.value, colorAlpha : colorAlpha.value });
 }
 
+function getTileTextJSON(tileId, textType) {
+
+	var textContentsHide	= (document.getElementById(tileId + '_text' + textType + 'Hide')?.checked) ? true : false;
+	var textContentsReplace = (document.getElementById(tileId + '_text' + textType + 'Replace')?.checked) ? true : false;
+	var textContentsAddTo	= (document.getElementById(tileId + '_text' + textType + 'AddTo')?.checked) ? true : false;
+	
+	var replaceTextVal	= document.getElementById(tileId + '_text' + textType + 'ReplaceText').value;
+	var beforeTextVal	= document.getElementById(tileId + '_text' + textType + 'BeforeText').value;
+	var afterTextVal	= document.getElementById(tileId + '_text' + textType + 'AfterText').value;
+	
+	var adjustFontSize	= (document.getElementById(tileId + '_text' + textType + 'FontSize')?.checked) ? true : false;
+	var vfontSizeVal	= document.getElementById(tileId + '_text' + textType + 'FontSizeVal').value;
+	
+	var adjustFontFamily	= document.getElementById(tileId + '_text' + textType + 'FontFamily').checked;
+	var vFontFamilyVal		= document.getElementById(tileId + '_text' + textType + 'FontFamilyVal').value;
+	var vFontFamilyOther	= document.getElementById(tileId + '_text' + textType + 'FontFamilyOther').value;
+	
+	var vFontBold			= document.getElementById(tileId + '_text' + textType + 'FontBold').checked;
+	var vFontItalic			= document.getElementById(tileId + '_text' + textType + 'FontItalic').checked;
+	var vFontUnderline		= document.getElementById(tileId + '_text' + textType + 'FontUnderline').checked;
+	
+	var vFontColor			= document.getElementById(tileId + '_text' + textType + 'FontColor').checked;
+	var vFontColorVal	= document.getElementById(tileId + '_text' + textType + 'FontColorVal').value;
+	var vFontColorAlpha	= document.getElementById(tileId + '_text' + textType + 'FontColorAlpha').value;
+	
+	var adjustAlignment = document.getElementById(tileId + '_text' + textType + 'Align').checked;
+	var alignVal = document.getElementById(tileId + '_text' + textType + 'AlignVal').value;
+	
+	return JSON.stringify({ hide : textContentsHide , replace : textContentsReplace , addTo : textContentsAddTo , replaceText : replaceTextVal, beforeText : beforeTextVal , afterText : afterTextVal , fontSize : adjustFontSize , fontSizeVal : vfontSizeVal , fontFamily : adjustFontFamily , fontFamilyVal : vFontFamilyVal , fontFamilyOther : vFontFamilyOther , fontBold : vFontBold , fontItalic : vFontItalic , fontUnderline : vFontUnderline , align : adjustAlignment , alignVal : alignVal , fontColor : vFontColor , fontColorVal : vFontColorVal , fontColorAlpha : vFontColorAlpha });
+}
 
 function writeSettings() {
 
@@ -605,7 +1009,7 @@ data += '{';
 data += ' "dashboard" : { "dashHeader" : "' + dashHeader + '"\n';
 data += '				, "hideDashBack" : ' + hideDashBack + '\n';
 data += '				, "hideDashTitle" : ' + hideDashTitle + '\n';
-data += '				}\n';
+data += '		}\n';
 
 
 var x = window.parent.document.getElementsByClassName("tile");
@@ -627,28 +1031,60 @@ for (i = 0; i < x.length; i++) {
 	var bgColorEl = document.getElementById(x[i].id + '_bg-color');
 	var bgAlphaEl = document.getElementById(x[i].id + '_bg-alpha');
 	var rgbaColorVal = hexToRgb(bgColorEl.value.replace("#","")) + ',' + bgAlphaEl.value;
+	var cssTemplate = document.getElementById(x[i].id + '_CSSTemplate').value;
 	
 	var borderJson = '{ ';
 	
-	if (document.getElementById(`${x[i].id}_borderAll`).checked) { borderJson += '"All": ' + getTileBorderJSON(x[i].id, 'All'); }
+	if (document.getElementById(`${x[i].id}_borderAll`).checked) { borderJson += '\n				"All": ' + getTileBorderJSON(x[i].id, 'All'); }
 	else {
 	
 		if (document.getElementById(`${x[i].id}_borderLeft`).checked)	{ if (borderJson != '{ ') { borderJson += ','; }
-																		  borderJson += '"Left": ' + getTileBorderJSON(x[i].id, 'Left') + '\n';
+																		  borderJson += '\n				"Left": ' + getTileBorderJSON(x[i].id, 'Left') + '\n';
 																		}
 		if (document.getElementById(`${x[i].id}_borderRight`).checked)	{ if (borderJson != '{ ') { borderJson += ','; }
-																		  borderJson += '"Right": ' + getTileBorderJSON(x[i].id, 'Right') + '\n';
+																		  borderJson += '\n				"Right": ' + getTileBorderJSON(x[i].id, 'Right') + '\n';
 																		}
 		if (document.getElementById(`${x[i].id}_borderTop`).checked) 	{ if (borderJson != '{ ') { borderJson += ','; }
-																		  borderJson += '"Top": ' + getTileBorderJSON(x[i].id, 'Top') + '\n';
+																		  borderJson += '\n				"Top": ' + getTileBorderJSON(x[i].id, 'Top') + '\n';
 																		}
 		if (document.getElementById(`${x[i].id}_borderBottom`).checked)	{ if (borderJson != '{ ') { borderJson += ','; }
-																		  borderJson += '"Bottom": ' + getTileBorderJSON(x[i].id, 'Bottom') + '\n';
+																		  borderJson += '\n				"Bottom": ' + getTileBorderJSON(x[i].id, 'Bottom') + '\n';
 																		}
 	}
-	borderJson += '}\n';
-	data += '{ ';
-	data += '"id" : "' + x[i].id + '", "name" : "' + nameEl.value + '", "group" : "' + groupEl.value + '", "notes" : "' + notesEl.value + '", "exportCSS" : ' + exportCSSEl.checked + ', "hideTitle" : ' + hideTitleEl.checked + ', "borderRadius" : "' + borderRadiusEl.value + '", "borders" : ' + borderJson + ', "zIndex" : "' + zIndexEl.value + '", "bgColor" : "' + rgbaColorVal + '" }';
+	borderJson += '		}';
+	
+	
+	// Text Title
+		
+	var textJson = '{ ';
+	if (document.getElementById(x[i].id + '_textTitle').checked) { textJson += '\n				"Title": ' + getTileTextJSON(x[i].id, 'Title'); }
+	if (document.getElementById(x[i].id + '_textPrimary').checked) { if (textJson != '{ ') { textJson += ','; }
+																	 textJson += '\n				"Primary": ' + getTileTextJSON(x[i].id, 'Primary');
+																	}
+	if (document.getElementById(x[i].id + '_textSecondary').checked) {
+																		if (textJson != '{ ') { textJson += ','; }
+																		textJson += '\n				"Secondary": ' + getTileTextJSON(x[i].id, 'Secondary');
+																	}
+	if (document.getElementById(x[i].id + '_textTertiary').checked) {
+																		if (textJson != '{ ') { textJson += ','; }
+																		textJson += '\n				"Tertiary": ' + getTileTextJSON(x[i].id, 'Tertiary');
+																	}
+	if (document.getElementById(x[i].id + '_textTextTile').checked) {
+																		if (textJson != '{ ') { textJson += ','; }
+																		textJson += '\n				"TextTile": ' + getTileTextJSON(x[i].id, 'TextTile');
+																	}
+	textJson += '\n			}';
+
+	var iconHide	= document.getElementById(x[i].id + '_iconsIconHide').checked
+	var dimmerHide	= document.getElementById(x[i].id + '_iconsDimmerHide').checked
+	
+	var iconsJson = '{ ';
+	iconsJson += '"iconHide" : ' + iconHide + ', "dimmerHide" : ' + dimmerHide;
+	
+	iconsJson += ' }';
+	
+	data += '	{ ';
+	data += '"id" : "' + x[i].id + '", "name" : "' + nameEl.value + '", "group" : "' + groupEl.value + '", "notes" : "' + notesEl.value + '", "exportCSS" : ' + exportCSSEl.checked + ', "cssTemplate" : "' + cssTemplate + '", "hideTitle" : ' + hideTitleEl.checked + ', "borderRadius" : "' + borderRadiusEl.value + '",\n		"borders" : ' + borderJson + ',\n		"text" : ' + textJson + ',\n		"icons" : ' + iconsJson + '\n		,"zIndex" : "' + zIndexEl.value + '", "bgColor" : "' + rgbaColorVal + '"\n	}';
 	
 	if( i < (x.length - 1) ) { data += ',\n' }
 
@@ -671,6 +1107,24 @@ xhr.send(data);
 
 
 
+</script>
+
+<script>
+function expandSetting(button, tileId, setting, iconToggle) {
+    
+	if (iconToggle == "yes") {
+		button.classList.toggle("active");
+	}
+    var content = document.getElementById(tileId + '_' + setting + 'Content');
+	
+	if (content.style.maxHeight){
+      content.style.maxHeight = null;
+    } else {
+		content.style.maxHeight = "5000px";
+      //if (setting == 'tile') { content.style.maxHeight = "5000px"; }
+	  //else { content.style.maxHeight = content.scrollHeight + "px"; }
+    }
+  }
 </script>
 
 </html>
