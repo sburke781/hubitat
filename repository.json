@@ -60,6 +60,12 @@
 			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/TVHE_EPG_Importer/packageManifest.json",
 			"description": "Retrieves current EPG details from an instance of TV HeadEnd, typically installed on a raspberry pi with a TV Hat"
 		 }
+		 ,{
+			"name": "Simple CSS Editor",
+			"tags": ["Convenience"],
+			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/SimpleCSSEditor/packageManifest.json",
+			"description": "A pop-up tile and dashboard styling editor"
+		 }
 	]
 	
 }

@@ -42,7 +42,7 @@ void refresh() {
 
 void downloadEditorHTML() {
  
-    String uri = 'https://raw.githubusercontent.com/sburke781/hubitat/SimpleCSSEditor/SimpleCSSEditor.html'
+    String uri = 'https://raw.githubusercontent.com/sburke781/hubitat/master/SimpleCSSEditor/SimpleCSSEditor.html'
 
     xferFile(uri, 'SimpleCSSEditor.html');
     setIframe();
