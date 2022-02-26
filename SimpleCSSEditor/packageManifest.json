@@ -1,0 +1,20 @@
+{
+	"packageName": "Simple CSS Editor",
+	"minimumHEVersion": "2.2.9.141",
+	"author": "Simon Burke (sburke781)",
+	"version": "1.0.0",
+	"dateReleased": "2022-02-26",
+	"documentationLink": "",
+	"communityLink": "https://community.hubitat.com/t/release-simple-css-editor/89853",
+	"releaseNotes": "2022-02-26: 1.0.0 - Initial Release",
+	"apps" : [],
+	"drivers" : [
+		{
+			"id": "e012ffff-7959-466b-a2ae-3123a3309222",
+			"name": "Simple CSS Editor Driver",
+			"namespace": "simnet",
+			"location": "https://raw.githubusercontent.com/sburke781/hubitat/SimpleCSSEditor/SimpleCSSEditor_driver.groovy",
+			"required": true
+		}
+	]
+}
