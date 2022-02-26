@@ -13,7 +13,7 @@
 			"id": "e012ffff-7959-466b-a2ae-3123a3309222",
 			"name": "Simple CSS Editor Driver",
 			"namespace": "simnet",
-			"location": "https://raw.githubusercontent.com/sburke781/hubitat/SimpleCSSEditor/SimpleCSSEditor_driver.groovy",
+			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/SimpleCSSEditor/SimpleCSSEditor_driver.groovy",
 			"required": true
 		}
 	]
