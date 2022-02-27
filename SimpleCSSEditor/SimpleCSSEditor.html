@@ -132,8 +132,7 @@ function rgbToHex(r, g, b) {
 }
 
 function getDashName() {
-
-  return window.parent.document.getElementsByClassName("dashName")[0].innerHTML.trim().replace(/ /g,"_");
+  return encodeURIComponent(window.parent.document.getElementsByClassName("dashName")[0].innerHTML.trim().replace(/ /g,"_"), "UTF-8");
 }
 
 function dashHeaderClick(radio) {
@@ -211,7 +210,10 @@ function readInSettings() {
 										}
 								});
 								
-								
+								//Custom CSS
+								document.getElementById(tileId + "_customCSS").checked = data.tiles[tile].customCSS.customCSSCheck;
+								document.getElementById(tileId + "_customCSSText").value = data.tiles[tile].customCSS.customCSSText;
+																
 								document.getElementById(tileId + "_z-index").value = data.tiles[tile].zIndex;
 								const bgColorRgba = data.tiles[tile].bgColor.split(",");
 								document.getElementById(tileId + "_bg-color").value = rgbToHex(parseInt(bgColorRgba[0]), parseInt(bgColorRgba[1]), parseInt(bgColorRgba[2]));
@@ -621,7 +623,20 @@ function createTileInputs(tileId) {
 	tableHTML += '</td>\n';
 	tableHTML += '</tr>\n';
 	
-	// End of Icons and Controls	
+	// End of Icons and Controls
+
+	tableHTML += '<tr class="tileTR">';
+	tableHTML += '<td>Custom CSS</td>';
+	
+	tableHTML += '<td style="padding: 0px;">';
+	tableHTML += '<input id="' + tileId + '_customCSS" type="checkbox"/>';
+	tableHTML += '	<label for="' + tileId + '_customCSS"> Include Custom CSS</label>\n';
+	tableHTML += '<br/>';
+	tableHTML += '<textarea id="' + tileId + '_customCSSText" cols="25" rows="6" maxlength="8000" style="width: 100%; max-width: 100%;" /></textarea><br/>\n';
+	tableHTML += '</td>';
+	tableHTML += '</td>\n';
+	tableHTML += '</tr>\n';
+	
 	
 	tableHTML += '<tr class="tileTR">';
 	tableHTML += '<td>Name</td>';
@@ -918,6 +933,14 @@ else {
 `;
 			  }
 			}
+			
+			// Custom CSS
+			var customCSSCheckEl = document.getElementById(srcTileId + '_customCSS');
+			var customCSSTextEl = document.getElementById(srcTileId + '_customCSSText');
+			if(customCSSCheckEl.checked) {
+				var re = new RegExp(srcTileId,"g");
+				data += '	' + customCSSTextEl.value.replace(re, tileId) + '\n';
+				}
 		}
 	}
 
@@ -982,6 +1005,12 @@ function getTileTextJSON(tileId, textType) {
 
 function writeSettings() {
 
+/*
+Prepare the file name and HTTP Call details
+
+*/
+
+
 var dashName = getDashName();
 var url = "http://" + location.hostname + ":8080/hub/fileManager/upload";
 
@@ -999,6 +1028,10 @@ var data = '------WebKitFormBoundaryDtoO2QfPwfhTjOuS\n';
 data += 'Content-Disposition: form-data; name="uploadFile"; filename="' + dashName + '.json"\n';
 data += 'Content-Type: text/plain\n\n';
 
+/*
+Gather together the Dashboard level settings to be exported
+*/
+
 
 var dashHeader = document.querySelector('input[name="dashHeader"]:checked')?.value;
 var hideDashBack = (document.getElementById('hideDashBack').checked) ? true : false;
@@ -1011,6 +1044,9 @@ data += '				, "hideDashBack" : ' + hideDashBack + '\n';
 data += '				, "hideDashTitle" : ' + hideDashTitle + '\n';
 data += '		}\n';
 
+/*
+Loop through the tiles and get their settings to be exported
+*/
 
 var x = window.parent.document.getElementsByClassName("tile");
 var i;
@@ -1032,7 +1068,9 @@ for (i = 0; i < x.length; i++) {
 	var bgAlphaEl = document.getElementById(x[i].id + '_bg-alpha');
 	var rgbaColorVal = hexToRgb(bgColorEl.value.replace("#","")) + ',' + bgAlphaEl.value;
 	var cssTemplate = document.getElementById(x[i].id + '_CSSTemplate').value;
-	
+	var customCSSCheckEl = document.getElementById(x[i].id + '_customCSS');
+	var customCSSTextEl = document.getElementById(x[i].id + '_customCSSText');
+
 	var borderJson = '{ ';
 	
 	if (document.getElementById(`${x[i].id}_borderAll`).checked) { borderJson += '\n				"All": ' + getTileBorderJSON(x[i].id, 'All'); }
@@ -1083,8 +1121,10 @@ for (i = 0; i < x.length; i++) {
 	
 	iconsJson += ' }';
 	
+	var customCSSJson = JSON.stringify({ customCSSCheck : customCSSCheckEl.checked , customCSSText : customCSSTextEl.value });
+	
 	data += '	{ ';
-	data += '"id" : "' + x[i].id + '", "name" : "' + nameEl.value + '", "group" : "' + groupEl.value + '", "notes" : "' + notesEl.value + '", "exportCSS" : ' + exportCSSEl.checked + ', "cssTemplate" : "' + cssTemplate + '", "hideTitle" : ' + hideTitleEl.checked + ', "borderRadius" : "' + borderRadiusEl.value + '",\n		"borders" : ' + borderJson + ',\n		"text" : ' + textJson + ',\n		"icons" : ' + iconsJson + '\n		,"zIndex" : "' + zIndexEl.value + '", "bgColor" : "' + rgbaColorVal + '"\n	}';
+	data += '"id" : "' + x[i].id + '", "name" : "' + nameEl.value + '", "group" : "' + groupEl.value + '", "notes" : "' + notesEl.value + '", "exportCSS" : ' + exportCSSEl.checked + ', "cssTemplate" : "' + cssTemplate + '", "hideTitle" : ' + hideTitleEl.checked + ', "borderRadius" : "' + borderRadiusEl.value + '",\n		"borders" : ' + borderJson + ',\n		"text" : ' + textJson + ',\n		"icons" : ' + iconsJson + '\n		,"zIndex" : "' + zIndexEl.value + '", "bgColor" : "' + rgbaColorVal + '", "customCSS" : ' + customCSSJson + '\n	}';
 	
 	if( i < (x.length - 1) ) { data += ',\n' }
 
