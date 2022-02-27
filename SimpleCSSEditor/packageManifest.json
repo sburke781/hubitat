@@ -2,11 +2,11 @@
 	"packageName": "Simple CSS Editor",
 	"minimumHEVersion": "2.2.9.141",
 	"author": "Simon Burke (sburke781)",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"dateReleased": "2022-02-26",
 	"documentationLink": "",
 	"communityLink": "https://community.hubitat.com/t/release-simple-css-editor/89853",
-	"releaseNotes": "2022-02-26: 1.0.0 - Initial Release",
+	"releaseNotes": "2022-02-27: 1.0.1 - Remove all spaces in file names\n2022-02-26: 1.0.0 - Initial Release",
 	"apps" : [],
 	"drivers" : [
 		{
