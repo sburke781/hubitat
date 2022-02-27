@@ -6,7 +6,7 @@
 	"dateReleased": "2022-02-26",
 	"documentationLink": "",
 	"communityLink": "https://community.hubitat.com/t/release-simple-css-editor/89853",
-	"releaseNotes": "2022-02-27: 1.0.1 - Remove all spaces in file names\n2022-02-26: 1.0.0 - Initial Release",
+	"releaseNotes": "2022-02-27: 1.0.1 - Replace all spaces in file names with underscore\n2022-02-26: 1.0.0 - Initial Release",
 	"apps" : [],
 	"drivers" : [
 		{
