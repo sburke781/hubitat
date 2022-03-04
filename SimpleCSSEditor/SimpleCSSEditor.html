@@ -626,13 +626,13 @@ function createTileInputs(tileId) {
 	// End of Icons and Controls
 
 	tableHTML += '<tr class="tileTR">';
-	tableHTML += '<td>Custom CSS</td>';
+	tableHTML += '<td style="vertical-align: top;">Custom CSS</td>';
 	
-	tableHTML += '<td style="padding: 0px;">';
+	tableHTML += '<td>';
 	tableHTML += '<input id="' + tileId + '_customCSS" type="checkbox"/>';
-	tableHTML += '	<label for="' + tileId + '_customCSS"> Include Custom CSS</label>\n';
+	tableHTML += '	<label for="' + tileId + '_customCSS"> Include Custom CSS</label><br/>';
 	tableHTML += '<br/>';
-	tableHTML += '<textarea id="' + tileId + '_customCSSText" cols="25" rows="6" maxlength="8000" style="width: 100%; max-width: 100%;" /></textarea><br/>\n';
+	tableHTML += '<textarea id="' + tileId + '_customCSSText" cols="25" rows="6" maxlength="8000" style="width: 100%; max-width: 100%;" /></textarea><br/><br/>\n';
 	tableHTML += '</td>';
 	tableHTML += '</td>\n';
 	tableHTML += '</tr>\n';
@@ -692,7 +692,7 @@ $(document).ready(function () {
 	<div class="container">
 		
 	
-		<div id="dashboardSettings-div" class="form-control" style="width: 700px; margin-left: auto; margin-right: auto;">
+		<div id="dashboardSettings-div" class="form-control" style="width: 700px; margin-left: auto; margin-right: auto; margin-bottom: 80px;">
 			<button onClick="writeCSS();">Save Settings & Export CSS</button><br/><br/>
 		</div>
 	</div>
