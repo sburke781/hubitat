@@ -323,9 +323,11 @@ def retrieveAuthCode_KumoCloud() {
                   }
                   
                   child.children?.each { child2 ->
-                    if (child2[0].containsKey("zoneTable")) {
-                      child2[0].zoneTable?.each { unit ->
-                        unitsList.add(parseKumoUnit(unit))
+                    if (child2[0] != null) {
+                        if (child2[0].containsKey("zoneTable")) {
+                        child2[0].zoneTable?.each { unit ->
+                            unitsList.add(parseKumoUnit(unit))
+                            }
                         }
                     }
                   }
