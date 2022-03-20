@@ -99,7 +99,7 @@ preferences {
         command "on"
         
         //Kumo Local testing commands:
-        command "unitCommand_Kumo_Local" [[name: "command", type: "STRING"]]
+        command "unitCommand_Kumo_Local", [[name: "command", type: "STRING"]]
 
         /* Example Local Commands */
         /*
