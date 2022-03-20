@@ -29,6 +29,7 @@
  *                                              Encrypted version of Crypto Serial and Password
  *                                              Child Unit IP Address
  *                                          Removal of some debug messages
+ *                                          Added warning for errors logging in and retrieving an authentication code
  *                                        
  */
 
@@ -304,45 +305,47 @@ def setAuthCode() {
 
 def retrieveAuthCode_KumoCloud() {
     
-    def vnewAuthCode = ""
-    def unitsList    = []
+    def vnewAuthCode = "";
+    def unitsList    = [];
     
    
-    def vbodyJson = "{ \"username\": \"${UserName}\", \"password\": \"${Password}\", \"AppVersion\": \"2.2.0\" }"
+    def vbodyJson = "{ \"username\": \"${UserName}\", \"password\": \"${Password}\", \"AppVersion\": \"2.2.0\" }";
     
     def postParams = [
         uri: "${getBaseURL()}/login",
         headers: getStandardHTTPHeaders_KumoCloud("yes"),
         contentType: "application/json; charset=UTF-8",
         body : vbodyJson
-	]
+	];
            
 	try {
         
-          httpPost(postParams)
-          { resp ->
-              debugLog("retrieveAuthCode_KumoCloud: HTTP Response = ${resp?.data}")
-              vnewAuthCode = "${resp?.data[0].token}";
+          httpPostJson(postParams) { resp ->
+              debugLog("retrieveAuthCode_KumoCloud: HTTP Response = ${resp?.data}");
+              debugLog("retrieveAuthCode_KumoCloud: HTTP Status = ${resp?.status}");
+              if (resp.data != null && resp.status >= 200 && resp.status <= 299) {
+                vnewAuthCode = "${resp?.data[0].token}";
+                
             
-        
-              debugLog("retrieveAuthCode_KumoCloud: New Auth Code - ${vnewAuthCode}");
-              resp?.data[2].children.each { child ->
-                  debugLog("retrieveAuthCode_KumoCloud: Child - ${child}")
-                  child.zoneTable?.each { unit ->
-                    unitsList.add(parseKumoUnit(unit))
-                  
-                  }
-                  
-                  child.children?.each { child2 ->
-                    if (child2[0] != null) {
-                        if (child2[0].containsKey("zoneTable")) {
-                        child2[0].zoneTable?.each { unit ->
-                            unitsList.add(parseKumoUnit(unit))
+                debugLog("retrieveAuthCode_KumoCloud: New Auth Code - ${vnewAuthCode}");
+                resp?.data[2].children.each { child ->
+                    debugLog("retrieveAuthCode_KumoCloud: Child - ${child}")
+                    child.zoneTable?.each { unit ->
+                        unitsList.add(parseKumoUnit(unit))
+                    
+                    }
+                    child.children?.each { child2 ->
+                        if (child2 != null && child2[0] != null) {
+                            if (child2[0].containsKey("zoneTable")) {
+                            child2[0].zoneTable?.each { unit ->
+                                unitsList.add(parseKumoUnit(unit))
+                                }
                             }
                         }
                     }
-                  }
+                }
               }
+              else warnLog("Warning - Retrieval of a new authentication code failed.  Check the username and password in the Preference Settings");
           }
         createChildACUnits(unitsList)
     }
