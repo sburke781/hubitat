@@ -321,22 +321,24 @@ def retrieveAuthCode_KumoCloud() {
         
           httpPost(postParams)
           { resp ->
-              //debugLog("retrieveAuthCode_KumoCloud: HTTP Response = ${resp?.data}")
-              
+              debugLog("retrieveAuthCode_KumoCloud: HTTP Response = ${resp?.data}")
               vnewAuthCode = "${resp?.data[0].token}";
             
         
               debugLog("retrieveAuthCode_KumoCloud: New Auth Code - ${vnewAuthCode}");
               resp?.data[2].children.each { child ->
-                  //debugLog("retrieveAuthCode_KumoCloud: Child - ${child}")
+                  debugLog("retrieveAuthCode_KumoCloud: Child - ${child}")
                   child.zoneTable?.each { unit ->
                     unitsList.add(parseKumoUnit(unit))
+                  
                   }
                   
                   child.children?.each { child2 ->
-                    if (child2[0].containsKey("zoneTable")) {
-                      child2[0].zoneTable?.each { unit ->
-                        unitsList.add(parseKumoUnit(unit))
+                    if (child2[0] != null) {
+                        if (child2[0].containsKey("zoneTable")) {
+                        child2[0].zoneTable?.each { unit ->
+                            unitsList.add(parseKumoUnit(unit))
+                            }
                         }
                     }
                   }
