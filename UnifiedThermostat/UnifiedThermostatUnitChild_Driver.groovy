@@ -25,9 +25,11 @@
  *    2021-07-25  Simon Burke    1.0.6      Fahrenheit Conversion - moving temp conversion from setCooling / Heating SetPoint to setTemperature method
  *    2021-08-15  Simon Burke    1.0.7      Added temperature conversion In/Out methods to make use of new temp scale override in parent driver
  *    2021-08-15  Simon Burke    1.0.8      Added Last Command UTC attribute and checked this when determining whether to apply status updates - Kumo Only at the moment
- *    2021-12-27  Simon Burke    2.0.0      Kumo Local Control - Alpha Version
+ *    2022-03-20  Simon Burke    2.0.0      Kumo Local Control - Alpha Version
  *                                              New Local Control Preference Setting
  *                                              New prepareLocalCommand method to encode the unit command
+ *                                              New unitCommand_Kumo_Local method to send local command to unit
+ *                                              Temporarily setup unitCommand_Kumo_Local as a command to test
  */
 import java.text.DecimalFormat;
 

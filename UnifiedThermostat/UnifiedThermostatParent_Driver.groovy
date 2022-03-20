@@ -24,7 +24,7 @@
  *                               1.0.5 - No Change
  *                               1.0.6 - No Change
  *    2021-08-15  Simon Burke    1.0.7 - Added heTempScale attribute and override command to override HE hub temp scale
- *    2021-12-27  Simon Burke    2.0.0 - Kumo Local Control Alpha
+ *    2022-03-20  Simon Burke    2.0.0 - Kumo Local Control Alpha
  *                                          Capture state variables for Kumo Local Control:
  *                                              Encrypted version of Crypto Serial and Password
  *                                              Child Unit IP Address
