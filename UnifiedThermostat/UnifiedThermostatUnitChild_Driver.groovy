@@ -1352,11 +1352,11 @@ def unitCommand_KumoCloud(pCommand) {
 // Execute a command locally on a Kumo unit
 void unitCommand_Kumo_Local(String pcommand) {
     String vpost_data = '{"c":{"indoorUnit":{"status":' + pcommand + '}}}';
-    debugLog("unitCommand_Kumo_Local: post_data = ${vpost_data}");
+    parent.debugLog("unitCommand_Kumo_Local: post_data = ${vpost_data}");
 
-    String vbodyJson = post_data;
-    String vtoken = prepareLocalCommand_Kumo(post_data);
-    debugLog("unitCommand_Kumo_Local: pcommandEncrypted = ${vbodyJson}");
+    String vbodyJson = vpost_data;
+    String vtoken = prepareLocalCommand_Kumo(vpost_data);
+    parent.debugLog("unitCommand_Kumo_Local: pcommandEncrypted = ${vbodyJson}");
 
     String vuri = "http://${address}/api?m=${vtoken}";
 
