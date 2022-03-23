@@ -1358,7 +1358,7 @@ void unitCommand_Kumo_Local(String pcommand) {
     String vtoken = prepareLocalCommand_Kumo(vpost_data);
     parent.debugLog("unitCommand_Kumo_Local: pcommandEncrypted = ${vbodyJson}");
 
-    String vuri = "http://${address}/api?m=${vtoken}";
+    String vuri = "http://${getDataValue("address")}/api?m=${vtoken}";
 
     def headers = [:];
     headers.put('Accept', 'application/json, text/plain, */*');
