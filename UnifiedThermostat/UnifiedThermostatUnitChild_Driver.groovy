@@ -14,6 +14,14 @@
  *
  *  Change History:
  *
+
+2022-05-03: 1.0.11 - Additional fix for fan speed parameters
+2022-05-03: 1.0.10 - Fix for temperature and fan speed parameter data types (heat and setFanSpeed commands)
+2022-03-13: 1.0.9 - Fix to handle different zone configurations
+
+
+
+
  *    Date        Who            Version	What
  *    ----        ---            -------	----
  *    2021-07-12  Simon Burke    1.0.0		Alpha release
@@ -25,6 +33,10 @@
  *    2021-07-25  Simon Burke    1.0.6      Fahrenheit Conversion - moving temp conversion from setCooling / Heating SetPoint to setTemperature method
  *    2021-08-15  Simon Burke    1.0.7      Added temperature conversion In/Out methods to make use of new temp scale override in parent driver
  *    2021-08-15  Simon Burke    1.0.8      Added Last Command UTC attribute and checked this when determining whether to apply status updates - Kumo Only at the moment
+ *    2022-03-13  Simon Burke    1.0.9      Fix to handle different zone configurations
+ *    2022-05-03  Simon Burke    1.0.10     Fix for temperature and fan speed parameter data types (heat and setFanSpeed commands)
+ *    2022-05-03  Simon Burke    1.0.11     Additional fix for fan speed parameters
+ *    2022-05-03  Simon Burke    1.0.12     Fix for fan speed conversion for in-between speed text including hiphens
  */
 import java.text.DecimalFormat;
 
@@ -218,8 +230,10 @@ def convertFanModeToKey(pFanMode) {
     if(vFanMode == "auto"         || vFanMode == "auto")   { vModeKey = 0 }
     if(vFanMode == "low"          || vFanMode == "1"   )   { vModeKey = 1 }
     if(vFanMode == "medium low"   || vFanMode == "2"   )   { vModeKey = 2 }
+    if(vFanMode == "medium-low"   || vFanMode == "2"   )   { vModeKey = 2 }
     if(vFanMode == "medium"       || vFanMode == "3"   )   { vModeKey = 3 }
     if(vFanMode == "medium high"  || vFanMode == "4"   )   { vModeKey = 4 }
+    if(vFanMode == "medium-high"  || vFanMode == "4"   )   { vModeKey = 4 }
     if(vFanMode == "high"         || vFanMode == "5"   )   { vModeKey = 5 }
     
     return vModeKey
