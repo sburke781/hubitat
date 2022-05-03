@@ -212,13 +212,15 @@ def getFanModeMap() {
 /* convertFanModeToKey() To-Do: Confirm mode values across each platform */
 def convertFanModeToKey(pFanMode) {
     
+    String vFanMode = "${pFanMode}";
+    vFanMode = vFanMode.trim().toLowerCase();
     def vModeKey = null
-    if(pFanMode.trim().toLowerCase() == "auto"         || pFanMode.trim() == "auto")   { vModeKey = 0 }
-    if(pFanMode.trim().toLowerCase() == "low"          || pFanMode.trim() == "1"   )   { vModeKey = 1 }
-    if(pFanMode.trim().toLowerCase() == "medium low"   || pFanMode.trim() == "2"   )   { vModeKey = 2 }
-    if(pFanMode.trim().toLowerCase() == "medium"       || pFanMode.trim() == "3"   )   { vModeKey = 3 }
-    if(pFanMode.trim().toLowerCase() == "medium high"  || pFanMode.trim() == "4"   )   { vModeKey = 4 }
-    if(pFanMode.trim().toLowerCase() == "high"         || pFanMode.trim() == "5"   )   { vModeKey = 5 }
+    if(vFanMode == "auto"         || vFanMode == "auto")   { vModeKey = 0 }
+    if(vFanMode == "low"          || vFanMode == "1"   )   { vModeKey = 1 }
+    if(vFanMode == "medium low"   || vFanMode == "2"   )   { vModeKey = 2 }
+    if(vFanMode == "medium"       || vFanMode == "3"   )   { vModeKey = 3 }
+    if(vFanMode == "medium high"  || vFanMode == "4"   )   { vModeKey = 4 }
+    if(vFanMode == "high"         || vFanMode == "5"   )   { vModeKey = 5 }
     
     return vModeKey
 }
