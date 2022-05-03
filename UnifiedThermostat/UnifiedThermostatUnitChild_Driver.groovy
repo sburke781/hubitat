@@ -1011,7 +1011,7 @@ def setThermostatFanMode_KumoCloud (pFanModeKey) {
 
 //Fan Speed method from the Fan Control capability
 //  Simply calling the Fan Mode method that is part of the Thermostat capability 
-def setSpeed(pFanspeed) { setThermostatFanMode(pFanspeed) }
+def setSpeed(pFanspeed) { setThermostatFanMode("${pFanspeed}") }
 
 // Thermostat Mode Control
 
@@ -1432,12 +1432,16 @@ def checkNull(value, alternative) {
     
 }
 
+def convertTemperatureIn(BigDecimal pTemp) { return convertTemperatureIn("${pTemp}") }
+
 def convertTemperatureIn(String pTemp) {
     
     def vPlatformScale = parent.getPlatformScale()
     def vHEScale = parent.getHETempScale()
     return convertTemperature(pTemp,vPlatformScale,vHEScale)
 }
+
+def convertTemperatureOut(BigDecimal pTemp) { return convertTemperatureOut("${pTemp}") }
 
 def convertTemperatureOut(String pTemp) {
     
