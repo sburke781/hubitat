@@ -1308,7 +1308,8 @@ def unitCommand_MELCloud(pCommand) {
           }
     }   
 	catch (Exception e) {
-        parent.errorLog "unitCommand : Unable to query Mitsubishi Electric ${parent.getPlatform()}: ${e}"
+        parent.errorLog "unitCommand : Unable to query Mitsubishi Electric ${parent.getPlatform()}: ${e}";
+        parent.debugLog "unitCommand : vPostParams = ${vPostParams}";
 	}
 
 }
