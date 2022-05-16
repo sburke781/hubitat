@@ -1295,7 +1295,7 @@ def unitCommand_MELCloud(pCommand) {
     def vPostParams = [
         uri: "${parent.getBaseURL()}/Mitsubishi.Wifi.Client/Device/SetAta",
         headers: parent.getStandardHTTPHeaders_MELCloud("no"),
-        contentType: "application/json; charset=UTF-8",
+        //contentType: "application/json; charset=UTF-8",
         body : "${pCommand}"
 	]
     
@@ -1309,6 +1309,7 @@ def unitCommand_MELCloud(pCommand) {
     }   
 	catch (Exception e) {
         parent.errorLog "unitCommand : Unable to query Mitsubishi Electric ${parent.getPlatform()}: ${e}";
+        parent.debugLog "unitCommand : response contentType = ${resp.ContentType}");
         parent.debugLog "unitCommand : vPostParams = ${vPostParams}";
 	}
 
