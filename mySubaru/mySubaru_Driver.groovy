@@ -34,7 +34,7 @@ metadata {
             platformList << ["CAN"  : "Canada"]
         
 		// Platform and authentication Preferences
-        input name: "Platform", type: "enum",     title: "Platform (Country)",        displayDuringSetup: true, required: true, multiple: false, options: platformList, defaultValue: "US"
+        input name: "Platform", type: "enum",     title: "Platform (Country)",        displayDuringSetup: true, required: true, multiple: false, options: platformList, defaultValue: "USA"
         input name: "UserName", type: "string",   title:"Username / Email", displayDuringSetup: true, required: true, multiple: false
 		input name: "Password", type: "password", title:"Password",         displayDuringSetup: true, required: true, multiple: false
         input name: "PIN", type: "password", title:"PIN",         displayDuringSetup: true, required: true, multiple: false
