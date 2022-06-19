@@ -37,6 +37,11 @@
  *    2022-05-03  Simon Burke    1.0.10     Fix for temperature and fan speed parameter data types (heat and setFanSpeed commands)
  *    2022-05-03  Simon Burke    1.0.11     Additional fix for fan speed parameters
  *    2022-05-03  Simon Burke    1.0.12     Fix for fan speed conversion for in-between speed text including hiphens
+ *    2022-05-04  Simon Burke    1.0.13     Added debug logging for MELCloud unitCommand
+ *    2022-05-16  Simon Burke    1.0.14     Removed tweak and additional logging for MELCloud UnitCommand
+ *    2022-05-16  Simon Burke    1.0.15     Fix for logging error
+ *    2022-06-19  Simon Burke    1.0.16     Fix for temperature conversion in Europe
+
  */
 import java.text.DecimalFormat;
 
@@ -1475,8 +1480,8 @@ def convertTemperature(String pTemp, String pSourceScale, String pTargetScale) {
     if (pTemp == null || !pTemp.isNumber() || pSourceScale == null || pTargetScale == null) { vTemp = null }
     else {
         if(pSourceScale != pTargetScale) {
-            if(pSourceScale == "C") { vTemp = celsiusToFahrenheit(pTemp.toFloat()) }
-            else { vTemp = fahrenheitToCelsius(pTemp.toFloat()) }
+            if(pSourceScale == "C") { vTemp = celsiusToFahrenheit(pTemp.toFloat().toString()) }
+            else { vTemp = fahrenheitToCelsius(pTemp.toFloat().toString()) }
         }
     }
     return vTemp
