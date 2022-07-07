@@ -41,7 +41,7 @@
  *    2022-05-16  Simon Burke    1.0.14     Removed tweak and additional logging for MELCloud UnitCommand
  *    2022-05-16  Simon Burke    1.0.15     Fix for logging error
  *    2022-06-19  Simon Burke    1.0.16     Fix for temperature conversion in Europe
-
+ *    2022-07-07  Simon Burke    1.0.17     Fix for temp string conversion
  */
 import java.text.DecimalFormat;
 
@@ -1480,8 +1480,8 @@ def convertTemperature(String pTemp, String pSourceScale, String pTargetScale) {
     if (pTemp == null || !pTemp.isNumber() || pSourceScale == null || pTargetScale == null) { vTemp = null }
     else {
         if(pSourceScale != pTargetScale) {
-            if(pSourceScale == "C") { vTemp = celsiusToFahrenheit(pTemp.toFloat().toString()) }
-            else { vTemp = fahrenheitToCelsius(pTemp.toFloat().toString()) }
+            if(pSourceScale == "C") { vTemp = celsiusToFahrenheit(pTemp.toFloat()).toString() }
+            else { vTemp = fahrenheitToCelsius(pTemp.toFloat()).toString() }
         }
     }
     return vTemp
