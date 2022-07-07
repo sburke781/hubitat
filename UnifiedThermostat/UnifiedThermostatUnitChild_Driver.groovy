@@ -36,6 +36,7 @@
  *    2022-06-19  Simon Burke    1.0.16     Fix for temperature conversion in Europe
  *    2022-07-07  Simon Burke    1.0.17     Fix for temp string conversion
  *    2022-07-07  Simon Burke    1.0.18     Adjusted all currentValue calls to read from database instead of cache
+ *    2022-07-07  Simon Burke    1.0.19     Updates to cooling and heating set point changes so that set temperature setting is also updated
  */
 import java.text.DecimalFormat;
 
@@ -763,10 +764,10 @@ def adjustHeatingSetpoint(givenTemp) {
         parent.infoLog("Heating Set Point adjusted to ${heatingSetTempValue} for ${device.label}")
     }
     
-    if (currThermSetTempValue != heatingSetTempValue) {
-        sendEvent(name: "thermostatSetpoint", value: heatingSetTempValue)
-        parent.infoLog("Thermostat Set Point adjusted to ${heatingSetTempValue} for ${device.label}")
-    }
+    //if (currThermSetTempValue != heatingSetTempValue) {
+    //    sendEvent(name: "thermostatSetpoint", value: heatingSetTempValue)
+    //    parent.infoLog("Thermostat Set Point adjusted to ${heatingSetTempValue} for ${device.label}")
+    //}
     
 }
 
@@ -808,10 +809,10 @@ def adjustCoolingSetpoint(givenTemp) {
     }
     
     
-    if (device.currentValue("thermostatOperatingState", true) == "cooling" && currThermSetTempValue != coolingSetTempValue) {
-        sendEvent(name: "thermostatSetpoint", value: coolingSetTempValue)
-        parent.infoLog("Thermostat Set Point adjusted to ${coolingSetTempValue} for ${device.label}")
-    }
+    //if (device.currentValue("thermostatOperatingState", true) == "cooling" && currThermSetTempValue != coolingSetTempValue) {
+    //    sendEvent(name: "thermostatSetpoint", value: coolingSetTempValue)
+    //    parent.infoLog("Thermostat Set Point adjusted to ${coolingSetTempValue} for ${device.label}")
+    //}
     
 }
 
@@ -884,7 +885,7 @@ def setTemperature(givenSetTemp) {
     def setTempValue = givenSetTemp.toFloat().round(1)
     def currThermSetTempValue = checkNull(device.currentValue("thermostatSetpoint", true),"23.0").toFloat().round(1)
     def convertedTemp = setTempValue
-    
+    parent.debugLog("setTemperature: givenSetTemp = ${givenSetTemp}, currentThermSetTempValue = ${currThermSetTempValue}")
     if(currThermSetTempValue != setTempValue) {
         parent.debugLog("setTemperature: Setting Temperature to ${setTempValue} for ${device.label}")
         adjustSetTemperature(givenSetTemp, null, null)
