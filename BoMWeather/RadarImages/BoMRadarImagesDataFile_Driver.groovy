@@ -73,8 +73,16 @@ void retrieveImageURLs() {
 	]
 
 	try {
-        httpGet(getParams) { resp ->
-            String shtmlResponse = groovy.xml.XmlUtil.escapeXml(resp.data.text)
+        asynchttpGet('retrieveImageURLsCallback', getParams) 
+	} catch (Exception e) {
+		errorLog "retrieveImageURLs: call to update radar images failed: ${e}"
+	}
+    debugLog('retrieveImageURLs: process complete')
+}
+
+void retrieveImageURLsCallback(resp, data) {
+    
+    String shtmlResponse = groovy.xml.XmlUtil.escapeXml(resp.getData())
 
             String[] lines = shtmlResponse.split('\\r\\n|\\n|\\r')
             def images = lines.findAll { it.startsWith('theImageNames[') }
@@ -96,7 +104,7 @@ void retrieveImageURLs() {
                 staticImagesJson += ",\"foreground0${f}\": \"http://www.bom.gov.au/products/radar_transparencies/${idr}.range.png\"\n"
             }
             staticImagesJson += '}'
-            debugLog("retrieveImageURLs: background images JSON = ${staticImagesJson}")
+            debugLog("retrieveImageURLsCallback: background images JSON = ${staticImagesJson}")
 
             String imagesJson = '{\n'
             int i = 1
@@ -107,16 +115,12 @@ void retrieveImageURLs() {
                 i++
             }
             imagesJson += '}'
-            debugLog("retrieveImageURLs: radar images JSON = ${imagesJson}");
+            debugLog("retrieveImageURLsCallback: radar images JSON = ${imagesJson}");
 
             updateDataFile(staticImagesJson,imagesJson);
             lastUpdate = new Date().format('YYYY-MM-dd HH:mm:ss');
             device.sendEvent(name: 'lastupdate', value: "${lastUpdate}")
-        }
-	} catch (Exception e) {
-		errorLog "retrieveImageURLs: call to update radar images failed: ${e}"
-	}
-    debugLog('retrieveImageURLs: process complete')
+        
 }
 
 void updateDataFile(String pbackgrounds, String pimages) {

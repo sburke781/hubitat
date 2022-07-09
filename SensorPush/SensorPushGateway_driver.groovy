@@ -41,7 +41,12 @@
  *					polling occurred, now it correctly impacts the minute in the hour when
  *					polling occurs
  *				Removed redundant attributes lastUpdatedSource and lastUpdatedHE
+ *
  * 2021-05-16  Simon Burke	Additional fix to CRON setup
+ * 2021-12-28  Simon Burke  Changed HTTP calls to be asynchronous
+ * 2021-12-31  Simon Burke  Fix for null json returned in samples (included callback method in getAccessToken())
+ *                          Made same fix for sensors to include callback method in async call
+ * 2022-02-02  Simon Burke  Added ignore SSL issues to HTTP calls after certificate appears to be signed by any untrusted party
  * 
  */
 metadata {
@@ -131,20 +136,28 @@ def samples() {
         headers: headers,
         contentType: "application/json",
         requestContentType: "application/json",
-		body : bodyJson
+		body : bodyJson,
+        ignoreSSLIssues: true
 	]
            
 	try {
-        httpPost(postParams)
-        { resp -> 
-            //log.debug("samplesTest: resp = ${resp.data}")
-            resp?.data?.sensors?.each { sensor ->
+        asynchttpPost('samplesCallback', postParams);
+    }
+    catch(Exception e)
+    {
+        errorLog("samples: Exception ${e}")   
+    }
+    
+}
+
+void samplesCallback(resp, data) {
+            resp?.getJson().sensors?.each { sensor ->
                                         
                         def tempStr = (String)(sensor.value.temperature)
                         tempStr = tempStr.replace("[","").replace("]","")
-                        debugLog("samples: Temp String = ${tempStr}")
+                        debugLog("samplesCallback: Temp String = ${tempStr}")
                         def temperature = convertTemperatureIfNeeded(tempStr.toFloat(),"F",1)
-                        debugLog("samples: Converted Temperature = ${temperature}")
+                        debugLog("samplesCallback: Converted Temperature = ${temperature}")
                         
                         def childTempDevice = findChildDevice(sensor.key, "Temperature")
     
@@ -157,10 +170,10 @@ def samples() {
                         
                         if (childTempDevice == null) {
                             //Still could not find the device
-                            errorLog("samples: Lookup of newly created sensor failed... ${sensor.key}, Temperature")                         
+                            errorLog("samplesCallback: Lookup of newly created sensor failed... ${sensor.key}, Temperature")                         
                         }
                         else {
-                            childTempDevice.sendEvent(name: "temperature", value: temperature.toString())
+                            childTempDevice.sendEvent(name: "temperature", value: temperature.toString(), isStateChange: true)
                         }
                         
                         def humidity = (String)(sensor.value.humidity)
@@ -177,21 +190,14 @@ def samples() {
                         
                         if (childHumDevice == null) {
                             //Still could not find the device
-                            errorLog("samples: Lookup of newly created sensor failed... ${sensor.key}, Humidity")                         
+                            errorLog("samplesCallback: Lookup of newly created sensor failed... ${sensor.key}, Humidity")                         
                         }
                         else {
-                            childHumDevice.sendEvent(name: "humidity", value: humidity)
+                            childHumDevice.sendEvent(name: "humidity", value: humidity, isStateChange: true)
                         }
                        
             
             }
-        }
-    }
-    catch(Exception e)
-    {
-        errorLog("samples: Exception ${e}")   
-    }
-    
 }
 
 def getAuthToken() {
@@ -208,20 +214,12 @@ def getAuthToken() {
         headers: headers,
         contentType: "application/json",
         requestContentType: "application/json",
-		body : bodyJson
+		body : bodyJson,
+        ignoreSSLIssues: true
 	]
            
 	try {
-        
-        
-        httpPost(postParams)
-        { resp -> 
-
-            sendEvent(name: "spAuthCode", value : resp.data.authorization)
-            
-        }
-        
-                
+        asynchttpPost('getAuthTokenCallback', postParams);        
 	}
 	catch (Exception e) {
         errorLog("getAuthToken: Unable to query sensorpush cloud: ${e}")
@@ -229,6 +227,9 @@ def getAuthToken() {
     
 }
 
+void getAuthTokenCallback(resp, data) {
+    sendEvent(name: "spAuthCode", value : resp.getJson().authorization)
+}
 
 def getAccessToken(){
     
@@ -244,20 +245,12 @@ def getAccessToken(){
         headers: headers,
         contentType: "application/json",
         requestContentType: "application/json",
-		body : bodyJson
+		body : bodyJson,
+        ignoreSSLIssues: true
 	]
            
 	try {
-        //log.debug("Requesting SensorPush Authorization Code")
-        
-        httpPost(postParams)
-        { resp -> 
-
-            sendEvent(name: "spAccessToken", value : resp.data.accesstoken)
-            //log.debug("getAccessToken: Access Token = ${resp.data.accesstoken}")
-        }
-        
-                
+        asynchttpPost('getAccessTokenCallback',postParams)
 	}
 	catch (Exception e) {
         errorLog("getAccessToken: Unable to query sensorpush cloud: ${e}")
@@ -265,8 +258,11 @@ def getAccessToken(){
     
 }
 
-def sensors() {
+void getAccessTokenCallback(resp, data) {
+    sendEvent(name: "spAccessToken", value : resp.getJson().accesstoken)
+}
 
+def sensors() {
     
     debugLog("sensors: Sensors starting")
     def bodyJson = ""
@@ -281,15 +277,24 @@ def sensors() {
         headers: headers,
         contentType: "application/json",
         requestContentType: "application/json",
-		body : bodyJson
+		body : bodyJson,
+        ignoreSSLIssues: true
 	]
            
 	try {
-        httpPost(postParams)
-        { resp -> 
+        asynchttpPost('sensorsCallback',postParams)
 
+	}
+	catch (Exception e) {
+        errorLog("sensors: Unable to query sensorpush cloud whilst getting sensor data: ${e}")
+	}
+    debugLog("sensors: Sensors completed")
+    
+}
+
+void sensorsCallback(resp, data) {
             //sendEvent(name: "spAccessToken", value : resp.data.accesstoken)
-            resp?.data?.each { it ->
+            resp?.getJson().each { it ->
             
                 def childTempDevice = findChildDevice(it.value.id, "Temperature")
     
@@ -299,7 +304,7 @@ def sensors() {
                 }
                         
                 if (childTempDevice == null) {
-                    errorLog("sensors: Lookup of newly created sensor failed... ${it.value.id}, ${it.value.name}, Temperature")                         
+                    errorLog("sensorsCallback: Lookup of newly created sensor failed... ${it.value.id}, ${it.value.name}, Temperature")                         
                 }
                 
                 def childHumDevice = findChildDevice(it.value.id, "Humidity")
@@ -309,16 +314,6 @@ def sensors() {
                     childHumDevice = findChildDevice(it.value.id, "Humidity")
                 }
             }
-            
-        }
-        
-                
-	}
-	catch (Exception e) {
-        errorLog("sensors: Unable to query sensorpush cloud whilst getting sensor data: ${e}")
-	}
-    debugLog("sensors: Sensors completed")
-    
 }
 
 def deriveSensorDNI(sensorId, sensorType) {

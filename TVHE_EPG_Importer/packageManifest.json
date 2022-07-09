@@ -1,0 +1,20 @@
+{
+	"packageName": "TV HeadEnd EPG Importer",
+	"minimumHEVersion": "2.2.9.141",
+	"author": "Simon Burke (sburke781)",
+	"version": "1.0.0",
+	"dateReleased": "2022-01-02",
+	"documentationLink": "",
+	"communityLink": "https://community.hubitat.com/t/release-tvheadend-epg-importer/86388",
+	"releaseNotes": "2022-01-02: 1.0.0 - Initial release",
+	"apps" : [],
+	"drivers" : [
+		{
+			"id": "e012ffff-7959-466b-a2ae-3123a3305555",
+			"name": "TV HeadEnd EPG Importer Driver",
+			"namespace": "simnet",
+			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/TVHE_EPG_Importer/TVHE_EPG_Importer_Driver.groovy",
+			"required": true
+		}
+	]
+}
