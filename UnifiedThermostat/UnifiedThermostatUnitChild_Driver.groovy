@@ -37,6 +37,7 @@
  *    2022-07-07  Simon Burke    1.0.17     Fix for temp string conversion
  *    2022-07-07  Simon Burke    1.0.18     Adjusted all currentValue calls to read from database instead of cache
  *    2022-07-07  Simon Burke    1.0.19     Updates to cooling and heating set point changes so that set temperature setting is also updated
+ *    2022-07-09  Simon Burke    1.0.20     Removal of min heating and max cooling restrictons
  */
 import java.text.DecimalFormat;
 
@@ -779,10 +780,10 @@ def setHeatingSetpoint(givenTemp) {
     
     //Check allowable heating temperature range and correct where necessary
     //Minimum
-    if (givenTemp < device.currentValue("MinTempHeat", true)) {
-        correctedTemp = device.currentValue("MinTempHeat", true)
-        parent.debugLog("setHeatingSetpoint: Temperature selected = ${givenTemp}, corrected to minimum heating set point ${correctedTemp}")
-    }
+    //if (givenTemp < device.currentValue("MinTempHeat", true)) {
+    //    correctedTemp = device.currentValue("MinTempHeat", true)
+    //    parent.debugLog("setHeatingSetpoint: Temperature selected = ${givenTemp}, corrected to minimum heating set point ${correctedTemp}")
+    //}
     
     //Maximum
     if (givenTemp > device.currentValue("MaxTempHeat", true)) {
@@ -830,11 +831,11 @@ def setCoolingSetpoint(givenTemp) {
     }
     
     //Maximum
-    if (givenTemp > device.currentValue("MaxTempCool", true)) {
-        correctedTemp = device.currentValue("MaxTempCool", true)
-        parent.debugLog("setCoolingSetpoint: Temperature selected = ${givenTemp}, corrected to maximum cooling set point ${correctedTemp}")
-    }
-        
+    //if (givenTemp > device.currentValue("MaxTempCool", true)) {
+    //    correctedTemp = device.currentValue("MaxTempCool", true)
+    //    parent.debugLog("setCoolingSetpoint: Temperature selected = ${givenTemp}, corrected to maximum cooling set point ${correctedTemp}")
+    //}
+    parent.debugLog("setCoolingSetpoint: Corrected Temp = ${correctedTemp}")
     adjustCoolingSetpoint(correctedTemp)
     if (device.currentValue("thermostatOperatingState", true) == "cooling") { setTemperature(correctedTemp) }
 }
