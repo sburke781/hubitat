@@ -38,6 +38,9 @@
  *    2022-07-07  Simon Burke    1.0.18     Adjusted all currentValue calls to read from database instead of cache
  *    2022-07-07  Simon Burke    1.0.19     Updates to cooling and heating set point changes so that set temperature setting is also updated
  *    2022-07-09  Simon Burke    1.0.20     Removal of min heating and max cooling restrictons
+ *    2022-07-10  Simon Burke    1.0.21     Adjustment to MELCloud command JSON to try and fix 500 error
+ *    2022-07-10  Simon Burke    1.0.22     Fixed inclusion of language in authentication call to MELCloud
+ *    2022-07-10  Simon Burke    1.0.23     Reversing JSON changes for MELCloud and AppVersion update
  */
 import java.text.DecimalFormat;
 
@@ -1385,7 +1388,7 @@ def getUnitCommandBody_MELCloud(pPower, pFanMode, pOpMode, pSetTemp) {
     vFanModeKey = convertFanModeToKey(pFanMode)
         
     if (vFanModeKey != null) {
-        vFanModeText = "'SetFanSpeed' : '${vFanModeKey}',"
+        vFanModeText = "\"SetFanSpeed\" : ${vFanModeKey},"
     }
     else { vFanModeText = "" }
     
@@ -1394,14 +1397,14 @@ def getUnitCommandBody_MELCloud(pPower, pFanMode, pOpMode, pSetTemp) {
     // Lookup the operating mode key for MEL based on mode provided
     vModeKey = convertThermostatModeToKey(pOpMode)
         
-    if (vModeKey != null) {vModeText = "'OperationMode' : '${vModeKey}'," }
+    if (vModeKey != null) {vModeText = "\"OperationMode\" : ${vModeKey}," }
     else {vModeText = ""}
     
     // Compile the Set Temperature Text
     
-    vSetTempText = "'SetTemperature' : '${pSetTemp}',"
+    vSetTempText = "\"SetTemperature\" : ${pSetTemp},"
     
-    vBodyJSON = "{ 'Power' : '${pPower}', ${vModeText} ${vSetTempText} ${vFanModeText} 'EffectiveFlags' : '15', 'DeviceID' : '${getUnitId()}',  'HasPendingCommand' : 'true' }"
+    vBodyJSON = "{ \"Power\" : ${pPower}, ${vModeText} ${vSetTempText} ${vFanModeText} \"EffectiveFlags\" : 15, \"DeviceID\" : ${getUnitId()},  \"HasPendingCommand\" : true }"
     
     return "${vBodyJSON}"
     
