@@ -401,7 +401,7 @@ def retrieveAuthCode_MELCloud() {
     
     def vnewAuthCode = "";
     
-    def bodyJson = "{ \"Email\": \"${UserName}\", \"Password\": \"${Password}\", \"Language\": \"13\", \"AppVersion\": \"1.18.5.1\", \"Persist\": \"True\", \"CaptchaResponse\": \"\" }"
+    def bodyJson = "{ 'Email': '${UserName}', 'Password': '${Password}', 'Language': '${Language}', 'AppVersion': '1.18.5.1', 'Persist': 'True', 'CaptchaResponse': '' }"
     def postParams = [
         uri: "${getBaseURL()}/Mitsubishi.Wifi.Client/Login/ClientLogin",
         headers: getStandardHTTPHeaders_MELCloud("yes"),
