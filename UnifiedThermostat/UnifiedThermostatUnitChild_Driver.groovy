@@ -1385,7 +1385,7 @@ def getUnitCommandBody_MELCloud(pPower, pFanMode, pOpMode, pSetTemp) {
     vFanModeKey = convertFanModeToKey(pFanMode)
         
     if (vFanModeKey != null) {
-        vFanModeText = "\"SetFanSpeed\" : \"${vFanModeKey}\","
+        vFanModeText = "'SetFanSpeed' : '${vFanModeKey}',"
     }
     else { vFanModeText = "" }
     
@@ -1394,14 +1394,14 @@ def getUnitCommandBody_MELCloud(pPower, pFanMode, pOpMode, pSetTemp) {
     // Lookup the operating mode key for MEL based on mode provided
     vModeKey = convertThermostatModeToKey(pOpMode)
         
-    if (vModeKey != null) {vModeText = "\"OperationMode\" : \"${vModeKey}\"," }
+    if (vModeKey != null) {vModeText = "'OperationMode' : '${vModeKey}'," }
     else {vModeText = ""}
     
     // Compile the Set Temperature Text
     
-    vSetTempText = "\"SetTemperature\" : \"${pSetTemp}\","
+    vSetTempText = "'SetTemperature' : '${pSetTemp}',"
     
-    vBodyJSON = "{ \"Power\" : \"${pPower}\", ${vModeText} ${vSetTempText} ${vFanModeText} \"EffectiveFlags\" : \"15\", \"DeviceID\" : \"${getUnitId()}\",  \"HasPendingCommand\" : \"true\" }"
+    vBodyJSON = "{ 'Power' : '${pPower}', ${vModeText} ${vSetTempText} ${vFanModeText} 'EffectiveFlags' : '15', 'DeviceID' : '${getUnitId()}',  'HasPendingCommand' : 'true' }"
     
     return "${vBodyJSON}"
     
