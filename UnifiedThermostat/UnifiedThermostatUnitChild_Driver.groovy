@@ -41,8 +41,8 @@
  *    2022-03-20  Simon Burke    2.0.0      Kumo Local Control - Alpha Version
  *                                              New Local Control Preference Setting
  *                                              New prepareLocalCommand method to encode the unit command
- *                                              New unitCommand_Kumo_Local method to send local command to unit
- *                                              Temporarily setup unitCommand_Kumo_Local as a command to test
+ *                                              New unitCommand_KumoLocal method to send local command to unit
+ *                                              Temporarily setup unitCommand_KumoLocal as a command to test
  */
 import java.text.DecimalFormat;
 
@@ -60,8 +60,7 @@ preferences {
 		input(name: "FansTextOrNumbers",     type: "bool", title: "Fan Modes: Text or Numbers?",  description: "Use Text for Fan Modes (ON) or Numbers (OFF)?", defaultValue: true, required: true, displayDuringSetup: true)
         input(name: "LocalControl",          type: "bool", title: "Local Control",                description: "Communicate via LAN (ON, Kumo Only) or Cloud (OFF)?", defaultValue: false, required: true, displayDuringSetup: true)
     }
-        
-        
+
         attribute "unitId",                 "string"
         //attribute "setTemperature",         "number"
         
@@ -112,7 +111,7 @@ preferences {
         command "on"
         
         //Kumo Local testing commands:
-        command "unitCommand_Kumo_Local", [[name: "command", type: "STRING"]]
+        command "unitCommand_KumoLocal", [[name: "command", type: "STRING"]]
 
         /* Example Local Commands */
         /*
@@ -1120,8 +1119,8 @@ def on_MELCloud() {
 }
 
 def on_KumoCloud() {
-    unitCommand_KumoCloud("{\"power\":1}")
-    
+    if(getLocalControl()) { unitCommand_KumoLocal("{'mode': '${device.getCurrentValue("lastRunningMode", true)}'}") }
+    else                  { unitCommand_KumoCloud("{\"power\":1}") }
 }
 
 def on_MELView() {
@@ -1140,9 +1139,8 @@ def off() {
 }
 
 def off_KumoCloud() {
-    
-    unitCommand_KumoCloud("{\"power\":0}")
-    //{'mode':'off'};
+    if(getLocalControl()) { unitCommand_KumoLocal("{'mode':'off'}") }
+    else                  { unitCommand_KumoCloud("{\"power\":0}") }
 }
 
 def off_MELCloud() {
@@ -1173,9 +1171,8 @@ def heat() {
 }
 
 def heat_KumoCloud() {
-
-    unitCommand_KumoCloud("{\"power\":1,\"operationMode\":1}")
-    //{'mode': 'heat'};
+    if(getLocalControl()) { unitCommand_KumoLocal("{'mode': 'heat'}") }
+    else                  { unitCommand_KumoCloud("{\"power\":1,\"operationMode\":1}") }
 }
 
 def heat_MELCloud() {
@@ -1204,9 +1201,8 @@ def dry() {
 }
 
 def dry_KumoCloud() {
-    
-    unitCommand_KumoCloud("{\"power\":1,\"operationMode\":2}")
-    //{'mode':'dry'};
+    if(getLocalControl()) { unitCommand_KumoLocal("{'mode':'dry'}") }
+    else                  {unitCommand_KumoCloud("{\"power\":1,\"operationMode\":2}") }
 }
 
 def dry_MELCloud() {
@@ -1235,9 +1231,12 @@ def cool() {
 }
 
 def cool_KumoCloud() {
-    
-    unitCommand_KumoCloud("{\"power\":1,\"operationMode\":3}")
-    //{'mode': 'cool'};
+    if(getLocalControl()) { unitCommand_KumoLocal("{'mode': 'cool'}") }
+    else                  { unitCommand_KumoCloud("{\"power\":1,\"operationMode\":3}") }
+}
+
+boolean getLocalControl() {
+    return LocalControl;
 }
 
 def cool_MELCloud() {
@@ -1298,9 +1297,8 @@ def auto() {
 }
 
 def auto_KumoCloud() {
-    
-    unitCommand_KumoCloud("{\"power\":1,\"operationMode\":8}")
-    //{'mode': 'auto'};
+    if(getLocalControl()) { unitCommand_KumoLocal("{'mode': 'auto'}") }
+    else                  { unitCommand_KumoCloud("{\"power\":1,\"operationMode\":8}") }
 }
 
 def auto_MELCloud() {
@@ -1369,13 +1367,13 @@ def unitCommand_KumoCloud(pCommand) {
 }
 
 // Execute a command locally on a Kumo unit
-void unitCommand_Kumo_Local(String pcommand) {
+void unitCommand_KumoLocal(String pcommand) {
     String vpost_data = '{"c":{"indoorUnit":{"status":' + pcommand + '}}}';
-    parent.debugLog("unitCommand_Kumo_Local: post_data = ${vpost_data}");
+    parent.debugLog("unitCommand_KumoLocal: post_data = ${vpost_data}");
 
     String vbodyJson = vpost_data;
     String vtoken = prepareLocalCommand_Kumo(vpost_data);
-    parent.debugLog("unitCommand_Kumo_Local: pcommandEncrypted = ${vbodyJson}");
+    parent.debugLog("unitCommand_KumoLocal: pcommandEncrypted = ${vbodyJson}");
 
     String vuri = "http://${getDataValue("address")}/api?m=${vtoken}";
 
@@ -1393,11 +1391,11 @@ void unitCommand_Kumo_Local(String pcommand) {
     try {
         httpPut(vPutParams) { resp ->
             //sendEvent(name: "lastCommandUTC", value: "${new Date().format("yyyy-MM-dd HH:mm:ss.SSS'Z'", TimeZone.getTimeZone('UTC'))}")
-            parent.debugLog("unitCommand_Kumo_Local: Initial data returned: ${resp.data}, response received ${new Date().format("yyyy-MM-dd HH:mm:ss.SSS'Z'", TimeZone.getTimeZone('UTC'))}")
+            parent.debugLog("unitCommand_KumoLocal: Initial data returned: ${resp.data}, response received ${new Date().format("yyyy-MM-dd HH:mm:ss.SSS'Z'", TimeZone.getTimeZone('UTC'))}")
             }
     }   
     catch (Exception e) {
-        parent.errorLog "unitCommand_KumoCloud_Local : Unable to query local ${parent.getPlatform()} unit: ${e}"
+        parent.errorLog "unitCommand_KumoCloudLocal : Unable to query local ${parent.getPlatform()} unit: ${e}"
     }
 }
                       
