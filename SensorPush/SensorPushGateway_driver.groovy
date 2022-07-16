@@ -173,7 +173,16 @@ void samplesCallback(resp, data) {
                             errorLog("samplesCallback: Lookup of newly created sensor failed... ${sensor.key}, Temperature")                         
                         }
                         else {
-                            childTempDevice.sendEvent(name: "temperature", value: temperature.toString(), isStateChange: true)
+                            def map = [:]
+                            
+                            map.name            = "temperature"
+                            map.value           = temperature.toString()
+                            map.unit            = "°" + getTemperatureScale()
+                            map.isStateChange   = true
+                            map.descriptionText = "${childTempDevice.displayName}: temperature is ${map.value}${map.unit}"
+                            infoLog(map.descriptionText)
+                            // childTempDevice.sendEvent(name: "temperature", value: temperature.toString(), unit: getTemperatureScale(), isStateChange: true)
+                            childTempDevice.sendEvent(map)
                         }
                         
                         def humidity = (String)(sensor.value.humidity)
@@ -193,7 +202,16 @@ void samplesCallback(resp, data) {
                             errorLog("samplesCallback: Lookup of newly created sensor failed... ${sensor.key}, Humidity")                         
                         }
                         else {
-                            childHumDevice.sendEvent(name: "humidity", value: humidity, isStateChange: true)
+                            def map = [:]
+                            
+                            map.name            = "humidity"
+                            map.value           = humidity
+                            map.unit            = "%"
+                            map.isStateChange   = true
+                            map.descriptionText = "${childHumDevice.displayName}: humidity is ${map.value}${map.unit}"
+                            infoLog(map.descriptionText)
+                            // childHumDevice.sendEvent(name: "humidity", value: humidity, unit: "%", isStateChange: true)
+                            childHumDevice.sendEvent(map)   
                         }
                        
             
