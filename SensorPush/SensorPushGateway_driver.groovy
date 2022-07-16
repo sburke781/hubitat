@@ -179,7 +179,7 @@ void samplesCallback(resp, data) {
                             map.value           = temperature.toString()
                             map.unit            = "°" + getTemperatureScale()
                             map.isStateChange   = true
-                            map.descriptionText = "${childTempDevice.displayName}: temperature is ${map.value}°${map.unit}"
+                            map.descriptionText = "${childTempDevice.displayName}: temperature is ${map.value}${map.unit}"
                             infoLog(map.descriptionText)
                             // childTempDevice.sendEvent(name: "temperature", value: temperature.toString(), unit: getTemperatureScale(), isStateChange: true)
                             childTempDevice.sendEvent(map)
