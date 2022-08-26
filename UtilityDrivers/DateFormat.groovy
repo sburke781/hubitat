@@ -20,6 +20,7 @@
  *    2021-02-10  Simon Burke    Addition of Scheduling
  *    2021-02-21  Raul Martin    Adding html format for dashboard
  *    2021-02-22  Raul Martin    Adding Timezones
+ *    2021-02-22  Raul Martin    Only update the properties when needed, avoiding the driver to be too chatty
  *
  */
 metadata {
@@ -49,13 +50,19 @@ def updated() {
     updatePolling()
 }
 
+def sendEventProxy(name, value, unit = '') {
+    if (device.currentValue(name) != value) {
+        sendEvent(name: name, value: value, unit: unit)
+    }
+}
+
 def runCmd() {
     now = new Date()
     selectedTimeZone = TimeZone.getTimeZone(timeZone)
-    
+
     simpleDateFormatForDate = new java.text.SimpleDateFormat(dateFormat);
     simpleDateFormatForDate.setTimeZone(selectedTimeZone);
-    
+
     simpleDateFormatForTime = new java.text.SimpleDateFormat(timeFormat);
     simpleDateFormatForTime.setTimeZone(selectedTimeZone);
 
@@ -64,9 +71,9 @@ def runCmd() {
     proposedFormattedTime = simpleDateFormatForTime.format(now);
     proposedHtmlFriendlyDateTime = "<span class=\"timeFormat\">${proposedFormattedTime}</span> <span class=\"dateFormat\">${proposedFormattedDate}</span>"
 
-    sendEvent(name: "formattedDate", value : proposedFormattedDate);
-    sendEvent(name: "formattedTime", value : proposedFormattedTime);
-    sendEvent(name: "htmlFriendlyDateTime", value : proposedHtmlFriendlyDateTime);
+    sendEventProxy("formattedDate", proposedFormattedDate);
+    sendEventProxy("formattedTime", proposedFormattedTime);
+    sendEventProxy("htmlFriendlyDateTime", proposedHtmlFriendlyDateTime);
 }
 
 def getSchedule() { }
