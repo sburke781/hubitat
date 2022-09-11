@@ -66,6 +66,12 @@
 			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/SimpleCSSEditor/packageManifest.json",
 			"description": "A pop-up tile and dashboard styling editor"
 		 }
+		 ,{
+			"name": "Mobile Controller",
+			"tags": ["Convenience"],
+			"location": "https://github.com/sburke781/MobileController/raw/master/hubitat/packageManifest.json",
+			"description": "Send and receive information and between your HE hub and mobile devices such as phones and tablets, along with initiating commands.  Currently only Android devices are supported, using Tasker and associated Tasker plugins."
+		 }
 	]
 	
 }
