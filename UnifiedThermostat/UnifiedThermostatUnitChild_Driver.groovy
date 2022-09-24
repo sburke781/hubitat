@@ -41,6 +41,7 @@
  *    2022-07-10  Simon Burke    1.0.21     Adjustment to MELCloud command JSON to try and fix 500 error
  *    2022-07-10  Simon Burke    1.0.22     Fixed inclusion of language in authentication call to MELCloud
  *    2022-07-10  Simon Burke    1.0.23     Reversing JSON changes for MELCloud and AppVersion update
+ *    2022-09-25  Simon Burke    1.0.24     Updated supported modes and fan modes to add double quotes to support HE platofrm version 2.3.3.122
  */
 import java.text.DecimalFormat;
 
@@ -246,58 +247,58 @@ def convertFanModeToKey(pFanMode) {
 def adjustFanModes(pNumberOfFanSpeeds, pHasAutomaticFanSpeed) {
     def fanModes = []
     
-    fanModes.add('Off')
+    fanModes.add("\"Off\"")
     
     //Text or Numbers?
     if (FansTextOrNumbers == true || FansTextOrNumbers == "1") {
         parent.debugLog("adjustFanModes:Text-based Fan Modes")
         if(pNumberOfFanSpeeds.toInteger() == 3) {
-            fanModes.add('Low')
-            fanModes.add('Medium')
-            fanModes.add('High')
+            fanModes.add("\"Low\"")
+            fanModes.add("\"Medium\"")
+            fanModes.add("\"High\"")
         }
         else if(pNumberOfFanSpeeds.toInteger() == 2) {
-            fanModes.add('Low')
-            fanModes.add('High')
+            fanModes.add("\"Low\"")
+            fanModes.add("\"High\"")
         }
         else
         {
         //if(pNumberOfFanSpeeds.toInteger() == 5) {
-            fanModes.add('Low')
-            fanModes.add('Medium Low')
-            fanModes.add('Medium')
-            fanModes.add('Medium High')
-            fanModes.add('High')
+            fanModes.add("\"Low\"")
+            fanModes.add("\"Medium Low\"")
+            fanModes.add("\"Medium\"")
+            fanModes.add("\"Medium High\"")
+            fanModes.add("\"High\"")
         }
 
     }
     else {
         parent.debugLog("adjustFanModes:Number-based Fan Modes")
         if(pNumberOfFanSpeeds.toInteger() == 3) {
-            fanModes.add('1')
-            fanModes.add('2')
-            fanModes.add('3')
+            fanModes.add("\"1\"")
+            fanModes.add("\"2\"")
+            fanModes.add("\"3\"")
         }
         else if(pNumberOfFanSpeeds.toInteger() == 2) {
-            fanModes.add('1')
-            fanModes.add('2')
+            fanModes.add("\"1\"")
+            fanModes.add("\"2\"")
         }
         else
         {
         //if(pNumberOfFanSpeeds.toInteger() == 5) {
-            fanModes.add('1')
-            fanModes.add('2')
-            fanModes.add('3')
-            fanModes.add('4')
-            fanModes.add('5')
+            fanModes.add("\"1\"")
+            fanModes.add("\"2\"")
+            fanModes.add("\"3\"")
+            fanModes.add("\"4\"")
+            fanModes.add("\"5\"")
         }
     }
     
     if(pHasAutomaticFanSpeed == "true" || pHasAutomaticFanSpeed == "1") {
-        fanModes.add('Auto')
+        fanModes.add("\"Auto\"")
     }
     
-    fanModes.add('On')
+    fanModes.add("\"On\"")
     
     parent.debugLog("adjustFanModes: fanModes detected are ${fanModes}")
     //Apply settings
@@ -337,13 +338,13 @@ def adjustThermostatModes(pCanHeat,pCanCool,pCanDry, pCanAuto) {
     def thermostatModes = []
     parent.debugLog("adjustThermostatModes: CanHeat = ${pCanHeat}, CanCool = ${pCanCool}, CanDry = ${pCanDry}, CanAuto = ${pCanAuto}")
     
-    if(pCanHeat == "true" || pCanHeat == "1") { thermostatModes.add('heat') }
-    if(pCanCool == "true" || pCanCool == "1") { thermostatModes.add('cool') }
-    if(pCanDry  == "true" || pCanDry  == "1") { thermostatModes.add('dry')  }
-    if(pCanAuto == "true" || pCanAuto == "1") { thermostatModes.add('auto') }
+    if(pCanHeat == "true" || pCanHeat == "1") { thermostatModes.add("\"heat\"") }
+    if(pCanCool == "true" || pCanCool == "1") { thermostatModes.add("\"cool\"") }
+    if(pCanDry  == "true" || pCanDry  == "1") { thermostatModes.add("\"dry\"")  }
+    if(pCanAuto == "true" || pCanAuto == "1") { thermostatModes.add("\"auto\"") }
     
-    thermostatModes.add('fan')
-    thermostatModes.add('off')
+    thermostatModes.add("\"fan\"")
+    thermostatModes.add("\"off\"")
     
     parent.debugLog("adjustThermostatModes: thermostatModes detected are ${thermostatModes}")
     sendEvent(name: 'supportedThermostatModes', value: thermostatModes)
