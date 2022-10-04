@@ -42,6 +42,7 @@
  *    2022-07-10  Simon Burke    1.0.22     Fixed inclusion of language in authentication call to MELCloud
  *    2022-07-10  Simon Burke    1.0.23     Reversing JSON changes for MELCloud and AppVersion update
  *    2022-09-25  Simon Burke    1.0.24     Updated supported modes and fan modes to add double quotes to support HE platofrm version 2.3.3.122
+ *    2022-10-04  Simon Burke    1.0.25     Added TemperatureMeasurement capability to support Thermostat Controller Built-in App
  */
 import java.text.DecimalFormat;
 
@@ -51,6 +52,7 @@ metadata {
         capability "Initialize"
         capability "Thermostat"
         capability "FanControl"
+        capability "TemperatureMeasurement"
 
 preferences {
 
