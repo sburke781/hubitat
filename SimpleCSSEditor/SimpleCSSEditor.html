@@ -913,19 +913,19 @@ function getTileTextCSS(tileId, srcTileId, textPos) {
 function getCSSFileURL() {
 
 	var dashName = getDashName();
-	return 'http://' + location.hostname + ':8080/local/' + dashName + '.css';
+	return 'http://' + location.hostname + '/local/' + dashName + '.css';
 }
 
 function getJsonFileURL() {
 
 	var dashName = getDashName();
-	return 'http://' + location.hostname + ':8080/local/' + dashName + '.json';
+	return 'http://' + location.hostname + '/local/' + dashName + '.json';
 }
 
 function writeCSS() {
 
 var dashName = getDashName();
-var url = "http://" + location.hostname + ":8080/hub/fileManager/upload";
+var url = "http://" + location.hostname + "/hub/fileManager/upload";
 
 var xhr = new XMLHttpRequest();
 xhr.open("POST", url);
@@ -1157,7 +1157,7 @@ Prepare the file name and HTTP Call details
 
 
 var dashName = getDashName();
-var url = "http://" + location.hostname + ":8080/hub/fileManager/upload";
+var url = "http://" + location.hostname + "/hub/fileManager/upload";
 
 var xhr = new XMLHttpRequest();
 xhr.open("POST", url);
