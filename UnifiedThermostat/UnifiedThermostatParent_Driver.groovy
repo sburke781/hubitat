@@ -245,7 +245,7 @@ def retrieveChildACUnits_MELCloud()
         
         httpGet(getParams) { resp -> 
                         
-            resp?.data?.Structure?.Devices?.each { unit -> // Each Device
+            resp?.data?.Structure?.Devices[0]?.each { unit -> // Each Device
                                       
                                       unitDetail = [unitId   : "${unit.DeviceID}".replace("[","").replace("]",""),
                                                     unitName : "${unit.DeviceName}".replace("[","").replace("]","")
