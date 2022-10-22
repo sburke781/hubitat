@@ -247,8 +247,8 @@ def retrieveChildACUnits_MELCloud()
                         
             resp?.data?.Structure?.Devices[0]?.each { unit -> // Each Device
                                       
-                                      unitDetail = [unitId   : "${unit.DeviceID}".replace("[","").replace("]",""),
-                                                    unitName : "${unit.DeviceName}".replace("[","").replace("]","")
+                                      unitDetail = [unitId   : "${unit.DeviceID}",
+                                                    unitName : "${unit.DeviceName}"
                                                    ]
                                       unitsList.add(unitDetail)
                 
