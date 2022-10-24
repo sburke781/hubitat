@@ -659,7 +659,7 @@ def retrieveStatusInfo_MELCloud() {
         httpGet(getParams) { resp ->
 
             parent.debugLog("retrieveStatusInfo_MELCloud: Initial data returned from ListDevices: ${resp.data}")
-            def unit = resp?.data?.Structure?.Devices[0]?.find { unit -> // Each Device
+            def unit = resp?.data?.Structure?.Devices[0]?.find { unit ->
                 "${unit.DeviceID}" == getUnitId()
             }.Device
             
@@ -1057,7 +1057,7 @@ def adjustThermostatMode(pThermostatMode, pPower) {
 def adjustThermostatOperatingState(pThermostatMode, pPower) {
 	
     def vOperatingState
-    if (pPower == "1") { vOperatingState = operatingStateMap["${pThermostatMode}"] }
+    if (pPower.toBoolean()) { vOperatingState = operatingStateMap["${pThermostatMode}"] }
     else { vOperatingState = "idle" }
     
     parent.debugLog("adjustThermostatOperatingState: Thermostat Mode passed in = ${pThermostatMode}, Power passed in ${pPower}, OperatingState: ${vOperatingState}")
@@ -1070,7 +1070,7 @@ def adjustThermostatOperatingState(pThermostatMode, pPower) {
 def deriveThermostatMode(pThermostatMode, pPower) {
  
     def vModeDesc
-    if (pPower == "1" || pPower == "true") { vModeDesc = modeMap["${pThermostatMode}"] }
+    if (pPower.toBoolean()) { vModeDesc = modeMap["${pThermostatMode}"] }
     else { vModeDesc = "off" }
     
     return vModeDesc
