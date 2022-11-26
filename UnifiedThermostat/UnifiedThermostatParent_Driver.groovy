@@ -16,14 +16,15 @@
  *
  *    Date        Who            What
  *    ----        ---            ----
- *    2021-07-12  Simon Burke    1.0.0 - Alpha release
- *                               1.0.1 - No Change
- *    2021-07-17  Simon Burke    1.0.2 - Added Platform temperature scale preference and get/set methods
- *    2021-07-19  Simon Burke	 1.0.3 - Updated platform temperature scale to align case of F and C with HE scale
- *                               1.0.4 - No Change
- *                               1.0.5 - No Change
- *                               1.0.6 - No Change
- *    2021-08-15  Simon Burke    1.0.7 - Added heTempScale attribute and override command to override HE hub temp scale
+ *    2021-07-12  Simon Burke    1.0.0  - Alpha release
+ *                               1.0.1  - No Change
+ *    2021-07-17  Simon Burke    1.0.2  - Added Platform temperature scale preference and get/set methods
+ *    2021-07-19  Simon Burke	 1.0.3  - Updated platform temperature scale to align case of F and C with HE scale
+ *                               1.0.4  - No Change
+ *                               1.0.5  - No Change
+ *                               1.0.6  - No Change
+ *    2021-08-15  Simon Burke    1.0.7  - Added heTempScale attribute and override command to override HE hub temp scale
+ *    2022-11-26  Simon Burke    1.0.26 - Removed Platform Scale Preference setting
  */
 metadata {
 	        definition (name:      "Unified Thermostat Parent Driver",
@@ -75,7 +76,6 @@ metadata {
             languageSelected << ["20" : "Українська (20)"]
         
         input(name: "Language", type: "enum", title:"Language", options: languageSelected, defaultValue: 0, description: "Select a language (Europe only)", displayDuringSetup: true)
-        input(name: "Scale", type: "bool", title:"Platform Temperature Scale", description: "Does the platform report in Celsius (ON, Default) or Fahrenheit (OFF)", displayDuringSetup: true, defaultValue: true)
         // Logging Preferences
         input(name: "DebugLogging", type: "bool", title:"Enable Debug Logging",                   displayDuringSetup: true, defaultValue: false)
         input(name: "WarnLogging",  type: "bool", title:"Enable Warning Logging",                 displayDuringSetup: true, defaultValue: true )
@@ -104,18 +104,7 @@ def getHETempScale() {
     return vTempScale
 }
 
-def getPlatformScale() {
- def vScale
- if(Scale == true) { vScale = 'C'}
-    else { vScale = 'F'}
- return vScale
-}
-
-def setPlatformScale(pScale) {
-    
-    if(pScale == 'C') { Scale = true}
-    else { Scale = false }
-}
+def getPlatformScale() { return 'C' }
 
 def initialize() {
     debugLog("initialize: Method called...")
