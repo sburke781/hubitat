@@ -1476,15 +1476,16 @@ def convertTemperatureOut(String pTemp) {
 }
 
 def convertTemperature(String pTemp, String pSourceScale, String pTargetScale) {
-    
+
     def vTemp = pTemp
     
     if (pTemp == null || !pTemp.isNumber() || pSourceScale == null || pTargetScale == null) { vTemp = null }
     else {
         if(pSourceScale != pTargetScale) {
-            if(pSourceScale == "C") { vTemp = celsiusToFahrenheit(pTemp.toFloat()).toString() }
+            if(pSourceScale == "C") { vTemp = (String) ((Float) ((int) (celsiusToFahrenheit(pTemp.toFloat()).toFloat().round(4) *2 + 0.5)) /2.0) }
             else { vTemp = fahrenheitToCelsius(pTemp.toFloat()).toString() }
         }
     }
+    
     return vTemp
 }
