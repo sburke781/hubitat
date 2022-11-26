@@ -43,6 +43,8 @@
  *    2022-07-10  Simon Burke    1.0.23     Reversing JSON changes for MELCloud and AppVersion update
  *    2022-09-25  Simon Burke    1.0.24     Updated supported modes and fan modes to add double quotes to support HE platofrm version 2.3.3.122
  *    2022-10-04  Simon Burke    1.0.25     Added TemperatureMeasurement capability to support Thermostat Controller Built-in App
+ *    2022-11-26  Simon Burke    1.0.26     Fix for Celsius to Fahrenheit conversion
+                                            Include drying operating state when setting cooling setpoint
  */
 import java.text.DecimalFormat;
 
@@ -843,7 +845,7 @@ def setCoolingSetpoint(givenTemp) {
     //}
     parent.debugLog("setCoolingSetpoint: Corrected Temp = ${correctedTemp}")
     adjustCoolingSetpoint(correctedTemp)
-    if (device.currentValue("thermostatOperatingState", true) == "cooling") { setTemperature(correctedTemp) }
+    if (device.currentValue("thermostatOperatingState", true) == "cooling" || device.currentValue("thermostatOperatingState", true) == "drying") { setTemperature(correctedTemp) }
 }
 
 // TO-DO: Look at use of the value 23.0 for the US
