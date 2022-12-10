@@ -45,6 +45,8 @@
  *    2022-10-04  Simon Burke    1.0.25     Added TemperatureMeasurement capability to support Thermostat Controller Built-in App
  *    2022-11-26  Simon Burke    1.0.26     Fix for Celsius to Fahrenheit conversion
                                             Include drying operating state when setting cooling setpoint
+ *    2022-12-11  Simon Burke    1.0.27     Changes to setHeatingSetpoint and setCoolingSetpoint to use thermostatMode rather than
+                                                thermostatOperatingState when determining whether to send command to the platform
  */
 import java.text.DecimalFormat;
 
@@ -800,7 +802,7 @@ def setHeatingSetpoint(givenTemp) {
     }
     parent.debugLog("setHeatingSetpoint: Corrected Temp = ${correctedTemp}")
     adjustHeatingSetpoint(correctedTemp)
-    if (device.currentValue("thermostatOperatingState", true) == "heating") { setTemperature(correctedTemp) }
+    if (device.currentValue("thermostatMode", true) == "heat") { setTemperature(correctedTemp) }
 }
 
 // adjustCoolingSetpoint() To-Do: Use Maximum Heating Set Point instead of 23
@@ -845,7 +847,7 @@ def setCoolingSetpoint(givenTemp) {
     //}
     parent.debugLog("setCoolingSetpoint: Corrected Temp = ${correctedTemp}")
     adjustCoolingSetpoint(correctedTemp)
-    if (device.currentValue("thermostatOperatingState", true) == "cooling" || device.currentValue("thermostatOperatingState", true) == "drying") { setTemperature(correctedTemp) }
+    if (device.currentValue("thermostatMode", true) == "cool" || device.currentValue("thermostatMode", true) == "dry") { setTemperature(correctedTemp) }
 }
 
 // TO-DO: Look at use of the value 23.0 for the US
