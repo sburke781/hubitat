@@ -47,6 +47,8 @@
                                             Include drying operating state when setting cooling setpoint
  *    2022-12-11  Simon Burke    1.0.27     Changes to setHeatingSetpoint and setCoolingSetpoint to use thermostatMode rather than
                                                 thermostatOperatingState when determining whether to send command to the platform
+ *    2022-12-11  Simon Burke    1.0.28     MELCloud - Fix adjust thermostat operating state to include power = true in the logic, catering for true
+                                                rather than 1 power status from MELCloud, like was included in adjust thermostat mode logic
  */
 import java.text.DecimalFormat;
 
@@ -1061,7 +1063,7 @@ def adjustThermostatMode(pThermostatMode, pPower) {
 def adjustThermostatOperatingState(pThermostatMode, pPower) {
 	
     def vOperatingState
-    if (pPower == "1") { vOperatingState = operatingStateMap["${pThermostatMode}"] }
+    if (pPower == "1" || pPower == "true") { vOperatingState = operatingStateMap["${pThermostatMode}"] }
     else { vOperatingState = "idle" }
     
     parent.debugLog("adjustThermostatOperatingState: Thermostat Mode passed in = ${pThermostatMode}, Power passed in ${pPower}, OperatingState: ${vOperatingState}")
