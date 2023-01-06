@@ -49,6 +49,7 @@
                                                 thermostatOperatingState when determining whether to send command to the platform
  *    2022-12-11  Simon Burke    1.0.28     MELCloud - Fix adjust thermostat operating state to include power = true in the logic, catering for true
                                                 rather than 1 power status from MELCloud, like was included in adjust thermostat mode logic
+ *    2023-01-07  Alexander Laamanen 1.0.29 MELCloud - Fixes to handle multiple AC Units in MELCloud setup
  */
 import java.text.DecimalFormat;
 
@@ -462,27 +463,27 @@ def retrieveUnitSettings_MELCloud() {
         httpGet(getParams) { resp ->
             
             parent.debugLog("retrieveUnitSettings_MELCloud: Initial data returned from ListDevices: ${resp.data}")
-                
-                //statusInfo.unitId   = "${resp?.data?.Structure?.Devices?.Device.DeviceID}".replace("[","").replace("]","")
-                
-                //Temperature Ranges Configured
-                settings.minTempCool  = "${resp?.data?.Structure?.Devices?.Device.MinTempCoolDry}".replace("[","").replace("]","")
-                settings.maxTempCool  = "${resp?.data?.Structure?.Devices?.Device.MaxTempCoolDry}".replace("[","").replace("]","")
-                settings.minTempDry   = "${resp?.data?.Structure?.Devices?.Device.MinTempCoolDry}".replace("[","").replace("]","")
-                settings.maxTempDry   = "${resp?.data?.Structure?.Devices?.Device.MaxTempCoolDry}".replace("[","").replace("]","")
-                settings.minTempHeat  = "${resp?.data?.Structure?.Devices?.Device.MinTempHeat}".replace("[","").replace("]","")
-                settings.maxTempHeat  = "${resp?.data?.Structure?.Devices?.Device.MaxTempHeat}".replace("[","").replace("]","")
-                settings.minTempAuto  = "${resp?.data?.Structure?.Devices?.Device.MinTempAutomatic}".replace("[","").replace("]","")
-                settings.maxTempAuto  = "${resp?.data?.Structure?.Devices?.Device.MaxTempAutomatic}".replace("[","").replace("]","")
-                
-                //Modes and Features
-                settings.canHeat              = "${resp?.data?.Structure?.Devices?.Device.CanHeat}".replace("[","").replace("]","")
-                settings.canDry               = "${resp?.data?.Structure?.Devices?.Device.CanDry}".replace("[","").replace("]","")
-                settings.canCool              = "${resp?.data?.Structure?.Devices?.Device.CanCool}".replace("[","").replace("]","")
-                settings.canAuto              = "${resp?.data?.Structure?.Devices?.Device.ModelSupportsAuto}".replace("[","").replace("]","")
-                settings.hasAutomaticFanSpeed = "${resp?.data?.Structure?.Devices?.Device.HasAutomaticFanSpeed}".replace("[","").replace("]","")
-                settings.numberOfFanSpeeds    = "${resp?.data?.Structure?.Devices?.Device.NumberOfFanSpeeds}".replace("[","").replace("]","").toInteger()
 
+            def unit = resp?.data?.Structure?.Devices[0]?.find { unit ->
+                "${unit.DeviceID}" == getUnitId()
+            }.Device
+
+            settings.minTempCool  = "${unit.MinTempCoolDry}"
+            settings.maxTempCool  = "${unit.MaxTempCoolDry}"
+            settings.minTempDry   = "${unit.MinTempCoolDry}"
+            settings.maxTempDry   = "${unit.MaxTempCoolDry}"
+            settings.minTempHeat  = "${unit.MinTempHeat}"
+            settings.maxTempHeat  = "${unit.MaxTempHeat}"
+            settings.minTempAuto  = "${unit.MinTempAutomatic}"
+            settings.maxTempAuto  = "${unit.MaxTempAutomatic}"
+
+            //Modes and Features
+            settings.canHeat              = "${unit.CanHeat}"
+            settings.canDry               = "${unit.CanDry}"
+            settings.canCool              = "${unit.CanCool}"
+            settings.canAuto              = "${unit.ModelSupportsAuto}"
+            settings.hasAutomaticFanSpeed = "${unit.HasAutomaticFanSpeed}"
+            settings.numberOfFanSpeeds    = "${unit.NumberOfFanSpeeds}".toInteger()
         }
     }   
 	catch (Exception e) {
@@ -663,40 +664,40 @@ def retrieveStatusInfo_MELCloud() {
 	try {
         
         httpGet(getParams) { resp ->
-            
+
             parent.debugLog("retrieveStatusInfo_MELCloud: Initial data returned from ListDevices: ${resp.data}")
-            if ("${resp?.data?.Structure?.Devices?.Device.HasPendingCommand}".replace("[","").replace("]","") != null
-               && "${resp?.data?.Structure?.Devices?.Device.HasPendingCommand}".replace("[","").replace("]","") != "true") {
+            def unit = resp?.data?.Structure?.Devices[0]?.find { unit ->
+                "${unit.DeviceID}" == getUnitId()
+            }.Device
+            
+            if ("${unit.HasPendingCommand}" != "true") {
                 
-                statusInfo.unitId   = "${resp?.data?.Structure?.Devices?.Device.DeviceID}".replace("[","").replace("]","")
-                
+                statusInfo.unitId   = "${unit.DeviceID}"
+
                 //Current Status Information
-                statusInfo.power    = "${resp?.data?.Structure?.Devices?.Device.Power}".replace("[","").replace("]","")
-                statusInfo.setMode  = "${resp?.data?.Structure?.Devices?.Device.OperationMode}".replace("[","").replace("]","").toInteger()
-                statusInfo.roomTemp = "${resp?.data?.Structure?.Devices?.Device.RoomTemperature}".replace("[","").replace("]","")
-                statusInfo.setTemp  = "${resp?.data?.Structure?.Devices?.Device.SetTemperature}".replace("[","").replace("]","")
-                statusInfo.setFan   = "${resp?.data?.Structure?.Devices?.Device.FanSpeed}".replace("[","").replace("]","").toInteger()
+                statusInfo.power    = "${unit.Power}"
+                statusInfo.setMode  = "${unit.OperationMode}".toInteger()
+                statusInfo.roomTemp = "${unit.RoomTemperature}"
+                statusInfo.setTemp  = "${unit.SetTemperature}"
+                statusInfo.setFan   = "${unit.FanSpeed}".toInteger()
 
                 //Temperature Ranges Configured
-                statusInfo.minTempCoolDry   = "${resp?.data?.Structure?.Devices?.Device.MinTempCoolDry}".replace("[","").replace("]","")
-                statusInfo.maxTempCoolDry   = "${resp?.data?.Structure?.Devices?.Device.MaxTempCoolDry}".replace("[","").replace("]","")
-                statusInfo.minTempHeat      = "${resp?.data?.Structure?.Devices?.Device.MinTempHeat}".replace("[","").replace("]","")
-                statusInfo.maxTempHeat      = "${resp?.data?.Structure?.Devices?.Device.MaxTempHeat}".replace("[","").replace("]","")
-                statusInfo.minTempAutomatic = "${resp?.data?.Structure?.Devices?.Device.MinTempAutomatic}".replace("[","").replace("]","")
-                statusInfo.maxTempAutomatic = "${resp?.data?.Structure?.Devices?.Device.MaxTempAutomatic}".replace("[","").replace("]","")
-                
+                statusInfo.minTempCoolDry   = "${unit.MinTempCoolDry}"
+                statusInfo.maxTempCoolDry   = "${unit.MaxTempCoolDry}"
+                statusInfo.minTempHeat      = "${unit.MinTempHeat}"
+                statusInfo.maxTempHeat      = "${unit.MaxTempHeat}"
+                statusInfo.minTempAutomatic = "${unit.MinTempAutomatic}"
+                statusInfo.maxTempAutomatic = "${unit.MaxTempAutomatic}"
                 //Modes and Features
-                statusInfo.canHeat              = "${resp?.data?.Structure?.Devices?.Device.CanHeat}".replace("[","").replace("]","")
-                statusInfo.canDry               = "${resp?.data?.Structure?.Devices?.Device.CanDry}".replace("[","").replace("]","")
-                statusInfo.canCool              = "${resp?.data?.Structure?.Devices?.Device.CanCool}".replace("[","").replace("]","")
-                statusInfo.hasAutomaticFanSpeed = "${resp?.data?.Structure?.Devices?.Device.HasAutomaticFanSpeed}".replace("[","").replace("]","")
-                statusInfo.numberOfFanSpeeds    = "${resp?.data?.Structure?.Devices?.Device.NumberOfFanSpeeds}".replace("[","").replace("]","").toInteger()
-            
+                statusInfo.canHeat              = "${unit.CanHeat}"
+                statusInfo.canDry               = "${unit.CanDry}"
+                statusInfo.canCool              = "${unit.CanCool}"
+                statusInfo.hasAutomaticFanSpeed = "${unit.HasAutomaticFanSpeed}"
+                statusInfo.numberOfFanSpeeds    = "${unit.NumberOfFanSpeeds}".toInteger()
             }
             else {
                 parent.debugLog("retrieveStatusInfo_MELCloud: There are pending commands, status will be updated when there are no pending commands.")
             }
-            
         }
     }   
 	catch (Exception e) {
@@ -1076,7 +1077,7 @@ def adjustThermostatOperatingState(pThermostatMode, pPower) {
 def deriveThermostatMode(pThermostatMode, pPower) {
  
     def vModeDesc
-    if (pPower == "1" || pPower == "true") { vModeDesc = modeMap["${pThermostatMode}"] }
+    if (pPower.toBoolean()) { vModeDesc = modeMap["${pThermostatMode}"] }
     else { vModeDesc = "off" }
     
     return vModeDesc
