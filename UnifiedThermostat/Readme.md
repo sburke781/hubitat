@@ -85,10 +85,6 @@ Each HE hub is configured with a default temperature scale, typically based on t
 
 Currently all communication is performed through the appropriate cloud services.  There are plans shortly after the official release of these drivers to start looking at local control of the air conditioning units.
 
-* Thermostat Scheduling
-
-The Hubitat Elevation system does allow for scheduling of thermostat changes.  This is not currently supported, but may be looked at in the future if there is enough interest from users.
-
 * Thermostat Commands
 
 The Emergency Heat, Fan Auto and Fan Circulate commands that are part of the Thermostat definition in Hubitat are not currently supported.

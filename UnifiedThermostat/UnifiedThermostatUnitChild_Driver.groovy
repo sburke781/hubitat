@@ -43,6 +43,12 @@
  *    2022-07-10  Simon Burke    1.0.23     Reversing JSON changes for MELCloud and AppVersion update
  *    2022-09-25  Simon Burke    1.0.24     Updated supported modes and fan modes to add double quotes to support HE platofrm version 2.3.3.122
  *    2022-10-04  Simon Burke    1.0.25     Added TemperatureMeasurement capability to support Thermostat Controller Built-in App
+ *    2022-11-26  Simon Burke    1.0.26     Fix for Celsius to Fahrenheit conversion
+                                            Include drying operating state when setting cooling setpoint
+ *    2022-12-11  Simon Burke    1.0.27     Changes to setHeatingSetpoint and setCoolingSetpoint to use thermostatMode rather than
+                                                thermostatOperatingState when determining whether to send command to the platform
+ *    2022-12-11  Simon Burke    1.0.28     MELCloud - Fix adjust thermostat operating state to include power = true in the logic, catering for true
+                                                rather than 1 power status from MELCloud, like was included in adjust thermostat mode logic
  */
 import java.text.DecimalFormat;
 
@@ -798,7 +804,7 @@ def setHeatingSetpoint(givenTemp) {
     }
     parent.debugLog("setHeatingSetpoint: Corrected Temp = ${correctedTemp}")
     adjustHeatingSetpoint(correctedTemp)
-    if (device.currentValue("thermostatOperatingState", true) == "heating") { setTemperature(correctedTemp) }
+    if (device.currentValue("thermostatMode", true) == "heat") { setTemperature(correctedTemp) }
 }
 
 // adjustCoolingSetpoint() To-Do: Use Maximum Heating Set Point instead of 23
@@ -843,7 +849,7 @@ def setCoolingSetpoint(givenTemp) {
     //}
     parent.debugLog("setCoolingSetpoint: Corrected Temp = ${correctedTemp}")
     adjustCoolingSetpoint(correctedTemp)
-    if (device.currentValue("thermostatOperatingState", true) == "cooling") { setTemperature(correctedTemp) }
+    if (device.currentValue("thermostatMode", true) == "cool" || device.currentValue("thermostatMode", true) == "dry") { setTemperature(correctedTemp) }
 }
 
 // TO-DO: Look at use of the value 23.0 for the US
@@ -1057,7 +1063,7 @@ def adjustThermostatMode(pThermostatMode, pPower) {
 def adjustThermostatOperatingState(pThermostatMode, pPower) {
 	
     def vOperatingState
-    if (pPower.toBoolean()) { vOperatingState = operatingStateMap["${pThermostatMode}"] }
+    if (pPower == "1" || pPower == "true") { vOperatingState = operatingStateMap["${pThermostatMode}"] }
     else { vOperatingState = "idle" }
     
     parent.debugLog("adjustThermostatOperatingState: Thermostat Mode passed in = ${pThermostatMode}, Power passed in ${pPower}, OperatingState: ${vOperatingState}")
@@ -1476,15 +1482,16 @@ def convertTemperatureOut(String pTemp) {
 }
 
 def convertTemperature(String pTemp, String pSourceScale, String pTargetScale) {
-    
+
     def vTemp = pTemp
     
     if (pTemp == null || !pTemp.isNumber() || pSourceScale == null || pTargetScale == null) { vTemp = null }
     else {
         if(pSourceScale != pTargetScale) {
-            if(pSourceScale == "C") { vTemp = celsiusToFahrenheit(pTemp.toFloat()).toString() }
+            if(pSourceScale == "C") { vTemp = (String) ((Float) ((int) (celsiusToFahrenheit(pTemp.toFloat()).toFloat().round(4) *2 + 0.5)) /2.0) }
             else { vTemp = fahrenheitToCelsius(pTemp.toFloat()).toString() }
         }
     }
+    
     return vTemp
 }
