@@ -49,6 +49,7 @@
                                                 thermostatOperatingState when determining whether to send command to the platform
  *    2022-12-11  Simon Burke    1.0.28     MELCloud - Fix adjust thermostat operating state to include power = true in the logic, catering for true
                                                 rather than 1 power status from MELCloud, like was included in adjust thermostat mode logic
+ *    2023-01-07  Alexander Laamanen 1.0.29 MELCloud - Fixes to handle multiple AC Units in MELCloud setup
  */
 import java.text.DecimalFormat;
 
