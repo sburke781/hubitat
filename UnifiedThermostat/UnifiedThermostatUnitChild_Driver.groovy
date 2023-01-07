@@ -50,9 +50,11 @@
  *    2022-12-11  Simon Burke    1.0.28     MELCloud - Fix adjust thermostat operating state to include power = true in the logic, catering for true
                                                 rather than 1 power status from MELCloud, like was included in adjust thermostat mode logic
  *    2023-01-07  Alexander Laamanen 1.0.29 MELCloud - Fixes to handle multiple AC Units in MELCloud setup
+ *    2023-01-07  Simon Burke    1.0.30   Now use JsonOutput for larger HTTP response logging
+                                          Automatically turn off Debug Logging after 30 minutes
  */
 import java.text.DecimalFormat;
-
+import groovy.json.JsonOutput;
 metadata {
 	definition (name: "Unified Thermostat Unit Child Driver", namespace: "simnet", author: "Simon Burke") {
         capability "Refresh"
@@ -412,7 +414,7 @@ def retrieveUnitSettings_MELView() {
 	try {
         
         httpPost(postParams) { resp ->
-            parent.debugLog("retrieveUnitSettings_MELView: unit capabilities response - ${resp.data}")     
+            parent.debugLog("retrieveUnitSettings_MELView: unit capabilities response - ${JsonOutput.toJson(resp.data)}")
             
             //Current Temperature Settings
             settings.minTempCool = "${resp.data.max."3".min}"
@@ -462,7 +464,7 @@ def retrieveUnitSettings_MELCloud() {
         
         httpGet(getParams) { resp ->
             
-            parent.debugLog("retrieveUnitSettings_MELCloud: Initial data returned from ListDevices: ${resp.data}")
+            parent.debugLog("retrieveUnitSettings_MELCloud: Initial data returned from ListDevices: ${JsonOutput.toJson(resp.data)}")
 
             def unit = resp?.data?.Structure?.Devices[0]?.find { unit ->
                 "${unit.DeviceID}" == getUnitId()
@@ -509,7 +511,8 @@ def retrieveUnitSettings_KumoCloud() {
         
         httpPost(postParams) { resp ->
             
-            parent.debugLog("retrieveUnitSettings_KumoCloud: Initial data returned: ${resp.data}")
+            parent.debugLog("retrieveUnitSettings_KumoCloud: Initial data returned: ${JsonOutput.toJson(resp.data)}")
+
             //Temperature Ranges Configured
             settings.minTempCool  = "${resp.data[2].adapter_status[0].min_setpoint}"
             settings.maxTempCool  = "${resp.data[2].adapter_status[0].max_setpoint}"
