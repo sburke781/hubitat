@@ -2,11 +2,11 @@
 	"packageName": "Simple CSS Editor",
 	"minimumHEVersion": "2.2.9.141",
 	"author": "Simon Burke (sburke781)",
-	"version": "1.1.1",
-	"dateReleased": "2022-03-04",
+	"version": "1.2.1",
+	"dateReleased": "2022-10-10",
 	"documentationLink": "",
 	"communityLink": "https://community.hubitat.com/t/release-simple-css-editor/89853",
-	"releaseNotes": "2022-03-04: 1.1.1 - Minor adjustments to Editor display (Custom CSS and padding at end of settings)\n2022-02-27: 1.1.0 - Tile Custom CSS added\n2022-02-27: 1.0.1 - Replace all spaces in file names with underscore\n2022-02-26: 1.0.0 - Initial Release",
+	"releaseNotes": "2022-10-10: 1.2.1 - Fix to remove port 8080 references\n2022-07-23: 1.2.0 - Tile Box Shadow, Dashboard Custom CSS, Hide All Titles, CSS/JSON File Links, Confirmation of saving settings and css\n2022-03-04: 1.1.1 - Minor adjustments to Editor display (Custom CSS and padding at end of settings)\n2022-02-27: 1.1.0 - Tile Custom CSS added\n2022-02-27: 1.0.1 - Replace all spaces in file names with underscore\n2022-02-26: 1.0.0 - Initial Release",
 	"apps" : [],
 	"drivers" : [
 		{
