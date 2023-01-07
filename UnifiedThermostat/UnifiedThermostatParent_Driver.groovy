@@ -41,6 +41,7 @@ metadata {
                         author:    "Simon Burke")
                  { 
                      capability "Refresh" //Adds the refresh command on the device page, allowing users to trigger the refresh() method
+                     capability "Initialize" // Calls initialize when the device is created and when the hub restarts
                  }
 
 	        preferences {
