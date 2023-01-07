@@ -28,7 +28,7 @@
  *    2023-01-07  Alexander Laamanen 1.0.29 - MELCloud - Fixes to handle multiple AC Units in MELCloud setup
  *    2023-01-07  Simon Burke    1.0.30   Now use JsonOutput for larger HTTP response logging
                                           Automatically turn off Debug Logging after 30 minutes
- *    2022-03-20  Simon Burke    2.0.0 - Kumo Local Control Alpha
+ *    2023-01-07  Simon Burke    2.0.0 - Kumo Local Control Alpha
  *                                          Capture state variables for Kumo Local Control:
  *                                              Encrypted version of Crypto Serial and Password
  *                                              Child Unit IP Address
