@@ -116,21 +116,23 @@ def getHETempScale() {
 def getPlatformScale() { return 'C' }
 
 def initialize() {
-    debugLog("initialize: Method called...")
-    if (   "${UserName}"     != ""
-        && "${Password}"     != ""
-        && "${getBaseURL()}" != "")
-      { refresh() }
-    else { debugLog("initialize: Refresh process was not called, check Preferences for UserName, Password, Platform and the Base URL State variable") }
+    debugLog("initialize: Method called...");
+    updated();
+    debugLog("initialize: Initialize process completed");
 }
 
 // updated() - Run when the "Save Preferences" button is pressed on the device edit page
 def updated() {
    debugLog("updated: Update process called")
-   refresh()
+   
+   if (   "${UserName}"     != ""
+        && "${Password}"     != ""
+        && "${getBaseURL()}" != "")
+      { refresh() }
+   else { debugLog("updated: Refresh process was not called, check Preferences for UserName, Password, Platform and the Base URL State variable") }
 
    if (DebugLogging) {
-     log.debug "Debug logging will be automatically disabled in ${debugAutoDisableMinutes} minutes"
+     log.debug "updated: Debug logging will be automatically disabled in ${debugAutoDisableMinutes} minutes"
      runIn(debugAutoDisableMinutes*60, "debugOff")
    }
    else { unschedule("debugOff") }
