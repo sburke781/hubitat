@@ -26,7 +26,14 @@
  *    2021-08-15  Simon Burke    1.0.7  - Added heTempScale attribute and override command to override HE hub temp scale
  *    2022-11-26  Simon Burke    1.0.26 - Removed Platform Scale Preference setting
  *    2023-01-07  Alexander Laamanen 1.0.29 - MELCloud - Fixes to handle multiple AC Units in MELCloud setup
+ *    2023-01-07  Simon Burke    1.0.30   Now use JsonOutput for larger HTTP response logging
+                                          Automatically turn off Debug Logging after 30 minutes
  */
+
+import groovy.json.JsonOutput;
+
+@Field static final Integer debugAutoDisableMinutes = 30
+
 metadata {
 	        definition (name:      "Unified Thermostat Parent Driver",
                         namespace: "simnet",
@@ -120,6 +127,12 @@ def initialize() {
 def updated() {
    debugLog("updated: Update process called")
    refresh()
+
+   if (DebugLogging) {
+     log.debug "Debug logging will be automatically disabled in ${debugAutoDisableMinutes} minutes"
+     runIn(debugAutoDisableMinutes*60, "debugOff")
+   }
+
    debugLog("updated: Update process complete")
 }
 
@@ -195,8 +208,7 @@ def retrieveChildACUnits_MELView() {
 	try {
         
         httpPost(postParams) { resp -> 
-                                debugLog("retrieveChildACUnits_MELView: Initial data returned from rooms.aspx: ${resp.data}") 
-            
+                                debugLog("retrieveChildACUnits_MELView: Initial data returned from rooms.aspx: ${JsonOutput.toJson(resp.data)}");
                                 resp?.data?.each { building -> // Each Building
                                                     building?.units?.each // Each AC Unit / Room
                                                       { unit -> 
@@ -234,7 +246,7 @@ def retrieveChildACUnits_MELCloud()
 	try {
         
         httpGet(getParams) { resp -> 
-                        
+            debugLog("retrieveChildACUnits_MELCloud: Initial data returned from ListDevices: ${JsonOutput.toJson(resp.data)}");
             resp?.data?.Structure?.Devices[0]?.each { unit -> // Each Device
                                       
                                       unitDetail = [unitId   : "${unit.DeviceID}",
@@ -300,13 +312,13 @@ def retrieveAuthCode_KumoCloud() {
         
           httpPost(postParams)
           { resp ->
-              debugLog("retrieveAuthCode_KumoCloud: HTTP Response = ${resp?.data}")
+              debugLog("retrieveAuthCode_KumoCloud: HTTP Response = ${JsonOutput.toJson(resp.data)}")
               vnewAuthCode = "${resp?.data[0].token}";
             
         
               debugLog("retrieveAuthCode_KumoCloud: New Auth Code - ${vnewAuthCode}");
               resp?.data[2].children.each { child ->
-                  debugLog("retrieveAuthCode_KumoCloud: Child - ${child}")
+                  debugLog("retrieveAuthCode_KumoCloud: Child - ${JsonOutput.toJson(child)}")
                   child.zoneTable?.each { unit ->
                     unitsList.add(parseKumoUnit(unit))
                   
@@ -403,7 +415,7 @@ def retrieveAuthCode_MELCloud() {
         
         httpPost(postParams)
         { resp -> 
-            debugLog("retrieveAuthCode_MELCloud: ${resp.data}")
+            debugLog("retrieveAuthCode_MELCloud: ${JsonOutput.toJson(resp.data)}")
                        
             vnewAuthCode = "${resp?.data?.LoginData?.ContextKey?.value}";
             debugLog("retrieveAuthCode_MELCloud: New Auth Code - ${vnewAuthCode}");
@@ -554,6 +566,12 @@ def warnLog(warnMessage) {
     if(WarnLogging == true) {log.warn(warnMessage)}    
 }
 
+def debugOff() {
+
+   log.warn("Disabling debug logging");
+   device.updateSetting("DebugLogging", [value:"false", type:"bool"])
+}
+
 // General Utility methods
 
 def checkNull(value, alternative) {
@@ -562,3 +580,4 @@ def checkNull(value, alternative) {
     return value
     
 }
+
