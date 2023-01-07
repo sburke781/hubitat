@@ -31,6 +31,7 @@
  */
 
 import groovy.json.JsonOutput;
+import groovy.transform.Field
 
 @Field static final Integer debugAutoDisableMinutes = 30
 
@@ -132,6 +133,7 @@ def updated() {
      log.debug "Debug logging will be automatically disabled in ${debugAutoDisableMinutes} minutes"
      runIn(debugAutoDisableMinutes*60, "debugOff")
    }
+   else { unschedule("debugOff") }
 
    debugLog("updated: Update process complete")
 }
