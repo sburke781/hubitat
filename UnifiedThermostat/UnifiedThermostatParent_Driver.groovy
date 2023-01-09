@@ -28,6 +28,7 @@
  *    2023-01-07  Alexander Laamanen 1.0.29 - MELCloud - Fixes to handle multiple AC Units in MELCloud setup
  *    2023-01-07  Simon Burke    1.0.30   Now use JsonOutput for larger HTTP response logging
                                           Automatically turn off Debug Logging after 30 minutes
+ *    2023-01-09  Simon Burke    1.0.31   Detection of A/C Units configured under Floors and Areas in MELCloud
  */
 
 import groovy.json.JsonOutput;
@@ -260,7 +261,28 @@ def retrieveChildACUnits_MELCloud()
                                       unitsList.add(unitDetail)
                 
                                   } //End of each unit
-                           } // End of response (resp)
+                                  
+            resp?.data?.Structure?.Floors?.each { floor -> // Each Floor
+                                    floor.Devices[0]?.each { unit -> // Each Device on a Floor
+                                      
+                                      unitDetail = [unitId   : "${unit.DeviceID}",
+                                                    unitName : "${unit.DeviceName}"
+                                                   ]
+                                      unitsList.add(unitDetail)
+                
+                                  } //End of each unit on a floor
+
+            resp?.data?.Structure?.Areas?.each { area -> // Each Area
+                                    area.Devices[0]?.each { unit -> // Each Device in an Area
+                                      
+                                      unitDetail = [unitId   : "${unit.DeviceID}",
+                                                    unitName : "${unit.DeviceName}"
+                                                   ]
+                                      unitsList.add(unitDetail)
+                
+                                  } //End of each unit in an Area
+            } // End of Each Area
+        } // End of response (resp)
     }  // End of Try 
 	catch (Exception e) {
         log.error "retrieveChildACUnits_MelCloud: Unable to query ${getPlatform()}: ${e}"
