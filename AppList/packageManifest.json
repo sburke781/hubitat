@@ -1,0 +1,20 @@
+{
+	"packageName": "App List (Beta)",
+	"minimumHEVersion": "2.2.1",
+	"author": "Simon Burke (sburke781)",
+	"version": "0.1.0",
+	"dateReleased": "2023-01-25",
+	"documentationLink": "",
+	"communityLink": "",
+	"releaseNotes": "2023-01-25: 0.1.0 - Initial Beta Release",
+	"apps" : [],
+	"drivers" : [
+		{
+			"id": "22597029-98db-490b-b8b9-c23b123dd613",
+			"name": "App List Driver",
+			"namespace": "simnet",
+			"location": "https://raw.githubusercontent.com/sburke781/hubitat/master/AppList/AppList_Driver.groovy",
+			"required": true
+		}
+	]
+}
