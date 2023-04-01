@@ -29,6 +29,7 @@
  *    2023-01-07  Simon Burke    1.0.30   Now use JsonOutput for larger HTTP response logging
                                           Automatically turn off Debug Logging after 30 minutes
  *    2023-01-09  Simon Burke    1.0.31   Detection of A/C Units configured under Floors and Areas in MELCloud
+ *    2023-04-02  Simon Burke    1.0.32   Updated applyStatusUpdates in child driver to detect when no status data is available
  */
 
 import groovy.json.JsonOutput;
