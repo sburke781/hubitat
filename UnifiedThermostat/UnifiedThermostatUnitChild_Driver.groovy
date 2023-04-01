@@ -714,9 +714,9 @@ def retrieveStatusInfo_MELCloud() {
 def applyStatusUpdates(statusInfo) {
     def statusIsCurrent = 1
     parent.debugLog("applyResponseStatus: Status Info: ${statusInfo}")
-    // Check to make sure the status map is not empty and that we have at least the status as at date, as an indicator there are likely some
+    // Check to make sure the status map is not empty and that we have at least the unitId, as an indicator there are likely some
     //   status updates available
-    if (!statusInfo.isEmpty() && statusInfo.statusAsAt != null) {
+    if (!statusInfo.isEmpty() && statusInfo.unitId != null) {
         parent.debugLog("applyResponseStatus: lastCommandUTC = ${checkNull(device.currentValue("lastCommandUTC", true),"Null")}, ${checkNull(statusInfo.statusAsAt,"Null")}")
         if (device.currentValue("lastCommandUTC") != null && statusInfo.containsKey("statusAsAt") ) {
             
