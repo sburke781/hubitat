@@ -465,33 +465,83 @@ def retrieveUnitSettings_MELCloud() {
         httpGet(getParams) { resp ->
             
             parent.debugLog("retrieveUnitSettings_MELCloud: Initial data returned from ListDevices: ${JsonOutput.toJson(resp.data)}")
+            def unit;
+            
+            // Find the Unit
+            resp?.data?.each { building -> // Each Building
+				// Units in Floors and Areas
+                building.Structure.Floors?.each { floor -> // Each Floor
+					floor.Areas?.each { area -> // Each Area in Floor
+						
+						unit = area.Devices[0]?.find { unit ->
+							"${unit.DeviceID}" == getUnitId()
+						}.Device
+					}
+                } //End of each unit on a floors & areas
+                
+				if(unit == null) {
+					// Units in Floors
+					building.Structure.Floors?.each { floor -> // Each Floor
+						
+						unit = floor.Devices[0]?.find { unit ->
+							"${unit.DeviceID}" == getUnitId()
+						}.Device
+						
+					} //End of each unit on a floors
+                }
+				if(unit == null) {
+					// Units in Areas
+					building.Structure.Areas?.each { area -> // Each Area
+						
+						unit = area.Devices[0]?.find { unit ->
+							"${unit.DeviceID}" == getUnitId()
+						}.Device
+						
+					} //End of each unit on a areas                 
+                }
+				
+				if(unit == null) {
+					// Units in buildings with no Floor, no Areas
+					
+					unit = building.Structure.Devices[0]?.find { unit ->
+							"${unit.DeviceID}" == getUnitId()
+						}.Device
+					
+				}
+			} // End of buildings
 
-            def unit = resp?.data?.Structure?.Devices[0]?.find { unit ->
-                "${unit.DeviceID}" == getUnitId()
-            }.Device
+            if(unit != null) parseUnitSettings_MELCloud(unit);
 
-            settings.minTempCool  = "${unit.MinTempCoolDry}"
-            settings.maxTempCool  = "${unit.MaxTempCoolDry}"
-            settings.minTempDry   = "${unit.MinTempCoolDry}"
-            settings.maxTempDry   = "${unit.MaxTempCoolDry}"
-            settings.minTempHeat  = "${unit.MinTempHeat}"
-            settings.maxTempHeat  = "${unit.MaxTempHeat}"
-            settings.minTempAuto  = "${unit.MinTempAutomatic}"
-            settings.maxTempAuto  = "${unit.MaxTempAutomatic}"
-
-            //Modes and Features
-            settings.canHeat              = "${unit.CanHeat}"
-            settings.canDry               = "${unit.CanDry}"
-            settings.canCool              = "${unit.CanCool}"
-            settings.canAuto              = "${unit.ModelSupportsAuto}"
-            settings.hasAutomaticFanSpeed = "${unit.HasAutomaticFanSpeed}"
-            settings.numberOfFanSpeeds    = "${unit.NumberOfFanSpeeds}".toInteger()
         }
     }   
 	catch (Exception e) {
         parent.errorLog "retrieveUnitSettings_MELCloud : Unable to query Mitsubishi Electric MELCloud: ${e}"
 	}
     
+    return settings
+}
+
+def parseUnitSettings_MELCloud(pUnit) {
+    
+    def settings = [:];
+
+    settings.minTempCool  = "${unit.MinTempCoolDry}"
+    settings.maxTempCool  = "${unit.MaxTempCoolDry}"
+    settings.minTempDry   = "${unit.MinTempCoolDry}"
+    settings.maxTempDry   = "${unit.MaxTempCoolDry}"
+    settings.minTempHeat  = "${unit.MinTempHeat}"
+    settings.maxTempHeat  = "${unit.MaxTempHeat}"
+    settings.minTempAuto  = "${unit.MinTempAutomatic}"
+    settings.maxTempAuto  = "${unit.MaxTempAutomatic}"
+
+    //Modes and Features
+    settings.canHeat              = "${unit.CanHeat}"
+    settings.canDry               = "${unit.CanDry}"
+    settings.canCool              = "${unit.CanCool}"
+    settings.canAuto              = "${unit.ModelSupportsAuto}"
+    settings.hasAutomaticFanSpeed = "${unit.HasAutomaticFanSpeed}"
+    settings.numberOfFanSpeeds    = "${unit.NumberOfFanSpeeds}".toInteger()
+
     return settings
 }
 
