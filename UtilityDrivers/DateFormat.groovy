@@ -20,7 +20,7 @@
  *    2021-02-10  Simon Burke    Addition of Scheduling
  *    2021-02-21  Raul Martin    Adding html format for dashboard
  *    2021-02-22  Raul Martin    Adding Timezones
- *    2021-02-22  Raul Martin    Only update the properties when needed, avoiding the driver to be too chatty
+ *    2023-04-10  Simon Burke    Added isDSTActive
  *
  */
 metadata {
@@ -29,6 +29,7 @@ metadata {
         attribute "formattedDate", "string"
         attribute "formattedTime", "string"
         attribute "htmlFriendlyDateTime", "string"
+        attribute "isDSTActive", "boolean"
 	}
 
 	preferences {
@@ -50,19 +51,14 @@ def updated() {
     updatePolling()
 }
 
-def sendEventProxy(name, value, unit = '') {
-    if (device.currentValue(name) != value) {
-        sendEvent(name: name, value: value, unit: unit)
-    }
-}
-
 def runCmd() {
     now = new Date()
     selectedTimeZone = TimeZone.getTimeZone(timeZone)
-
+    timezoneInDST = selectedTimeZone.inDaylightTime(now);
+    
     simpleDateFormatForDate = new java.text.SimpleDateFormat(dateFormat);
     simpleDateFormatForDate.setTimeZone(selectedTimeZone);
-
+    
     simpleDateFormatForTime = new java.text.SimpleDateFormat(timeFormat);
     simpleDateFormatForTime.setTimeZone(selectedTimeZone);
 
@@ -71,28 +67,40 @@ def runCmd() {
     proposedFormattedTime = simpleDateFormatForTime.format(now);
     proposedHtmlFriendlyDateTime = "<span class=\"timeFormat\">${proposedFormattedTime}</span> <span class=\"dateFormat\">${proposedFormattedDate}</span>"
 
-    sendEventProxy("formattedDate", proposedFormattedDate);
-    sendEventProxy("formattedTime", proposedFormattedTime);
-    sendEventProxy("htmlFriendlyDateTime", proposedHtmlFriendlyDateTime);
+    sendEvent(name: "formattedDate", value : proposedFormattedDate);
+    sendEvent(name: "formattedTime", value : proposedFormattedTime);
+    sendEvent(name: "htmlFriendlyDateTime", value : proposedHtmlFriendlyDateTime);
+    sendEvent(name: "isDSTActive", value : timezoneInDST);
 }
 
 def getSchedule() { }
 
 def updatePolling() {
 
-   def sched
+   String sched = '';
    log.debug("updatePolling: Updating Automatic Polling called, about to unschedule refresh")
    unschedule("refresh")
    log.debug("updatePolling: Unscheduleing refresh complete")
 
    if(AutoUpdate == true) {
-
-       sched = "2/${AutoUpdateInterval} * * ? * * *"
+       int intervalInt = Integer.parseInt(AutoUpdateInterval);
+       int seconds = intervalInt % 60;
+       
+       int minutes = (intervalInt - (intervalInt % 60)) / 60;
+       
+       log.debug("updatePolling: minutes = ${minutes}, seconds = ${seconds}");
+       if ( seconds != 0 ) { sched = "2/${seconds}" }
+       else                { sched = '2/0'            }
+       
+       
+       if ( minutes != 0 ) { sched = sched + " ${minutes} * ? * * *" }
+       else { sched = sched + " * * ? * * *" }
+       
        log.debug("updatePolling: Setting up schedule with settings: schedule(\"${sched}\",refresh)")
        try{
 
            schedule("${sched}","refresh")
-       }
+       } 
        catch(Exception e) {
            log.error("updatePolling: Error - " + e)
        }
