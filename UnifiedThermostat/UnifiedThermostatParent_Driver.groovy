@@ -270,6 +270,14 @@ def retrieveChildACUnits_MELCloud()
                                       unitsList.add(unitDetail)
                 
                                   } //End of each unit on a floor
+                                  floor.Areas?.each { area -> // Each Area in Floor
+						              area.Devices[0]?.each { unit -> // Each Device in the Area
+                                      
+                                      unitDetail = [unitId   : "${unit.DeviceID}",
+                                                    unitName : "${unit.DeviceName}"
+                                                   ]
+                                      unitsList.add(unitDetail)
+					              }  // End of each unit in a floor and area
             } // End of Each Floor
             resp?.data?.Structure?.Areas?.each { area -> // Each Area
                                     area.Devices[0]?.each { unit -> // Each Device in an Area

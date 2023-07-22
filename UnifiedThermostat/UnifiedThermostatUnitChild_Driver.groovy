@@ -52,6 +52,8 @@
  *    2023-01-07  Alexander Laamanen 1.0.29 MELCloud - Fixes to handle multiple AC Units in MELCloud setup
  *    2023-01-07  Simon Burke    1.0.30   Now use JsonOutput for larger HTTP response logging
                                           Automatically turn off Debug Logging after 30 minutes
+*     2023-01-09  Simon Burke    1.0.31   No Change
+ *    2023-07-22  Simon Burke    1.0.32   MELCloud detection of Floors and Areas when retrieving unit settings
  */
 import java.text.DecimalFormat;
 import groovy.json.JsonOutput;
