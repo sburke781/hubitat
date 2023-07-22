@@ -465,7 +465,7 @@ def retrieveUnitSettings_MELCloud() {
         httpGet(getParams) { resp ->
             
             parent.debugLog("retrieveUnitSettings_MELCloud: Initial data returned from ListDevices: ${JsonOutput.toJson(resp.data)}")
-            def unit;
+            def unitSettings;
             
             // Find the Unit
             resp?.data?.each { building -> // Each Building
@@ -473,44 +473,45 @@ def retrieveUnitSettings_MELCloud() {
                 building.Structure.Floors?.each { floor -> // Each Floor
 					floor.Areas?.each { area -> // Each Area in Floor
 						
-						unit = area.Devices[0]?.find { unit ->
+						unitSettings = area.Devices[0]?.find { unit ->
 							"${unit.DeviceID}" == getUnitId()
 						}.Device
 					}
                 } //End of each unit on a floors & areas
                 
-				if(unit == null) {
+				if(unitSettings == null) {
 					// Units in Floors
 					building.Structure.Floors?.each { floor -> // Each Floor
 						
-						unit = floor.Devices[0]?.find { unit ->
+						unitSettings = floor.Devices[0]?.find { unit ->
 							"${unit.DeviceID}" == getUnitId()
 						}.Device
 						
 					} //End of each unit on a floors
                 }
-				if(unit == null) {
+				if(unitSettings == null) {
 					// Units in Areas
 					building.Structure.Areas?.each { area -> // Each Area
 						
-						unit = area.Devices[0]?.find { unit ->
+						unitSettings = area.Devices[0]?.find { unit ->
 							"${unit.DeviceID}" == getUnitId()
 						}.Device
 						
 					} //End of each unit on a areas                 
                 }
 				
-				if(unit == null) {
+				if(unitSettings == null) {
 					// Units in buildings with no Floor, no Areas
 					
-					unit = building.Structure.Devices[0]?.find { unit ->
+					unitSettings = building.Structure.Devices[0]?.find { unit ->
 							"${unit.DeviceID}" == getUnitId()
 						}.Device
 					
 				}
 			} // End of buildings
 
-            if(unit != null) parseUnitSettings_MELCloud(unit);
+            if(unitSettings != null) parseUnitSettings_MELCloud(unitSettings)
+            else parent.warnLog("retrieveUnitSettings_MELCloud: Unable to find Unit Settings for ${getUnitId()} in ListDevices response");
 
         }
     }   
