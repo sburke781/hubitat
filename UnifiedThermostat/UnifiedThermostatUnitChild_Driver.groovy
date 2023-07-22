@@ -54,6 +54,7 @@
                                           Automatically turn off Debug Logging after 30 minutes
  *    2023-01-09  Simon Burke    1.0.31   Detection of A/C Units configured under Floors and Areas in MELCloud
  *    2023-04-02  Simon Burke    1.0.32   Updated applyStatusUpdates in child driver to detect when no status data is available
+ *    2023-07-22  Simon Burke    1.0.33   MELCloud detection of Floors and Areas when retrieving unit settings
  */
 import java.text.DecimalFormat;
 import groovy.json.JsonOutput;
@@ -467,33 +468,84 @@ def retrieveUnitSettings_MELCloud() {
         httpGet(getParams) { resp ->
             
             parent.debugLog("retrieveUnitSettings_MELCloud: Initial data returned from ListDevices: ${JsonOutput.toJson(resp.data)}")
+            def unitSettings;
+            
+            // Find the Unit
+            resp?.data?.each { building -> // Each Building
+				// Units in Floors and Areas
+                building.Structure.Floors?.each { floor -> // Each Floor
+					floor.Areas?.each { area -> // Each Area in Floor
+						
+						unitSettings = area.Devices[0]?.find { unit ->
+							"${unit.DeviceID}" == getUnitId()
+						}.Device
+					}
+                } //End of each unit on a floors & areas
+                
+				if(unitSettings == null) {
+					// Units in Floors
+					building.Structure.Floors?.each { floor -> // Each Floor
+						
+						unitSettings = floor.Devices[0]?.find { unit ->
+							"${unit.DeviceID}" == getUnitId()
+						}.Device
+						
+					} //End of each unit on a floors
+                }
+				if(unitSettings == null) {
+					// Units in Areas
+					building.Structure.Areas?.each { area -> // Each Area
+						
+						unitSettings = area.Devices[0]?.find { unit ->
+							"${unit.DeviceID}" == getUnitId()
+						}.Device
+						
+					} //End of each unit on a areas                 
+                }
+				
+				if(unitSettings == null) {
+					// Units in buildings with no Floor, no Areas
+					
+					unitSettings = building.Structure.Devices[0]?.find { unit ->
+							"${unit.DeviceID}" == getUnitId()
+						}.Device
+					
+				}
+			} // End of buildings
 
-            def unit = resp?.data?.Structure?.Devices[0]?.find { unit ->
-                "${unit.DeviceID}" == getUnitId()
-            }.Device
+            if(unitSettings != null) parseUnitSettings_MELCloud(unitSettings)
+            else parent.warnLog("retrieveUnitSettings_MELCloud: Unable to find Unit Settings for ${getUnitId()} in ListDevices response");
 
-            settings.minTempCool  = "${unit.MinTempCoolDry}"
-            settings.maxTempCool  = "${unit.MaxTempCoolDry}"
-            settings.minTempDry   = "${unit.MinTempCoolDry}"
-            settings.maxTempDry   = "${unit.MaxTempCoolDry}"
-            settings.minTempHeat  = "${unit.MinTempHeat}"
-            settings.maxTempHeat  = "${unit.MaxTempHeat}"
-            settings.minTempAuto  = "${unit.MinTempAutomatic}"
-            settings.maxTempAuto  = "${unit.MaxTempAutomatic}"
-
-            //Modes and Features
-            settings.canHeat              = "${unit.CanHeat}"
-            settings.canDry               = "${unit.CanDry}"
-            settings.canCool              = "${unit.CanCool}"
-            settings.canAuto              = "${unit.ModelSupportsAuto}"
-            settings.hasAutomaticFanSpeed = "${unit.HasAutomaticFanSpeed}"
-            settings.numberOfFanSpeeds    = "${unit.NumberOfFanSpeeds}".toInteger()
         }
     }   
 	catch (Exception e) {
         parent.errorLog "retrieveUnitSettings_MELCloud : Unable to query Mitsubishi Electric MELCloud: ${e}"
 	}
     
+    return settings
+}
+
+def parseUnitSettings_MELCloud(pUnit) {
+    
+    def settings = [:];
+
+    settings.minTempCool  = "${unit.MinTempCoolDry}"
+    settings.maxTempCool  = "${unit.MaxTempCoolDry}"
+    settings.minTempDry   = "${unit.MinTempCoolDry}"
+    settings.maxTempDry   = "${unit.MaxTempCoolDry}"
+    settings.minTempHeat  = "${unit.MinTempHeat}"
+    settings.maxTempHeat  = "${unit.MaxTempHeat}"
+    settings.minTempAuto  = "${unit.MinTempAutomatic}"
+    settings.maxTempAuto  = "${unit.MaxTempAutomatic}"
+
+    //Modes and Features
+    settings.canHeat              = "${unit.CanHeat}"
+    settings.canDry               = "${unit.CanDry}"
+    settings.canCool              = "${unit.CanCool}"
+    settings.canAuto              = "${unit.ModelSupportsAuto}"
+    settings.hasAutomaticFanSpeed = "${unit.HasAutomaticFanSpeed}"
+    settings.numberOfFanSpeeds    = "${unit.NumberOfFanSpeeds}".toInteger()
+
     return settings
 }
 

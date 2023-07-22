@@ -89,7 +89,7 @@ metadata {
         
         input(name: "Language", type: "enum", title:"Language", options: languageSelected, defaultValue: 0, description: "Select a language (Europe only)", displayDuringSetup: true)
         // Logging Preferences
-        input(name: "DebugLogging", type: "bool", title:"Enable Debug Logging",                   displayDuringSetup: true, defaultValue: false)
+        input(name: "DebugLogging", type: "bool", title:"Enable Debug Logging",                   description: "Will automatically disable after 30 minutes", displayDuringSetup: true, defaultValue: false)
         input(name: "WarnLogging",  type: "bool", title:"Enable Warning Logging",                 displayDuringSetup: true, defaultValue: true )
         input(name: "ErrorLogging", type: "bool", title:"Enable Error Logging",                   displayDuringSetup: true, defaultValue: true )
         input(name: "InfoLogging",  type: "bool", title:"Enable Description Text (Info) Logging", displayDuringSetup: true, defaultValue: false)
@@ -183,7 +183,6 @@ def createChildACUnits(givenUnitsList) {
               createChildDevice("${unit.unitId}", "${unit.unitName}", "AC")
               childDevice = findChildDevice("${unit.unitId}", "AC")
               childDevice.setUnitId("${unit.unitId}")
-              //childDevice.initialize()
               runIn(30, "initializeChildDevices", [overwrite: true])
           }
       
@@ -272,6 +271,14 @@ def retrieveChildACUnits_MELCloud()
                                       unitsList.add(unitDetail)
                 
                                   } //End of each unit on a floor
+                                  floor.Areas?.each { area -> // Each Area in Floor
+						              area.Devices[0]?.each { unit -> // Each Device in the Area
+                                      
+                                      unitDetail = [unitId   : "${unit.DeviceID}",
+                                                    unitName : "${unit.DeviceName}"
+                                                   ]
+                                      unitsList.add(unitDetail)
+					              }  // End of each unit in a floor and area
             } // End of Each Floor
             resp?.data?.Structure?.Areas?.each { area -> // Each Area
                                     area.Devices[0]?.each { unit -> // Each Device in an Area
