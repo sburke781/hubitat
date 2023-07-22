@@ -52,8 +52,9 @@
  *    2023-01-07  Alexander Laamanen 1.0.29 MELCloud - Fixes to handle multiple AC Units in MELCloud setup
  *    2023-01-07  Simon Burke    1.0.30   Now use JsonOutput for larger HTTP response logging
                                           Automatically turn off Debug Logging after 30 minutes
-*     2023-01-09  Simon Burke    1.0.31   No Change
- *    2023-07-22  Simon Burke    1.0.32   MELCloud detection of Floors and Areas when retrieving unit settings
+ *    2023-01-09  Simon Burke    1.0.31   Detection of A/C Units configured under Floors and Areas in MELCloud
+ *    2023-04-02  Simon Burke    1.0.32   Updated applyStatusUpdates in child driver to detect when no status data is available
+ *    2023-07-22  Simon Burke    1.0.33   MELCloud detection of Floors and Areas when retrieving unit settings
  */
 import java.text.DecimalFormat;
 import groovy.json.JsonOutput;
@@ -765,8 +766,9 @@ def retrieveStatusInfo_MELCloud() {
 def applyStatusUpdates(statusInfo) {
     def statusIsCurrent = 1
     parent.debugLog("applyResponseStatus: Status Info: ${statusInfo}")
-    
-    if (!statusInfo.isEmpty()) {
+    // Check to make sure the status map is not empty and that we have at least the unitId, as an indicator there are likely some
+    //   status updates available
+    if (!statusInfo.isEmpty() && statusInfo.unitId != null) {
         parent.debugLog("applyResponseStatus: lastCommandUTC = ${checkNull(device.currentValue("lastCommandUTC", true),"Null")}, ${checkNull(statusInfo.statusAsAt,"Null")}")
         if (device.currentValue("lastCommandUTC") != null && statusInfo.containsKey("statusAsAt") ) {
             
