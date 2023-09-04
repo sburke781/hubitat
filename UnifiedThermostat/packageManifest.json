@@ -2,11 +2,11 @@
 	"packageName": "Unified Thermostat",
 	"minimumHEVersion": "2.2.1",
 	"author": "Simon Burke (sburke781)",
-	"version": "1.0.32",
-	"dateReleased": "2023-04-02",
+	"version": "1.0.33",
+	"dateReleased": "2023-09-05",
 	"documentationLink": "https://github.com/sburke781/hubitat/blob/master/UnifiedThermostat/Readme.md",
 	"communityLink": "https://community.hubitat.com/t/release-unified-thermostat-driver-alpha-melcloud-melview-kumo-cloud-and-more-if-you-want",
-	"releaseNotes": "2023-04-02: 1.0.32 - Updated applyStatusUpdates in child driver to detect when no status data is available\n2023-01-09: 1.0.31 - Detection of MELCloud units on Floors and Areas\n2023-01-07: 1.0.30 - Now use JsonOutput for larger HTTP response logging, automatically turn off Debug Logging after 30 minutes\n2023-01-07: 1.0.29 - MELCloud Fixes to handle multiple AC Units (@klaamane)\n2022-12-11: 1.0.28 - Include MELCloud's Power reading of true in thermostat operating state detection\n2022-12-11: 1.0.27 - Changes to setHeatingSetpoint and setCoolingSetpoint to use thermostatMode rather than thermostatOperatingState when determining whether to send command to the platform",
+	"releaseNotes": "2023-09-05: 1.0.33 - Added 6 - Super High Fan Speed\n2023-04-02: 1.0.32 - Updated applyStatusUpdates in child driver to detect when no status data is available\n2023-01-09: 1.0.31 - Detection of MELCloud units on Floors and Areas\n2023-01-07: 1.0.30 - Now use JsonOutput for larger HTTP response logging, automatically turn off Debug Logging after 30 minutes\n2023-01-07: 1.0.29 - MELCloud Fixes to handle multiple AC Units (@klaamane)\n2022-12-11: 1.0.28 - Include MELCloud's Power reading of true in thermostat operating state detection\n2022-12-11: 1.0.27 - Changes to setHeatingSetpoint and setCoolingSetpoint to use thermostatMode rather than thermostatOperatingState when determining whether to send command to the platform",
 	"apps" : [],
 	"drivers" : [
 		{

@@ -30,6 +30,7 @@
                                           Automatically turn off Debug Logging after 30 minutes
  *    2023-01-09  Simon Burke    1.0.31   Detection of A/C Units configured under Floors and Areas in MELCloud
  *    2023-04-02  Simon Burke    1.0.32   Updated applyStatusUpdates in child driver to detect when no status data is available
+ *    2023-09-05  Simon Burke    1.0.33   Added 6 - Super High Fan Speed
  */
 
 import groovy.json.JsonOutput;
