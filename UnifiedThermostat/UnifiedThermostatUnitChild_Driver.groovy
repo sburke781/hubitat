@@ -54,6 +54,7 @@
                                           Automatically turn off Debug Logging after 30 minutes
  *    2023-01-09  Simon Burke    1.0.31   Detection of A/C Units configured under Floors and Areas in MELCloud
  *    2023-04-02  Simon Burke    1.0.32   Updated applyStatusUpdates in child driver to detect when no status data is available
+ *    2023-09-05  Simon Burke    1.0.33   Added 6 - Super High Fan Speed
  */
 import java.text.DecimalFormat;
 import groovy.json.JsonOutput;
@@ -216,15 +217,14 @@ def updated() {
 
 /* getFanModeMap() To-Do: Review these values for Kumo and MelView */
 def getFanModeMap() {
-    
     if (FansTextOrNumbers == true) {
         [
             "0":"Auto",
-            "1":"Low",
-            "2":"Medium Low",
+            "1":"Quiet",
+            "2":"Low",
             "3":"Medium",
-            "4":"Medium High",
-            "5":"High"
+            "5":"High",
+            "6":"Very High"
         ]
     }
     else {
@@ -233,8 +233,8 @@ def getFanModeMap() {
             "1":"1",
             "2":"2",
             "3":"3",
-            "4":"4",
-            "5":"5"
+            "5":"5",
+            "6":"6"
         ]
     }
 }
