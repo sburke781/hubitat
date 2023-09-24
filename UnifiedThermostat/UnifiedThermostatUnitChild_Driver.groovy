@@ -174,12 +174,6 @@ def setUnitId(pUnitId) {
 
 // Standard Driver Methods
 
-/* Initialize() To-Do
-      1. Come up with updated logic for handling high set point to take into account
-           Celsius and Fahrenheit
-
-*/
-
 def initialize() {
   
     parent.debugLog("initialize: Initialize process started for unit ${getUnitId()}...")
@@ -200,7 +194,6 @@ def refresh() {
 
 // Updated - Run when the Save Preferences button is pressed on the Device Edit page
 //            and when device is initialized
-//        To-Do: Turn on polling
 def updated() {
 
     // Retrieve current unit settings and features, applying updates
@@ -215,7 +208,6 @@ def updated() {
 
 // Mode and Fan Mode Maps and Conversions
 
-/* getFanModeMap() To-Do: Review these values for Kumo and MelView */
 def getFanModeMap() {
     if (FansTextOrNumbers == true) {
         [
@@ -239,7 +231,6 @@ def getFanModeMap() {
     }
 }
 
-/* convertFanModeToKey() To-Do: Confirm mode values across each platform */
 def convertFanModeToKey(pFanMode) {
     
     String vFanMode = "${pFanMode}";
@@ -253,7 +244,8 @@ def convertFanModeToKey(pFanMode) {
     if(vFanMode == "medium high"  || vFanMode == "4"   )   { vModeKey = 4 }
     if(vFanMode == "medium-high"  || vFanMode == "4"   )   { vModeKey = 4 }
     if(vFanMode == "high"         || vFanMode == "5"   )   { vModeKey = 5 }
-    
+    if(vFanMode == "very high"    || vFanMode == "6"   )   { vModeKey = 6 }
+    if(vFanMode == "very-high"    || vFanMode == "6"   )   { vModeKey = 6 }
     return vModeKey
 }
 
@@ -282,6 +274,7 @@ def adjustFanModes(pNumberOfFanSpeeds, pHasAutomaticFanSpeed) {
             fanModes.add("\"Medium\"")
             fanModes.add("\"Medium High\"")
             fanModes.add("\"High\"")
+            fanModes.add("\"Very High\"")
         }
 
     }
@@ -304,6 +297,7 @@ def adjustFanModes(pNumberOfFanSpeeds, pHasAutomaticFanSpeed) {
             fanModes.add("\"3\"")
             fanModes.add("\"4\"")
             fanModes.add("\"5\"")
+            fanModes.add("\"6\"")
         }
     }
     
