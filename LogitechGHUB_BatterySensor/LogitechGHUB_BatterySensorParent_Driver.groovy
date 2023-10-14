@@ -87,7 +87,7 @@ void getBatteryReadings() {
                 String deviceId = resp.data.device_id.text()
                 String deviceName = resp.data.device_name.text()
                 debugLog("getBatteryReadings: ${deviceName}(${deviceId}) - ${batteryPC}%")
-                if (batteryPC != 'NaN') { device.setBattery(new BigDecimal(batteryPC)) }
+                if (batteryPC != 'NaN' && batteryPC != '0.00') { device.setBattery(new BigDecimal(batteryPC)) }
             }
     } catch (Exception e) {
 		log.warn "getBatteryReadings: call to update G-Hub device battery levels failed: ${e}"
