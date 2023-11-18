@@ -34,7 +34,9 @@ tr:nth-of-type(odd) {
     }
 	
 	
-
+.inherit-label-disabled {
+	color: grey;
+}
 
 th { 
     background: rgba(39, 109, 140,0.50); 
@@ -108,9 +110,27 @@ td {
 }	
 
 
+/* Edit Icon */
+
+.editIcon {
+  font-size:14px;
+  margin-left: 20px;
+  cursor: pointer;
+}
+
+.editIconDisplay {
+  display: visible !important;
+}
+
+.editIconHide {
+  display: none !important;
+}
+
 </style>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
 <script>
 
 function hexToRgb(hex) {
@@ -177,11 +197,14 @@ function readInSettings() {
 								$.each( data.tiles[tile].borders, function( borderKey, borderVal ) {
 										var borderCheckbox = document.getElementById(tileId + "_border" + borderKey);
 										borderCheckbox.checked = true;
+										// If a template has been applied, disable editing of the border position
+										if(data.tiles[tile].cssTemplate != "") { borderCheckbox.disabled = true }
 										expandSetting(borderCheckbox, tileId, 'border_' + borderKey, 'no');
 										$.each( borderVal, function( borderPosKey, borderPosVal ) {
 											var element = document.getElementById(tileId + '_border' + borderKey + borderPosKey.charAt(0).toUpperCase() + borderPosKey.slice(1));
 											if(element.type == 'checkbox') { element.checked = borderPosVal; }
 											else { element.value = borderPosVal; }
+											if(data.tiles[tile].cssTemplate != "") { element.disabled = true }
 									});
 								});
 								
@@ -232,6 +255,18 @@ function readInSettings() {
 								const bgColorRgba = data.tiles[tile].bgColor.split(",");
 								document.getElementById(tileId + "_bg-color").value = rgbToHex(parseInt(bgColorRgba[0]), parseInt(bgColorRgba[1]), parseInt(bgColorRgba[2]));
 								document.getElementById(tileId + "_bg-alpha").value = bgColorRgba[3];
+								
+								
+								//Disable any inputs where a CSS template has been used
+								
+								if (data.tiles[tile].cssTemplate != "")
+								{
+									$("#" + tileId + "_tileContent").find(".inherit-input").prop("disabled", true);
+									$("#" + tileId + "_tileContent").find(".inherit-label").addClass("inherit-label-disabled");
+									$("#" + tileId + "_tileContent").find(".editIcon").addClass("cssTemplateApplied");
+									//$("#" + tileId + "_tileContent").find(".editIcon").removeClass("editIconHide");
+									//$("#" + tileId + "_tileContent").find(".editIcon").addClass("editIconDisplay");
+								}
 							}
 						}
 
@@ -261,8 +296,48 @@ function readInSettings() {
 						else { alert("Error reading CSS Settings JSON File: " + errorThrown); }
 					});	
 		
-	} // end of readInSettings()
+} // end of readInSettings()
 	
+
+function toggleDisplayEditIcon(elementId, onOrOff) {
+
+	// Only hide or display edit icon for tiles that have had a template applied
+	if ($("#" + elementId).hasClass("cssTemplateApplied")) {
+		if(onOrOff == "on") {
+			$("#" + elementId).removeClass("editIconHide");
+			$("#" + elementId).addClass("editIconDisplay");
+		}
+		else {
+			$("#" + elementId).removeClass("editIconDisplay");
+			$("#" + elementId).addClass("editIconHide");
+		}
+	}
+}
+/*
+function toggleInputDisabled(elementId) {
+
+	
+	var elements = document.querySelectorAll('[id^="' + elementId + '"]');
+	for (var i = 0; i < elements.length; i++)
+	  if(elements[i].disabled == true) { elements[i].disabled = false; }
+	  else { elements[i].disabled = true; }
+}
+*/
+
+function toggleInputOverrideTemplate(elementId) {
+
+	var elements = document.querySelectorAll('[id^="' + elementId + '"]');
+	for (var i = 0; i < elements.length; i++)
+	  if ($(elements[i]).hasClass("overrideTemplate")) {
+	    $(elements[i]).removeClass("overrideTemplate");
+		elements[i].disabled = false;
+	  }
+	  else { 
+	    $(elements[i]).addClass("overrideTemplate");
+		elements[i].disabled = true;
+	  }
+	
+}
 
 function createDashboardInputs() {
 
@@ -338,14 +413,18 @@ function createIconsControlsInputs(tileId) {
 	var tableHTML = '';
 	
 	tableHTML += '	<tr>\n';
-	tableHTML += '	<td style="vertical-align: top;"><input id="' + tileId + '_iconsIconHide" type="checkbox" />\n';
-	tableHTML += '	<label for="' + tileId + '_iconsIconHide">Hide Icon</label></td>\n';
+	tableHTML += '	<td style="vertical-align: top;" onmouseover="toggleDisplayEditIcon(\'' + tileId + '_iconsIconHideEdit\', \'on\');" onmouseleave="toggleDisplayEditIcon(\'' + tileId + '_iconsIconHideEdit\', \'off\');"><input id="' + tileId + '_iconsIconHide" type="checkbox" class="inherit-input" />\n';
+	tableHTML += '	<label for="' + tileId + '_iconsIconHide" class="inherit-label">Hide Icon</label>';
+	tableHTML += '<i id="' + tileId + '_iconsIconHideEdit" class="fa editIcon editIconHide" onClick="toggleInputOverrideTemplate(\'' + tileId + '_iconsIconHide\')">&#xf044;</i>';
+	tableHTML += '</td>\n';
 	tableHTML += '	<td></td>\n';
 	tableHTML += '	</tr>\n';
 
 	tableHTML += '	<tr>\n';
-	tableHTML += '	<td style="vertical-align: top;"><input id="' + tileId + '_iconsDimmerHide" type="checkbox" />\n';
-	tableHTML += '	<label for="' + tileId + '_iconsDimmerHide">Hide Slider / Dimmer</label></td>\n';
+	tableHTML += '	<td style="vertical-align: top;" onmouseover="toggleDisplayEditIcon(\'' + tileId + '_iconsDimmerHideEdit\', \'on\');" onmouseleave="toggleDisplayEditIcon(\'' + tileId + '_iconsDimmerHideEdit\', \'off\');"><input id="' + tileId + '_iconsDimmerHide" type="checkbox" class="inherit-input" />\n';
+	tableHTML += '	<label for="' + tileId + '_iconsDimmerHide" class="inherit-label">Hide Slider / Dimmer</label>';
+	tableHTML += '<i id="' + tileId + '_iconsDimmerHideEdit" class="fa editIcon editIconHide" onClick="toggleInputOverrideTemplate(\'' + tileId + '_iconsDimmerHide\')">&#xf044;</i>';
+	tableHTML += '</td>\n';
 	tableHTML += '	<td></td>\n';
 	tableHTML += '	</tr>\n';
 	
@@ -357,8 +436,10 @@ function createBorderPosInputs(tileId, borderPos) {
 	var tableHTML = '';
 	
 	tableHTML += '	<tr>\n';
-	tableHTML += '	<td><input id="' + tileId + '_border' + borderPos + '" type="checkbox" onclick="expandSetting(this, \'' + tileId + '\', \'border_' + borderPos + '\', \'no\')"/>\n';
-	tableHTML += '	<label for="' + tileId + '_border' + borderPos + '">' + borderPos + '</label></td>\n';
+	tableHTML += '	<td onmouseover="toggleDisplayEditIcon(\'' + tileId + '_border' + borderPos + 'Edit\', \'on\');" onmouseleave="toggleDisplayEditIcon(\'' + tileId + '_border' + borderPos + 'Edit\', \'off\');"><input id="' + tileId + '_border' + borderPos + '" type="checkbox" onclick="expandSetting(this, \'' + tileId + '\', \'border_' + borderPos + '\', \'no\') "  class="inherit-input" />\n';
+	tableHTML += '	<label for="' + tileId + '_border' + borderPos + '"  class="inherit-label" >' + borderPos + '</label>';
+	tableHTML += '<i id="' + tileId + '_border' + borderPos + 'Edit" class="fa editIcon editIconHide" onClick="toggleInputOverrideTemplate(\'' + tileId + '_border' + borderPos + '\')">&#xf044;</i>';
+	tableHTML += '</td>\n';
 	tableHTML += '	<td></td>\n';
 	tableHTML += '	</tr>\n';
 	
@@ -371,20 +452,20 @@ function createBorderPosInputs(tileId, borderPos) {
 	tableHTML += '<col style="width: 300px;"/>\n';
 	
 	tableHTML += '	<tr>\n';
-	tableHTML += '	<td style="vertical-align: top; text-align: right; "><label for="' + tileId + '_border' + borderPos + 'Thick">Thickness:</label></td>\n';
-	tableHTML += '	<td><select name="' + tileId + '_border' + borderPos + 'Thick" id="' + tileId + '_border' + borderPos + 'Thick">\n';
+	tableHTML += '	<td style="vertical-align: top; text-align: right; "><label for="' + tileId + '_border' + borderPos + 'Thick"  class="inherit-label">Thickness:</label></td>\n';
+	tableHTML += '	<td><select name="' + tileId + '_border' + borderPos + 'Thick" id="' + tileId + '_border' + borderPos + 'Thick"  class="inherit-input">\n';
 	tableHTML += '		<option value=""></option>\n';
 	tableHTML += '		<option value="thin">Thin</option>\n';
 	tableHTML += '		<option value="medium">Medium</option>\n';
 	tableHTML += '		<option value="thick">Thick</option>\n';
 	tableHTML += '		<option value="other">Other</option>\n';
 	tableHTML += '	</select>\n';
-	tableHTML += '	<input id="' + tileId + '_border' + borderPos + 'ThickOth" type="number" min="0" max="10"/> pixels</td>\n';
+	tableHTML += '	<input id="' + tileId + '_border' + borderPos + 'ThickOth" type="number" min="0" max="10"  class="inherit-input"/><label for="' + tileId + '_border' + borderPos + 'ThickOth" class="inherit-label"> pixels</label></td>\n';
 	tableHTML += '	</tr>\n';
 	
 	tableHTML += '	<tr>\n';
-	tableHTML += '	<td style="vertical-align: top; text-align: right; "><label for="' + tileId + '_border' + borderPos + 'Style">Style:</label></td>\n';
-	tableHTML += '	<td><select name="' + tileId + '_border' + borderPos + 'Style" id="' + tileId + '_border' + borderPos + 'Style">\n';
+	tableHTML += '	<td style="vertical-align: top; text-align: right; "><label for="' + tileId + '_border' + borderPos + 'Style"  class="inherit-label">Style:</label></td>\n';
+	tableHTML += '	<td><select name="' + tileId + '_border' + borderPos + 'Style" id="' + tileId + '_border' + borderPos + 'Style"  class="inherit-input">\n';
 	tableHTML += '		<option value=""></option>\n';
 	tableHTML += '		<option value="none">None</option>\n';
 	tableHTML += '		<option value="dotted">Dotted</option>\n';
@@ -396,8 +477,8 @@ function createBorderPosInputs(tileId, borderPos) {
 	
 	
 	tableHTML += '	<tr>\n';
-	tableHTML += '	<td style="vertical-align: top; text-align: right; "><label for="' + tileId + '_border' + borderPos + 'Color">Color:</label></td>\n';
-	tableHTML += '  <td><input id="' + tileId + '_border' + borderPos + 'Color" type="color"/> Transparency: <input id="' + tileId + '_border' + borderPos + 'ColorAlpha" type="number" min="0" max="1" step="0.1" value="1" /></td>\n';
+	tableHTML += '	<td style="vertical-align: top; text-align: right; "><label for="' + tileId + '_border' + borderPos + 'Color"  class="inherit-label">Color:</label></td>\n';
+	tableHTML += '  <td><input id="' + tileId + '_border' + borderPos + 'Color" type="color"  class="inherit-input"/> <label for="' + tileId + '_border' + borderPos + 'ColorAlpha"  class="inherit-label">Transparency: </label><input id="' + tileId + '_border' + borderPos + 'ColorAlpha" type="number" min="0" max="1" step="0.1" value="1"  class="inherit-input" /></td>\n';
 	tableHTML += '	</tr>\n';
 	
 	tableHTML += '	</td>\n';
@@ -416,8 +497,8 @@ function createBoxShadowInputs(tileId) {
 	var tableHTML = '';
 	
 	tableHTML += '	<tr>\n';
-	tableHTML += '	<td><input id="' + tileId + '_boxShadow" type="checkbox" onclick="expandSetting(this, \'' + tileId + '\', \'boxShadow\', \'no\')"/>\n';
-	tableHTML += '	<label for="' + tileId + '_boxShadow">Box Shadow</label></td>\n';
+	tableHTML += '	<td><input id="' + tileId + '_boxShadow" type="checkbox" onclick="expandSetting(this, \'' + tileId + '\', \'boxShadow\', \'no\')"  class="inherit-input"/>\n';
+	tableHTML += '	<label for="' + tileId + '_boxShadow"  class="inherit-label">Box Shadow</label></td>\n';
 	tableHTML += '	<td></td>\n';
 	tableHTML += '	</tr>\n';
 	
@@ -429,21 +510,21 @@ function createBoxShadowInputs(tileId) {
 	tableHTML += '<col style="width: 200px;"/>\n';
 	tableHTML += '<col style="width: 300px;"/>\n';
 	tableHTML += '	<tr>\n';
-	tableHTML += '	<td style="vertical-align: top; text-align: right; "><label for="' + tileId + '_boxShadowHOffset">Horizontal Offset:</label></td>\n';
-	tableHTML += '	<td><input id="' + tileId + '_boxShadowHOffset" type="number" min="-20" max="20"/> pixels</td>\n';
+	tableHTML += '	<td style="vertical-align: top; text-align: right; "><label for="' + tileId + '_boxShadowHOffset"  class="inherit-label">Horizontal Offset:</label></td>\n';
+	tableHTML += '	<td><input id="' + tileId + '_boxShadowHOffset" type="number" min="-20" max="20"  class="inherit-input"/> pixels</td>\n';
 	tableHTML += '	</tr>\n';
 	tableHTML += '	<tr>\n';
-	tableHTML += '	<td style="vertical-align: top; text-align: right; "><label for="' + tileId + '_boxShadowVOffset">Vertical Offset:</label></td>\n';
-	tableHTML += '	<td><input id="' + tileId + '_boxShadowVOffset" type="number" min="-20" max="20"/> pixels</td>\n';
+	tableHTML += '	<td style="vertical-align: top; text-align: right; "><label for="' + tileId + '_boxShadowVOffset"  class="inherit-label">Vertical Offset:</label></td>\n';
+	tableHTML += '	<td><input id="' + tileId + '_boxShadowVOffset" type="number" min="-20" max="20"  class="inherit-input"/> pixels</td>\n';
 	tableHTML += '	</tr>\n';
 	tableHTML += '	<tr>\n';
-	tableHTML += '	<td style="vertical-align: top; text-align: right; "><label for="' + tileId + '_boxShadowBlur">Blur:</label></td>\n';
-	tableHTML += '	<td><input id="' + tileId + '_boxShadowBlur" type="number" min="0" max="20"/> pixels</td>\n';
+	tableHTML += '	<td style="vertical-align: top; text-align: right; "><label for="' + tileId + '_boxShadowBlur"  class="inherit-label">Blur:</label></td>\n';
+	tableHTML += '	<td><input id="' + tileId + '_boxShadowBlur" type="number" min="0" max="20"  class="inherit-input"/> pixels</td>\n';
 	tableHTML += '	</tr>\n';
 	
 	tableHTML += '	<tr>\n';
-	tableHTML += '	<td style="vertical-align: top; text-align: right; "><label for="' + tileId + '_boxShadowColor">Color:</label></td>\n';
-	tableHTML += '  <td><input id="' + tileId + '_boxShadowColor" type="color"/></td>\n';
+	tableHTML += '	<td style="vertical-align: top; text-align: right; "><label for="' + tileId + '_boxShadowColor"  class="inherit-label">Color:</label></td>\n';
+	tableHTML += '  <td><input id="' + tileId + '_boxShadowColor" type="color"  class="inherit-input"/></td>\n';
 	tableHTML += '	</tr>\n';
 	
 	tableHTML += '	</td>\n';
@@ -621,19 +702,33 @@ function createTileInputs(tileId) {
 	tableHTML += '<col style="width: 200px;"/>\n';
 	tableHTML += '<col style="width: 500px;"/>\n';
 	tableHTML += '<tbody >\n';
+	
 	tableHTML += '<tr class="tileTR">\n';
-	tableHTML += '<td>Hide Title?</td>\n';
-	tableHTML += '<td><input id="' + tileId + '_hideTitle" type="checkbox"/></td>\n';
+	tableHTML += '<td onmouseover="toggleDisplayEditIcon(\'' + tileId + '_hideTitleEdit\', \'on\');" onmouseleave="toggleDisplayEditIcon(\'' + tileId + '_hideTitleEdit\', \'off\');"><label for="' + tileId + '_hideTitle" class="inherit-label">Hide Title?</label>';
+	tableHTML += '<i id="' + tileId + '_hideTitleEdit" class="fa editIcon editIconHide" onClick="toggleInputOverrideTemplate(\'' + tileId + '_hideTitle\')">&#xf044;</i>';
+	tableHTML += '</td>\n';
+	tableHTML += '<td><input id="' + tileId + '_hideTitle" type="checkbox" class="inherit-input"/></td>\n';
 	tableHTML += '</tr>\n';
 	
 	tableHTML += '<tr class="tileTR">\n';
-	tableHTML += '<td>Order (Z-Index)</td>\n';
-	tableHTML += '<td><input id="' + tileId + '_z-index" type="number" min="0" max="999"/></td>\n';
+	tableHTML += '<td onmouseover="toggleDisplayEditIcon(\'' + tileId + '_z-indexEdit\', \'on\');" onmouseleave="toggleDisplayEditIcon(\'' + tileId + '_z-indexEdit\', \'off\');"><label for="' + tileId + '_z-index" class="inherit-label">Order (Z-Index)</label>';
+	tableHTML += '<i id="' + tileId + '_z-indexEdit" class="fa editIcon editIconHide" onClick="toggleInputOverrideTemplate(\'' + tileId + '_z-index\')">&#xf044;</i>';
+	tableHTML += '</td>\n';
+	tableHTML += '<td><input id="' + tileId + '_z-index" type="number" min="0" max="999"  class="inherit-input"/></td>\n';
 	tableHTML += '</tr>\n';
 	
 	tableHTML += '<tr class="tileTR">\n';
-	tableHTML += '<td style="padding-right: 10px">Background</td>\n';
-	tableHTML += '<td><input id="' + tileId + '_bg-color" type="color"/> Transparency: <input id="' + tileId + '_bg-alpha" type="number" min="0" max="1" step="0.1" value="1" /></td>\n';
+	tableHTML += '<td style="padding-right: 10px" onmouseover="toggleDisplayEditIcon(\'' + tileId + '_bg-colorEdit\', \'on\');" onmouseleave="toggleDisplayEditIcon(\'' + tileId + '_bg-colorEdit\', \'off\');"><label for="' + tileId + '_bg-color" class="inherit-label">Background Color</label>';
+	tableHTML += '<i id="' + tileId + '_bg-colorEdit" class="fa editIcon editIconHide" onClick="toggleInputOverrideTemplate(\'' + tileId + '_bg-color\')">&#xf044;</i>';
+	tableHTML += '</td>\n';
+	tableHTML += '<td><input id="' + tileId + '_bg-color" type="color"  class="inherit-input"/></td>\n';
+	tableHTML += '</tr>\n';
+	
+	tableHTML += '<tr class="tileTR">\n';
+	tableHTML += '<td style="padding-right: 10px" onmouseover="toggleDisplayEditIcon(\'' + tileId + '_bg-alphaEdit\', \'on\');" onmouseleave="toggleDisplayEditIcon(\'' + tileId + '_bg-alphaEdit\', \'off\');"><label for="' + tileId + '_bg-alpha" class="inherit-label">Background Transparency</label>';
+	tableHTML += '<i id="' + tileId + '_bg-alphaEdit" class="fa editIcon editIconHide" onClick="toggleInputOverrideTemplate(\'' + tileId + '_bg-alpha\')">&#xf044;</i>';
+	tableHTML += '</td>\n';
+	tableHTML += '<td><input id="' + tileId + '_bg-alpha" type="number" min="0" max="1" step="0.1" value="1"  class="inherit-input" /></td>\n';
 	tableHTML += '</tr>\n';
 	
 	
@@ -642,13 +737,13 @@ function createTileInputs(tileId) {
 	tableHTML += '<tr class="tileTR">\n';
 	
 	tableHTML += '<td onClick="expandSetting(document.getElementById(\'' + tileId + '_bordersButton\'),\'' + tileId + '\',\'border\', \'yes\')" style="vertical-align: top;">\n';
-	tableHTML += '<button id="' + tileId + '_bordersButton" type="button" class="collapsible" >Borders</button>\n';
+	tableHTML += '<button id="' + tileId + '_bordersButton" type="button" class="collapsible"  class="inherit-input" >Borders</button>\n';
 	tableHTML += '</td>\n';
 	
 	tableHTML += '<td>\n';
 	tableHTML += '<div id="' + tileId + '_borderContent" class="borderContent">\n';
-	tableHTML += '	<label for="' + tileId + '_radius">Rounding: </label>\n';
-	tableHTML += '	<input id="' + tileId + '_radius" type="number" min="0" max="30"/> pixels<br/><br/>\n';
+	tableHTML += '	<label for="' + tileId + '_radius" class="inherit-label">Rounding: </label>\n';
+	tableHTML += '	<input id="' + tileId + '_radius" type="number" min="0" max="30"  class="inherit-input"/> pixels<br/><br/>\n';
 
 	tableHTML += '	<table>\n';
 	tableHTML += '<col style="width: 200px;"/>\n';
@@ -718,37 +813,49 @@ function createTileInputs(tileId) {
 	
 	// End of Icons and Controls
 
+	// Custom CSS
+
 	tableHTML += '<tr class="tileTR">';
-	tableHTML += '<td style="vertical-align: top;">Custom CSS</td>';
+	tableHTML += '<td style="vertical-align: top;" onmouseover="toggleDisplayEditIcon(\'' + tileId + '_customCSSEdit\', \'on\');" onmouseleave="toggleDisplayEditIcon(\'' + tileId + '_customCSSEdit\', \'off\');">Custom CSS';
+	tableHTML += '<i id="' + tileId + '_customCSSEdit" class="fa editIcon editIconHide" onClick="toggleInputOverrideTemplate(\'' + tileId + '_customCSS\'); toggleInputOverrideTemplate(\'' + tileId + '_customCSSText\');">&#xf044;</i>';
+	tableHTML += '</td>';
 	
 	tableHTML += '<td>';
-	tableHTML += '<input id="' + tileId + '_customCSS" type="checkbox"/>';
-	tableHTML += '	<label for="' + tileId + '_customCSS"> Include Custom CSS</label><br/>';
+	tableHTML += '<input id="' + tileId + '_customCSS" type="checkbox"  class="inherit-input"/>';
+	tableHTML += '	<label for="' + tileId + '_customCSS"  class="inherit-label"> Include Custom CSS</label><br/>';
 	tableHTML += '<br/>';
-	tableHTML += '<textarea id="' + tileId + '_customCSSText" cols="25" rows="6" maxlength="8000" style="width: 100%; max-width: 100%;" /></textarea><br/><br/>\n';
+	tableHTML += '<textarea id="' + tileId + '_customCSSText" cols="25" rows="6" maxlength="8000" style="width: 100%; max-width: 100%;"  class="inherit-input" /></textarea><br/><br/>\n';
 	tableHTML += '</td>';
 	tableHTML += '</td>\n';
 	tableHTML += '</tr>\n';
 	
+	// End of Custom CSS
+	
+	// General Details - Name, Group, Notes, etc
 	
 	tableHTML += '<tr class="tileTR">';
 	tableHTML += '<td>Name</td>';
-	tableHTML += '<td><input id="' + tileId + '_name" type="text" /></td>';
+	tableHTML += '<td><input id="' + tileId + '_name" type="text"  class="inherit-false"/></td>';
 	tableHTML += '</tr>';
 		
 	tableHTML += '<tr class="tileTR">\n';
-	tableHTML += '<td>Group</td>\n';
-	tableHTML += '<td><input id="' + tileId + '_group" type="text" /></td>\n';
+	tableHTML += '<td><label for="' + tileId + '_group">Group</label></td>\n';
+	tableHTML += '<td><input id="' + tileId + '_group" type="text"  class="inherit-false" /></td>\n';
 	tableHTML += '</tr>\n';
 	
 	tableHTML += '<tr class="tileTR">\n';
-	tableHTML += '<td style="vertical-align: top;">Notes</td>\n';
-	tableHTML += '<td><textarea id="' + tileId + '_notes" cols="25" rows="6" maxlength="255" style="width: 100%; max-width: 100%;" /></textarea></td>\n';
+	tableHTML += '<td style="vertical-align: top;"><label for="' + tileId + '_notes">Notes</label></td>\n';
+	tableHTML += '<td><textarea id="' + tileId + '_notes" cols="25" rows="6" maxlength="255" style="width: 100%; max-width: 100%;"  class="inherit-false" /></textarea></td>\n';
 	tableHTML += '</tr>\n';
+	
+	// End of General Details
 	
 	tableHTML += '</tbody>\n';
 	tableHTML += '</table>\n';
-	tableHTML += '</div>\n'; // End of Tile Content div
+	tableHTML += '</div>\n';
+		
+	// End of Tile Content div
+	
 	return tableHTML;
 }
 
@@ -777,7 +884,7 @@ $(document).ready(function () {
 		var tileCSSTemplates = document.getElementById(x[i].id + '_CSSTemplate');
 		tileCSSTemplates.innerHTML += tileListOptions;
 	}
-	
+	//Read in settings from dashboard settings file, populating the various inputs created above
 	readInSettings();
 	
 });
