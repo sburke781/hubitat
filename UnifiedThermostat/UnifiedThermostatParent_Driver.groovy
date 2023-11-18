@@ -30,6 +30,7 @@
                                           Automatically turn off Debug Logging after 30 minutes
  *    2023-01-09  Simon Burke    1.0.31   Detection of A/C Units configured under Floors and Areas in MELCloud
  *    2023-04-02  Simon Burke    1.0.32   Updated applyStatusUpdates in child driver to detect when no status data is available
+ *    2023-11-18  ruipinheiro65  1.0.33   Fix for MELCloud Authentication 401 error when retrieving auth code
  */
 
 import groovy.json.JsonOutput;
@@ -445,7 +446,8 @@ def retrieveAuthCode_MELCloud() {
         { resp -> 
             debugLog("retrieveAuthCode_MELCloud: ${JsonOutput.toJson(resp.data)}")
                        
-            vnewAuthCode = "${resp?.data?.LoginData?.ContextKey?.value}";
+            //vnewAuthCode = "${resp?.data?.LoginData?.ContextKey?.value}";
+            vnewAuthCode = JsonOutput.toJson(resp.data.LoginData.ContextKey).replaceAll (/\"/,"");
             debugLog("retrieveAuthCode_MELCloud: New Auth Code - ${vnewAuthCode}");
             
         }
