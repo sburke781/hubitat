@@ -109,7 +109,7 @@ void retrieveImageURLsCallback(resp, data) {
             String imagesJson = '{\n'
             int i = 1
             images.each {
-                imagesJson += "\"image${i}\": \"http://www.bom.gov.au/radar/${it.value.toString().substring(32).substring(0,it.value.toString().substring(32).length() - 7)}\"";
+                imagesJson += "\"image${i}\": \"http://www.bom.gov.au/radar/${it.substring(32).substring(0,it.substring(32).length() - 7)}\"";
                 if (i != images.size()) { imagesJson += ',' }
                 imagesJson += '\n'
                 i++
