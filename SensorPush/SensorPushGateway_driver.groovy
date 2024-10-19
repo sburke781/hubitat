@@ -175,19 +175,21 @@ void samplesCallback(resp, data) {
                             errorLog("samplesCallback: Lookup of newly created sensor failed... ${sensor.key}, Temperature")                         
                         }
                         else {
-                            if (childTempDevice.currentValue("temperature") != temperature) {
+                            debugLog("samplesCallback: Current temperature reading is ${childTempDevice.currentValue("temperature", true)}, new temperature reading is ${temperature}");
+                            
+                            //Check if the reading has actually changed, if not we won't send an event, reducing the changes to the device's Last Activity value and improving monitoring options
+                            if (childTempDevice.currentValue("temperature", true) == null || childTempDevice.currentValue("temperature", true).toString() != temperature) {
                                 def map = [:]
                                 
                                 map.name            = "temperature"
                                 map.value           = temperature.toString()
                                 map.unit            = "°" + getTemperatureScale()
-                                //map.isStateChange   = true
                                 map.descriptionText = "${childTempDevice.displayName}: temperature is ${map.value}${map.unit}"
                                 infoLog(map.descriptionText)
-                                // childTempDevice.sendEvent(name: "temperature", value: temperature.toString(), unit: getTemperatureScale(), isStateChange: true)
                                 childTempDevice.sendEvent(map)
                             }
                             else {
+                                //Record the fact we received the same reading
                                 infoLog("${childTempDevice.displayName}: temperature has not changed from ${temperature.toString()}°${getTemperatureScale()}")
                             }
                         }
@@ -209,7 +211,9 @@ void samplesCallback(resp, data) {
                             errorLog("samplesCallback: Lookup of newly created sensor failed... ${sensor.key}, Humidity")                         
                         }
                         else {
-                            if (childHumDevice.currentValue("humidity") != humidity) {
+                            debugLog("samplesCallback: Current humidity reading is ${childHumDevice.currentValue("humidity", true)}, new humidity reading is ${humidity}");          
+                            //Check if the reading has actually changed, if not we won't send an event, reducing the changes to the device's Last Activity value and improving monitoring options
+                            if (childHumDevice.currentValue("humidity", true) == null || childHumDevice.currentValue("humidity", true).toString() != humidity) {
                                 def map = [:]
                                 
                                 map.name            = "humidity"
@@ -222,6 +226,7 @@ void samplesCallback(resp, data) {
                                 childHumDevice.sendEvent(map)
                             }
                             else {
+                                //Record the fact we received the same reading
                                 infoLog("${childHumDevice.displayName}: humidity has not changed from ${humidity.toString()}%")
                             }   
                         }
