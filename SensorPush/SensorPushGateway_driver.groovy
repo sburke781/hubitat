@@ -47,7 +47,7 @@
  * 2021-12-31  Simon Burke  Fix for null json returned in samples (included callback method in getAccessToken())
  *                          Made same fix for sensors to include callback method in async call
  * 2022-02-02  Simon Burke  Added ignore SSL issues to HTTP calls after certificate appears to be signed by any untrusted party
- * 2024-08-25  Simon Burke  Removed State Change = True from events to make sure last activity in HE is more accurate
+ * 2024-10-19  Simon Burke  Removed State Change = True from sendEvent calls to reduce noise in Event history
  * 
  */
 metadata {
@@ -174,16 +174,21 @@ void samplesCallback(resp, data) {
                             errorLog("samplesCallback: Lookup of newly created sensor failed... ${sensor.key}, Temperature")                         
                         }
                         else {
-                            def map = [:]
-                            
-                            map.name            = "temperature"
-                            map.value           = temperature.toString()
-                            map.unit            = "°" + getTemperatureScale()
-                            //map.isStateChange   = true
-                            map.descriptionText = "${childTempDevice.displayName}: temperature is ${map.value}${map.unit}"
-                            infoLog(map.descriptionText)
-                            // childTempDevice.sendEvent(name: "temperature", value: temperature.toString(), unit: getTemperatureScale(), isStateChange: true)
-                            childTempDevice.sendEvent(map)
+                            if (childTempDevice.currentValue("temperature") != temperature) {
+                                def map = [:]
+                                
+                                map.name            = "temperature"
+                                map.value           = temperature.toString()
+                                map.unit            = "°" + getTemperatureScale()
+                                //map.isStateChange   = true
+                                map.descriptionText = "${childTempDevice.displayName}: temperature is ${map.value}${map.unit}"
+                                infoLog(map.descriptionText)
+                                // childTempDevice.sendEvent(name: "temperature", value: temperature.toString(), unit: getTemperatureScale(), isStateChange: true)
+                                childTempDevice.sendEvent(map)
+                            }
+                            else {
+                                infoLog("${childTempDevice.displayName}: temperature has not changed from ${temperature.toString()}°${getTemperatureScale()}")
+                            }
                         }
                         
                         def humidity = (String)(sensor.value.humidity)
@@ -203,19 +208,22 @@ void samplesCallback(resp, data) {
                             errorLog("samplesCallback: Lookup of newly created sensor failed... ${sensor.key}, Humidity")                         
                         }
                         else {
-                            def map = [:]
-                            
-                            map.name            = "humidity"
-                            map.value           = humidity
-                            map.unit            = "%"
-                            //map.isStateChange   = true
-                            map.descriptionText = "${childHumDevice.displayName}: humidity is ${map.value}${map.unit}"
-                            infoLog(map.descriptionText)
-                            // childHumDevice.sendEvent(name: "humidity", value: humidity, unit: "%", isStateChange: true)
-                            childHumDevice.sendEvent(map)   
+                            if (childHumDevice.currentValue("humidity") != humidity) {
+                                def map = [:]
+                                
+                                map.name            = "humidity"
+                                map.value           = humidity
+                                map.unit            = "%"
+                                //map.isStateChange   = true
+                                map.descriptionText = "${childHumDevice.displayName}: humidity is ${map.value}${map.unit}"
+                                infoLog(map.descriptionText)
+                                // childHumDevice.sendEvent(name: "humidity", value: humidity, unit: "%", isStateChange: true)
+                                childHumDevice.sendEvent(map)
+                            }
+                            else {
+                                infoLog("${childHumDevice.displayName}: humidity has not changed from ${humidity.toString()}%")
+                            }   
                         }
-                       
-            
             }
 }
 
