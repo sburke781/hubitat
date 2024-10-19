@@ -47,6 +47,7 @@
  * 2021-12-31  Simon Burke  Fix for null json returned in samples (included callback method in getAccessToken())
  *                          Made same fix for sensors to include callback method in async call
  * 2022-02-02  Simon Burke  Added ignore SSL issues to HTTP calls after certificate appears to be signed by any untrusted party
+ * 2024-08-25  Simon Burke  Removed State Change = True from events to make sure last activity in HE is more accurate
  * 
  */
 metadata {
@@ -178,7 +179,7 @@ void samplesCallback(resp, data) {
                             map.name            = "temperature"
                             map.value           = temperature.toString()
                             map.unit            = "°" + getTemperatureScale()
-                            map.isStateChange   = true
+                            //map.isStateChange   = true
                             map.descriptionText = "${childTempDevice.displayName}: temperature is ${map.value}${map.unit}"
                             infoLog(map.descriptionText)
                             // childTempDevice.sendEvent(name: "temperature", value: temperature.toString(), unit: getTemperatureScale(), isStateChange: true)
@@ -207,7 +208,7 @@ void samplesCallback(resp, data) {
                             map.name            = "humidity"
                             map.value           = humidity
                             map.unit            = "%"
-                            map.isStateChange   = true
+                            //map.isStateChange   = true
                             map.descriptionText = "${childHumDevice.displayName}: humidity is ${map.value}${map.unit}"
                             infoLog(map.descriptionText)
                             // childHumDevice.sendEvent(name: "humidity", value: humidity, unit: "%", isStateChange: true)
