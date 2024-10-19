@@ -48,6 +48,7 @@
  *                          Made same fix for sensors to include callback method in async call
  * 2022-02-02  Simon Burke  Added ignore SSL issues to HTTP calls after certificate appears to be signed by any untrusted party
  * 2024-10-19  Simon Burke  Removed State Change = True from sendEvent calls to reduce noise in Event history
+ *                          Added checks before submitting temperature and humidity events to reduce changes in Last Activity to improve device monitoring
  * 
  */
 metadata {
