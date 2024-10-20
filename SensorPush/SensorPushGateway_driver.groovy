@@ -49,6 +49,7 @@
  * 2022-02-02  Simon Burke  Added ignore SSL issues to HTTP calls after certificate appears to be signed by any untrusted party
  * 2024-10-19  Simon Burke  Removed State Change = True from sendEvent calls to reduce noise in Event history
  *                          Added checks before submitting temperature and humidity events to reduce changes in Last Activity to improve device monitoring
+ * 2024-10-20  Simon Burke  Minor code improvements - variable typing, additional debug logs, re-arranging code
  * 
  */
 metadata {
@@ -82,7 +83,7 @@ metadata {
 }
 
 
-def updated() {
+void updated() {
 
     debugLog("updated: AutoStatusPolling = ${AutoSensorPolling}, StatusPollingInterval = ${SensorPollingInterval}")
     updateSensorPolling()    
@@ -90,16 +91,16 @@ def updated() {
 
 def getSchedule() { }
 
-def updateSensorPolling() {
+void updateSensorPolling() {
 
-   def sched
-   debugLog("updateSensorPolling: Updating Sensor Polling called, about to unschedule refresh")
-   unschedule("refresh")
-   debugLog("updateSensorPolling: Unscheduleing refresh complete")
+   String sched = "";
+   debugLog("updateSensorPolling: Updating Sensor Polling called, about to unschedule refresh");
+   unschedule("refresh");
+   debugLog("updateSensorPolling: Unscheduleing refresh complete");
    
    if(AutoSensorPolling == true) {
        
-       sched = "0 0/${SensorPollingInterval} * ? * * *"
+       sched = "0 0/${SensorPollingInterval} * ? * * *";
        
        debugLog("updateSensorPolling: Setting up schedule with settings: schedule(\"${sched}\",refresh)")
        try{
@@ -118,21 +119,22 @@ def updateSensorPolling() {
 
 
 
-def refresh() {
+void refresh() {
  debugLog("refresh: running samples()")
  samples()   
  debugLog("refresh: samples() complete")
 }
 
-def samples() {
+void samples() {
 
-    def bodyJson = ""
-    def postParams = [:]
-    def headers = [:]
+    String bodyJson = ""
+    Map headers = [:] 
+    Map postParams = [:]
+    
     getAccessToken()
     headers.put("accept", "application/json")
     headers.put("Authorization", device.currentValue("spAccessToken", true))
-    bodyJson = "{ \"limit\": 1 }"
+    bodyJson = "{ \"limit\": 1 }"  // Only get the latest reading for each sensor
     postParams = [
 		uri: "${spBaseURL}/samples",
         headers: headers,
@@ -153,91 +155,99 @@ def samples() {
 }
 
 void samplesCallback(resp, data) {
-            resp?.getJson().sensors?.each { sensor ->
-                                        
-                        def tempStr = (String)(sensor.value.temperature)
-                        tempStr = tempStr.replace("[","").replace("]","")
-                        debugLog("samplesCallback: Temp String = ${tempStr}")
-                        def temperature = convertTemperatureIfNeeded(tempStr.toFloat(),"F",1)
-                        debugLog("samplesCallback: Converted Temperature = ${temperature}")
-                        
-                        def childTempDevice = findChildDevice(sensor.key, "Temperature")
+  debugLog("samplesCallback: Response status = ${resp.getStatus()}");
+  if (resp.getStatus() == 200) {
+    resp?.getJson().sensors?.each { sensor ->
+      
+      /*** Temperature Reading ***/
+              
+      com.hubitat.app.DeviceWrapper childTempDevice = findChildDevice(sensor.key, "Temperature")
     
-                        if (childTempDevice == null) {
-                            //Could not find sensor, run the sensors method to create any new sensor child devices
-                            sensors()
-                            //Attempt to do the lookup again
-                            childTempDevice = findChildDevice(sensor.key, "Temperature")
-                        }
+      if (childTempDevice == null) {
+        //Could not find sensor, run the sensors method to create any new sensor child devices
+        sensors()
+        //Attempt to do the lookup again
+        childTempDevice = findChildDevice(sensor.key, "Temperature")
+      }
                         
-                        if (childTempDevice == null) {
-                            //Still could not find the device
-                            errorLog("samplesCallback: Lookup of newly created sensor failed... ${sensor.key}, Temperature")                         
-                        }
-                        else {
-                            debugLog("samplesCallback: Current temperature reading is ${childTempDevice.currentValue("temperature", true)}, new temperature reading is ${temperature}");
+      if (childTempDevice == null) {
+        //Still could not find the device
+        errorLog("samplesCallback: Lookup of newly created sensor failed... ${sensor.key}, Temperature")                         
+      }
+      else {
+        String tempStr = (String)(sensor.value.temperature);
+        tempStr = tempStr.replace("[","").replace("]","");
+        String temperature = convertTemperatureIfNeeded(tempStr.toFloat(),"F",1);
+        debugLog("samplesCallback: ${childTempDevice.displayName} - Current reading = ${childTempDevice.currentValue("temperature", true)}, reading received = ${tempStr}, converted reading = ${temperature}");
                             
-                            //Check if the reading has actually changed, if not we won't send an event, reducing the changes to the device's Last Activity value and improving monitoring options
-                            if (childTempDevice.currentValue("temperature", true) == null || childTempDevice.currentValue("temperature", true).toString() != temperature) {
-                                def map = [:]
+        //Check if the reading has actually changed, if it has, record an event
+        //   The aim here is to minimise the device events that could trigger automations and minimise the changes to the device's Last Activity value to improve accuracy in monitoring device health
+        if (childTempDevice.currentValue("temperature", true) == null || childTempDevice.currentValue("temperature", true).toString() != temperature) {
+          Map map = [:];
                                 
-                                map.name            = "temperature"
-                                map.value           = temperature.toString()
-                                map.unit            = "°" + getTemperatureScale()
-                                map.descriptionText = "${childTempDevice.displayName}: temperature is ${map.value}${map.unit}"
-                                infoLog(map.descriptionText)
-                                childTempDevice.sendEvent(map)
-                            }
-                            else {
-                                //Record the fact we received the same reading
-                                infoLog("${childTempDevice.displayName}: temperature has not changed from ${temperature.toString()}°${getTemperatureScale()}")
-                            }
-                        }
-                        
-                        def humidity = (String)(sensor.value.humidity)
-                        humidity = humidity.replace("[","").replace("]","")
-                        
-                        def childHumDevice = findChildDevice(sensor.key, "Humidity")
+          map.name            = "temperature";
+          map.value           = temperature.toString();
+          map.unit            = "°" + getTemperatureScale();
+          map.descriptionText = "${childTempDevice.displayName}: temperature is ${map.value}${map.unit}";
+          childTempDevice.sendEvent(map);
+          infoLog(map.descriptionText)
+        }
+        else {
+          //Nothing has changed, record the fact we received the same reading
+          infoLog("${childTempDevice.displayName}: temperature has not changed from ${temperature.toString()}°${getTemperatureScale()}")
+        }
+      }
+      
+      /*** Humidity Reading ***/
+
+      com.hubitat.app.DeviceWrapper childHumDevice = findChildDevice(sensor.key, "Humidity");
     
-                        if (childHumDevice == null) {
-                            //Could not find sensor, run the sensors method to create any new sensor child devices
-                            sensors()
-                            //Attempt to do the lookup again
-                            childHumDevice = findChildDevice(sensor.key, "Humidity")
-                        }
+      if (childHumDevice == null) {
+        //Could not find sensor, run the sensors method to create any new sensor child devices
+        sensors()
+        //Attempt to do the lookup again
+        childHumDevice = findChildDevice(sensor.key, "Humidity")
+      }
                         
-                        if (childHumDevice == null) {
-                            //Still could not find the device
-                            errorLog("samplesCallback: Lookup of newly created sensor failed... ${sensor.key}, Humidity")                         
-                        }
-                        else {
-                            debugLog("samplesCallback: Current humidity reading is ${childHumDevice.currentValue("humidity", true)}, new humidity reading is ${humidity}");          
-                            //Check if the reading has actually changed, if not we won't send an event, reducing the changes to the device's Last Activity value and improving monitoring options
-                            if (childHumDevice.currentValue("humidity", true) == null || childHumDevice.currentValue("humidity", true).toString() != humidity) {
-                                def map = [:]
+      if (childHumDevice == null) {
+        //Still could not find the device
+        errorLog("samplesCallback: Lookup of newly created sensor failed... ${sensor.key}, Humidity")                         
+      }
+      else {
+        String humidity = (String)(sensor.value.humidity);
+        humidity = humidity.replace("[","").replace("]","");
+                            
+        debugLog("samplesCallback: ${childHumDevice.displayName} - Current humidity reading is ${childHumDevice.currentValue("humidity", true)}, new humidity reading is ${humidity}");          
+        //Check if the reading has actually changed, if it has, record an event
+        //   The aim here is to minimise the device events that could trigger automations and minimise the changes to the device's Last Activity value to improve accuracy in monitoring device health
+        if (childHumDevice.currentValue("humidity", true) == null || childHumDevice.currentValue("humidity", true).toString() != humidity) {
+          Map map = [:]
                                 
-                                map.name            = "humidity"
-                                map.value           = humidity
-                                map.unit            = "%"
-                                //map.isStateChange   = true
-                                map.descriptionText = "${childHumDevice.displayName}: humidity is ${map.value}${map.unit}"
-                                infoLog(map.descriptionText)
-                                // childHumDevice.sendEvent(name: "humidity", value: humidity, unit: "%", isStateChange: true)
-                                childHumDevice.sendEvent(map)
-                            }
-                            else {
-                                //Record the fact we received the same reading
-                                infoLog("${childHumDevice.displayName}: humidity has not changed from ${humidity.toString()}%")
-                            }   
-                        }
-            }
+          map.name            = "humidity"
+          map.value           = humidity
+          map.unit            = "%"
+          map.descriptionText = "${childHumDevice.displayName}: humidity is ${map.value}${map.unit}"
+          infoLog(map.descriptionText)
+          childHumDevice.sendEvent(map)
+        }
+        else {
+          //Record the fact we received the same reading
+          infoLog("${childHumDevice.displayName}: humidity has not changed from ${humidity.toString()}%")
+        }
+      }
+    }
+  }
+  else {
+      //We got a status other than 200 back
+      warnLog("There was a problem retrieving the latest readings from the SensorPush cloud.  If the issue continues, check your gateway is configured correctly and you Internet connection is working.");
+  }      
 }
 
-def getAuthToken() {
+void getAuthToken() {
  
-    def bodyJson = ""
-    def headers = [:] 
-    def postParams = [:]
+    String bodyJson = ""
+    Map headers = [:] 
+    Map postParams = [:]
         
     headers.put("accept", "application/json")
     
@@ -261,14 +271,15 @@ def getAuthToken() {
 }
 
 void getAuthTokenCallback(resp, data) {
+    debugLog("getAuthTokenCallback: Response status = ${resp.getStatus()}");
     sendEvent(name: "spAuthCode", value : resp.getJson().authorization)
 }
 
-def getAccessToken(){
+void getAccessToken(){
     
-    def bodyJson = ""
-    def headers = [:] 
-    def postParams = [:]
+    String bodyJson = ""
+    Map headers = [:] 
+    Map postParams = [:]
         
     headers.put("accept", "application/json")
         
@@ -292,15 +303,17 @@ def getAccessToken(){
 }
 
 void getAccessTokenCallback(resp, data) {
+    debugLog("getAccessTokenCallback: Response status = ${resp.getStatus()}");
     sendEvent(name: "spAccessToken", value : resp.getJson().accesstoken)
 }
 
-def sensors() {
+void sensors() {
     
     debugLog("sensors: Sensors starting")
-    def bodyJson = ""
-    def postParams = [:]
-    def headers = [:]
+    String bodyJson = ""
+    Map headers = [:] 
+    Map postParams = [:]
+    
     getAccessToken()
     headers.put("accept", "application/json")
     headers.put("Authorization", device.currentValue("spAccessToken", true))
@@ -326,10 +339,10 @@ def sensors() {
 }
 
 void sensorsCallback(resp, data) {
-            //sendEvent(name: "spAccessToken", value : resp.data.accesstoken)
+            debugLog("sensorsCallback: Response status = ${resp.getStatus()}");
             resp?.getJson().each { it ->
             
-                def childTempDevice = findChildDevice(it.value.id, "Temperature")
+                com.hubitat.app.DeviceWrapper childTempDevice = findChildDevice(it.value.id, "Temperature")
     
                 if (childTempDevice == null) {
                     createSensor(it.value.id, it.value.name, "Temperature")
@@ -340,7 +353,7 @@ void sensorsCallback(resp, data) {
                     errorLog("sensorsCallback: Lookup of newly created sensor failed... ${it.value.id}, ${it.value.name}, Temperature")                         
                 }
                 
-                def childHumDevice = findChildDevice(it.value.id, "Humidity")
+                com.hubitat.app.DeviceWrapper childHumDevice = findChildDevice(it.value.id, "Humidity")
     
                 if (childHumDevice == null) {
                     createSensor(it.value.id, it.value.name, "Humidity")
@@ -349,19 +362,19 @@ void sensorsCallback(resp, data) {
             }
 }
 
-def deriveSensorDNI(sensorId, sensorType) {
+String deriveSensorDNI(sensorId, sensorType) {
 
     return "${device.deviceNetworkId}-id${sensorId}-type${sensorType}"
 }
 
-def findChildDevice(sensorId, sensorType) {
+com.hubitat.app.DeviceWrapper findChildDevice(sensorId, sensorType) {
 	getChildDevices()?.find { it.deviceNetworkId == deriveSensorDNI(sensorId, sensorType)}
 }
 
-def createSensor(sensorId, sensorName, sensorType) {
+void createSensor(sensorId, sensorName, sensorType) {
     debugLog("createSensor: Creating SensorPush Sensor: ${sensorId}, ${sensorName}, ${sensorType}")
     
-	def childDevice = findChildDevice(sensorId, sensorType)
+	com.hubitat.app.DeviceWrapper childDevice = findChildDevice(sensorId, sensorType)
     
     if (childDevice == null) {
         childDevice = addChildDevice("hubitat", "Virtual ${sensorType} Sensor", deriveSensorDNI(sensorId, sensorType), [label: "${device.displayName} (${sensorType} Sensor - ${sensorName})", isComponent: false])
@@ -374,18 +387,18 @@ def createSensor(sensorId, sensorName, sensorType) {
 
 
 //Utility methods
-def debugLog(debugMessage) {
+void debugLog(debugMessage) {
 	if (DebugLogging == true) {log.debug(debugMessage)}	
 }
 
-def errorLog(errorMessage) {
+void errorLog(errorMessage) {
     if (ErrorLogging == true) { log.error(errorMessage)}  
 }
 
-def infoLog(infoMessage) {
+void infoLog(infoMessage) {
     if(InfoLogging == true) {log.info(infoMessage)}    
 }
 
-def warnLog(warnMessage) {
+void warnLog(warnMessage) {
     if(WarnLogging == true) {log.warn(warnMessage)}    
 }
