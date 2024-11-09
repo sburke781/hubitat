@@ -32,6 +32,7 @@
  *    2023-04-02  Simon Burke    1.0.32   Updated applyStatusUpdates in child driver to detect when no status data is available
  *    2023-11-18  ruipinheiro65  1.0.33   Fix for MELCloud Authentication 401 error when retrieving auth code
  *    2023-11-18  Simon Burke    1.0.34   Fix for BaseURL not being changed when Platform is changed
+ *    2024-11-09  Simon Burke    1.0.35   Fix for detection of rooms in Kumo when detecting units
  */
 
 import groovy.json.JsonOutput;
@@ -356,15 +357,13 @@ def retrieveAuthCode_KumoCloud() {
                   
                   }
                   
-                  child.children?.each { child2 ->
-                    if (child2[0] != null) {
-                        if (child2[0].containsKey("zoneTable")) {
-                        child2[0].zoneTable?.each { unit ->
+                  if (child.children[0] != null) {
+                        if (child.children[0].containsKey("zoneTable")) {
+                        child.children[0].zoneTable?.each { unit ->
                             unitsList.add(parseKumoUnit(unit))
                             }
                         }
                     }
-                  }
               }
           }
         createChildACUnits(unitsList)
