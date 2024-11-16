@@ -54,6 +54,11 @@
                                           Automatically turn off Debug Logging after 30 minutes
  *    2023-01-09  Simon Burke    1.0.31   Detection of A/C Units configured under Floors and Areas in MELCloud
  *    2023-04-02  Simon Burke    1.0.32   Updated applyStatusUpdates in child driver to detect when no status data is available
+ *    2024-11-17  Simon Burke    2.0.0    Kumo Local Control - Alpha Version
+ *                                              New Local Control Preference Setting
+ *                                              New prepareLocalCommand method to encode the unit command
+ *                                              New unitCommand_KumoLocal method to send local command to unit
+ *                                              Temporarily setup unitCommand_KumoLocal as a command to test
  */
 import java.text.DecimalFormat;
 import groovy.json.JsonOutput;
@@ -67,16 +72,14 @@ metadata {
 
 preferences {
 
-        input(name: "AutoStatusPolling", type: "bool", title:"Automatic Status Polling", description: "Enable / Disable automatic polling of unit status", defaultValue: true, required: true, displayDuringSetup: true)
-        input(name: "StatusPollingInterval", type: "ENUM", multiple: false, options: ["1", "2", "5", "10", "30", "60"], title:"Status Polling Interval", description: "Number of minutes between automatic status updates", defaultValue: 10, required: true, displayDuringSetup: true)		
-		input(name: "FansTextOrNumbers", type: "bool", title: "Fan Modes: Text or Numbers?", description: "Use Text for Fan Modes (ON) or Numbers (OFF)?", defaultValue: true, required: true, displayDuringSetup: true)
-        
+        input(name: "AutoStatusPolling",     type: "bool", title:"Automatic Status Polling",     description: "Enable / Disable automatic polling of unit status", defaultValue: true, required: true, displayDuringSetup: true)
+        input(name: "StatusPollingInterval", type: "ENUM", title:"Status Polling Interval",      description: "Number of minutes between automatic status updates", multiple: false, options: ["1", "2", "5", "10", "30", "60"], defaultValue: 10, required: true, displayDuringSetup: true)
+		input(name: "FansTextOrNumbers",     type: "bool", title: "Fan Modes: Text or Numbers?", description: "Use Text for Fan Modes (ON) or Numbers (OFF)?", defaultValue: true, required: true, displayDuringSetup: true)
+        input(name: "LocalControl",          type: "bool", title: "Local Control",                description: "Communicate via LAN (ON, Kumo Only) or Cloud (OFF)?", defaultValue: false, required: true, displayDuringSetup: true)
     }
-        
         
         attribute "unitId",                 "string"
         //attribute "setTemperature",         "number"
-        
         
         attribute "TemperatureIncrement",   "number"  // e.g. 0.5
         
@@ -157,6 +160,27 @@ preferences {
             fanspeed required (ENUM) - Fan speed to set
 
         */
+
+        //Kumo Local testing commands:
+        command "unitCommand_KumoLocal", [[name: "command", type: "STRING"]]
+
+        /* Example Local Commands */
+        /*
+            {'mode': 'auto'}
+            {'mode': 'heat'}
+            {'mode': 'cool'}
+            {'mode': 'auto'}
+            {'mode': 'off'}
+            {'mode': 'dry'}
+            {'fanSpeed':'auto'}
+            {'fanSpeed':'superQuiet'}
+            {'mode':'vent', 'fanSpeed':'superQuiet'}
+            {'spCool':value}
+            {'spHeat':value}
+        */
+
+
+
 	}
 
 }
@@ -1117,7 +1141,8 @@ def on_MELCloud() {
 }
 
 def on_KumoCloud() {
-    unitCommand_KumoCloud("{\"power\":1}")
+    if(getLocalControl()) { unitCommand_KumoLocal("{'mode': '${device.getCurrentValue("lastRunningMode", true)}'}") }
+    else                  { unitCommand_KumoCloud("{\"power\":1}") }
 }
 
 def on_MELView() {
@@ -1137,7 +1162,8 @@ def off() {
 
 def off_KumoCloud() {
     
-    unitCommand_KumoCloud("{\"power\":0}")
+    if(getLocalControl()) { unitCommand_KumoLocal("{'mode':'off'}") }
+    else                  { unitCommand_KumoCloud("{\"power\":0}") }
 }
 
 def off_MELCloud() {
@@ -1169,7 +1195,8 @@ def heat() {
 
 def heat_KumoCloud() {
 
-    unitCommand_KumoCloud("{\"power\":1,\"operationMode\":1}")
+    if(getLocalControl()) { unitCommand_KumoLocal("{'mode': 'heat'}") }
+    else                  { unitCommand_KumoCloud("{\"power\":1,\"operationMode\":1}") }
 }
 
 def heat_MELCloud() {
@@ -1199,7 +1226,8 @@ def dry() {
 
 def dry_KumoCloud() {
     
-    unitCommand_KumoCloud("{\"power\":1,\"operationMode\":2}")
+    if(getLocalControl()) { unitCommand_KumoLocal("{'mode':'dry'}") }
+    else                  {unitCommand_KumoCloud("{\"power\":1,\"operationMode\":2}") }
 }
 
 def dry_MELCloud() {
@@ -1229,7 +1257,12 @@ def cool() {
 
 def cool_KumoCloud() {
     
-    unitCommand_KumoCloud("{\"power\":1,\"operationMode\":3}")
+    if(getLocalControl()) { unitCommand_KumoLocal("{'mode': 'cool'}") }
+    else                  { unitCommand_KumoCloud("{\"power\":1,\"operationMode\":3}") }
+}
+
+boolean getLocalControl() {
+    return LocalControl;
 }
 
 def cool_MELCloud() {
@@ -1260,7 +1293,8 @@ def fan() {
 
 def fan_KumoCloud() {
     
-    unitCommand_KumoCloud("{\"power\":1,\"operationMode\":7}")  
+    unitCommand_KumoCloud("{\"power\":1,\"operationMode\":7}")
+    //{'mode':'vent', 'fanSpeed':'superQuiet'};
 }
 
 def fan_MELCloud() {
@@ -1290,7 +1324,8 @@ def auto() {
 
 def auto_KumoCloud() {
     
-    unitCommand_KumoCloud("{\"power\":1,\"operationMode\":8}")
+    if(getLocalControl()) { unitCommand_KumoLocal("{'mode': 'auto'}") }
+    else                  { unitCommand_KumoCloud("{\"power\":1,\"operationMode\":8}") }
 }
 
 def auto_MELCloud() {
@@ -1357,6 +1392,84 @@ def unitCommand_KumoCloud(pCommand) {
 	}
     
 }
+
+// Execute a command locally on a Kumo unit
+void unitCommand_KumoLocal(String pcommand) {
+    String vpost_data = '{"c":{"indoorUnit":{"status":' + pcommand + '}}}';
+    parent.debugLog("unitCommand_KumoLocal: post_data = ${vpost_data}");
+
+    String vbodyJson = vpost_data;
+    String vtoken = prepareLocalCommand_Kumo(vpost_data);
+    parent.debugLog("unitCommand_KumoLocal: pcommandEncrypted = ${vbodyJson}");
+
+    String vuri = "http://${getDataValue("address")}/api?m=${vtoken}";
+
+    def headers = [:];
+    headers.put('Accept', 'application/json, text/plain, */*');
+    headers.put('Content-Type', 'application/json')
+
+    def vPutParams = [
+        uri: vuri,
+        headers: headers,
+        contentType: "application/json; charset=UTF-8",
+        body : vbodyJson
+    ]
+
+    try {
+        httpPut(vPutParams) { resp ->
+            //sendEvent(name: "lastCommandUTC", value: "${new Date().format("yyyy-MM-dd HH:mm:ss.SSS'Z'", TimeZone.getTimeZone('UTC'))}")
+            parent.debugLog("unitCommand_KumoLocal: Initial data returned: ${resp.data}, response received ${new Date().format("yyyy-MM-dd HH:mm:ss.SSS'Z'", TimeZone.getTimeZone('UTC'))}")
+            }
+    }   
+    catch (Exception e) {
+        parent.errorLog "unitCommand_KumoCloudLocal : Unable to query local ${parent.getPlatform()} unit: ${e}"
+    }
+}
+
+def prepareLocalCommand_Kumo(String pcommand) {
+
+    byte[] decodedPassBytes = decrypt(getDataValue("p")).decodeBase64();
+
+    String decodedPassHex = '';
+    String hex = '';
+    for(int i=0; i < decodedPassBytes.length; i++) {
+        hex = String.format("%02X", decodedPassBytes[i] & 0xFF);
+        if(hex != "00") { decodedPassHex += hex }
+    }
+    decodedPassHex += bytesToHex(pcommand.getBytes());
+
+    java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+    byte[] passHashBytes = digest.digest(hexStringToByteArray(decodedPassHex));
+
+    //ToDo: Change W to a fixed variable
+    byte[] WBytes = hexStringToByteArray(getW_Kumo());
+    int[] intermediate = new int[88];
+    for (int i = 0; i < 32; i++) {
+        intermediate[i] = WBytes[i] & 0xFF;
+        intermediate[i + 32] = passHashBytes[i] & 0xFF;
+    }
+    intermediate[64] = 8;
+    intermediate[65] = 64;
+    intermediate[66] = 0; //S_PARAM
+
+    // convert cryptoSerial to byte array
+    byte[] cryptoSerialHex = hexStringToByteArray(decrypt(getDataValue("c")));
+
+    intermediate[79] = cryptoSerialHex[8] & 0xFF;
+    for (int i = 0; i < 4; i++) {
+        intermediate[i + 80] = cryptoSerialHex[i + 4] & 0xFF;
+        intermediate[i + 84] = cryptoSerialHex[i] & 0xFF;
+    }
+
+    String intermediateHex = "";
+    for (int i = 0; i < intermediate.length; i++) {
+        intermediateHex += String.format("%02x", intermediate[i] & 0xFF);
+    }
+
+    return bytesToHex(digest.digest(hexStringToByteArray(intermediateHex)));
+
+}
+
 
 def unitCommand_MELView(pCommand) {
     // Re-usable method that submits a command to the MELView Service, based on the command text passed in
@@ -1501,4 +1614,31 @@ def convertTemperature(String pTemp, String pSourceScale, String pTargetScale) {
     }
     
     return vTemp
+}
+
+String bytesToHex(byte[] bytes) {
+    byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes("US-ASCII");
+    byte[] hexChars = new byte[bytes.length * 2];
+    for (int j = 0; j < bytes.length; j++) {
+        int v = bytes[j] & 0xFF;
+        hexChars[j * 2] = HEX_ARRAY[v >>> 4];
+        hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+    }
+    return new String(hexChars, "UTF-8");
+}
+
+/* s must be an even-length string. */
+byte[] hexStringToByteArray(String s) {
+    int len = s.length();
+    byte[] data = new byte[len / 2];
+    for (int i = 0; i < len; i += 2) {
+        data[i / 2] = (byte) ((Integer.parseInt(s.charAt(i).toString(), 16) << 4)
+                             + Integer.parseInt(s.charAt(i+1).toString(), 16));
+    }
+    return data;
+}
+
+String getW_Kumo() {
+
+ return '44c73283b498d432ff25f5c8e06a016aef931e68f0a00ea710e36e6338fb22db';   
 }

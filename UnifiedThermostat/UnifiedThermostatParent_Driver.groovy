@@ -32,6 +32,12 @@
  *    2023-04-02  Simon Burke    1.0.32   Updated applyStatusUpdates in child driver to detect when no status data is available
  *    2023-11-18  ruipinheiro65  1.0.33   Fix for MELCloud Authentication 401 error when retrieving auth code
  *    2023-11-18  Simon Burke    1.0.34   Fix for BaseURL not being changed when Platform is changed
+ *    2024-11-17  Simon Burke    2.0.0  - Kumo Local Control Alpha
+ *                                          Capture state variables for Kumo Local Control:
+ *                                              Encrypted version of Crypto Serial and Password
+ *                                              Child Unit IP Address
+ *                                          Removal of some debug messages
+ *                                          Added warning for errors logging in and retrieving an authentication code
  */
 
 import groovy.json.JsonOutput;
@@ -187,6 +193,9 @@ def createChildACUnits(givenUnitsList) {
               createChildDevice("${unit.unitId}", "${unit.unitName}", "AC")
               childDevice = findChildDevice("${unit.unitId}", "AC")
               childDevice.setUnitId("${unit.unitId}")
+              if (unit.containsKey("c")) { childDevice.updateDataValue("c","${unit.c}") }
+              if (unit.containsKey("p")) { childDevice.updateDataValue("p","${unit.p}") }
+              if (unit.containsKey("address")) { childDevice.updateDataValue("address","${unit.address}") }
               //childDevice.initialize()
               runIn(30, "initializeChildDevices", [overwrite: true])
           }
@@ -345,15 +354,18 @@ def retrieveAuthCode_KumoCloud() {
           httpPost(postParams)
           { resp ->
               debugLog("retrieveAuthCode_KumoCloud: HTTP Response = ${JsonOutput.toJson(resp.data)}")
-              vnewAuthCode = "${resp?.data[0].token}";
+              debugLog("retrieveAuthCode_KumoCloud: HTTP Status = ${resp?.status}");
+              if (resp.data != null && resp.status >= 200 && resp.status <= 299) {
+                vnewAuthCode = "${resp?.data[0].token}";
             
         
-              debugLog("retrieveAuthCode_KumoCloud: New Auth Code - ${vnewAuthCode}");
-              resp?.data[2].children.each { child ->
+                debugLog("retrieveAuthCode_KumoCloud: New Auth Code - ${vnewAuthCode}");
+                resp?.data[2].children.each { child ->
+                  
                   debugLog("retrieveAuthCode_KumoCloud: Child - ${JsonOutput.toJson(child)}")
+                  
                   child.zoneTable?.each { unit ->
                     unitsList.add(parseKumoUnit(unit))
-                  
                   }
                   
                   child.children?.each { child2 ->
@@ -365,9 +377,11 @@ def retrieveAuthCode_KumoCloud() {
                         }
                     }
                   }
+                }
+              createChildACUnits(unitsList)
               }
+              else warnLog("Warning - Retrieval of a new authentication code failed.  Check the username and password in the Preference Settings");
           }
-        createChildACUnits(unitsList)
     }
 	catch (Exception e) {
         errorLog("retrieveAuthCode_KumoCloud: Unable to query Mitsubishi Electric ${getPlatform()}: ${e}")
@@ -380,7 +394,10 @@ def parseKumoUnit(unit) {
     def unitDetail  = [:]
     debugLog("parseKumoUnit: Unit (Serial / Label) - ${unit.value.serial} / ${unit.value.label}")
     unitDetail = [unitId   : "${unit.value.serial}",
-                  unitName : "${unit.value.label}"
+                  unitName : "${unit.value.label}",
+                  address  : "${unit.value.address}",
+                  c        : encrypt("${unit.value.cryptoSerial}"),
+                  p        : encrypt("${unit.value.password}")
                      ]
     return unitDetail
 }
