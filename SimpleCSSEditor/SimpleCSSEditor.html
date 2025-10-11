@@ -132,7 +132,17 @@ function rgbToHex(r, g, b) {
 }
 
 function getDashName() {
-  return encodeURIComponent(window.parent.document.getElementsByClassName("dashName")[0].innerHTML.trim().replace(/ /g,"_"), "UTF-8");
+  var name = "";
+  try{
+    //Post 2.4.3 dashboard HTML
+    name = encodeURIComponent(window.parent.document.getElementsByClassName("dashName")[0].firstElementChild.innerHTML.trim().replace(/ /g,"_"), "UTF-8");
+  }
+  catch(error) {
+    // Pre 2.4.3 dashboard HTML
+    name = encodeURIComponent(window.parent.document.getElementsByClassName("dashName")[0].innerHTML.trim().replace(/ /g,"_"), "UTF-8");
+  }
+  
+  return name
 }
 
 function dashHeaderClick(radio) {
