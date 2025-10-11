@@ -762,6 +762,18 @@ function createTileInputs(tileId) {
 	return tableHTML;
 }
 
+function getCSSFileURL() {
+
+var dashName = getDashName();
+return 'http://' + location.hostname + '/local/' + dashName + '.css';
+}
+
+function getJsonFileURL() {
+
+var dashName = getDashName();
+return 'http://' + location.hostname + '/local/' + dashName + '.json';
+}
+
 $(document).ready(function () {
 	
 	document.getElementById("cssFileLink").href = getCSSFileURL();
@@ -918,18 +930,6 @@ function getTileTextCSS(tileId, srcTileId, textPos) {
 	}
 	
 	return textCSS;
-}
-
-function getCSSFileURL() {
-
-	var dashName = getDashName();
-	return 'http://' + location.hostname + '/local/' + dashName + '.css';
-}
-
-function getJsonFileURL() {
-
-	var dashName = getDashName();
-	return 'http://' + location.hostname + '/local/' + dashName + '.json';
 }
 
 function writeCSS() {
