@@ -273,7 +273,6 @@ function readInSettings() {
 		
 	} // end of readInSettings()
 	
-
 function createDashboardInputs() {
 
 	var tableHTML = '';
@@ -420,7 +419,6 @@ function createBorderPosInputs(tileId, borderPos) {
 	return tableHTML;
 }
 
-
 function createBoxShadowInputs(tileId) {
 
 	var tableHTML = '';
@@ -465,11 +463,6 @@ function createBoxShadowInputs(tileId) {
 	
 	return tableHTML;
 }
-
-
-// /html/body/div/div/div/div[2]/div[7]/div[1]/div
-
-//document.querySelector("#tile-7 > div.flex.flex-col.w-full.text-center.h-full > div")
 
 function createTileTextPosInputs(tileId, textPos) {
 
@@ -803,31 +796,6 @@ $(document).ready(function () {
 	readInSettings();
 	
 });
-</script>
-</head>
-<body>
-	<div class="container">
-	
-		<div id="dashboardSettings-div" class="form-control" style="width: 700px; margin-left: auto; margin-right: auto; margin-bottom: 80px;">
-			<table>
-			<col style="width: 200px;"/>
-			<col style="width: 500px;"/>
-			<tr>
-				<td><button onClick="writeCSS();">Save Settings & Export CSS</button><br/><br/></td>
-				<td style="vertical-align: top; text-align: right; "><a id="cssFileLink" target="_blank">CSS File</a><br>
-					<a id="jsonFileLink" target="_blank">Settings File</a>
-				</td>
-			</tr>
-			</table>
-		</div>
-	</div>
-	
-</body>
-
-
-
-<script>
-
 
 function getTileBorderCSS(tileId, srcTileId, borderPos) {
 	var thickEl		= document.getElementById(srcTileId + '_border' + borderPos + 'Thick');
@@ -1321,13 +1289,6 @@ xhr.send(data);
 
 } // end of writeSettings()
 
-
-
-
-
-</script>
-
-<script>
 function expandSetting(button, tileId, setting, iconToggle) {
     
 	if (iconToggle == "yes") {
@@ -1344,5 +1305,24 @@ function expandSetting(button, tileId, setting, iconToggle) {
     }
   }
 </script>
+</head>
 
+<body>
+	<div class="container">
+	
+		<div id="dashboardSettings-div" class="form-control" style="width: 700px; margin-left: auto; margin-right: auto; margin-bottom: 80px;">
+			<table>
+			<col style="width: 200px;"/>
+			<col style="width: 500px;"/>
+			<tr>
+				<td><button onClick="writeCSS();">Save Settings & Export CSS</button><br/><br/></td>
+				<td style="vertical-align: top; text-align: right; "><a id="cssFileLink" target="_blank">CSS File</a><br>
+					<a id="jsonFileLink" target="_blank">Settings File</a>
+				</td>
+			</tr>
+			</table>
+		</div>
+	</div>
+	
+</body>
 </html>
