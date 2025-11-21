@@ -1,9 +1,11 @@
 /*
+
  * Australian BoM Weather Radar Images Data File Driver
  *
  * Retrieves URLs for radar images from the Australian Bureau of Meteorology (BOM) and stores them in a local file
  *   that is linked to a separate device to display the radar images
  *
+ * Version 1.3 Produced using modified version of the script produced using AI generated improvements (thanks to @Rocketwiz)
  */
 metadata {
     definition(name: 'BoM Radar Images Data File', namespace: 'simnet', author: 'sburke781') {
@@ -64,6 +66,7 @@ void setDataFileName(String pdataFileName) {
 void retrieveImageURLs() {
     debugLog('retrieveImageURLs: updating radar image data')
     String lastUpdate = null
+												   
     def getParams = [
         uri: "http://www.bom.gov.au/products/${idr}.loop.shtml",
         headers: ['User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'],
@@ -81,11 +84,27 @@ void retrieveImageURLs() {
 }
 
 void retrieveImageURLsCallback(resp, data) {
+						  
+																				 
+	  
+ 
     
     String shtmlResponse = groovy.xml.XmlUtil.escapeXml(resp.getData())
+																						   
+		  
+ 
+
+										 
 
             String[] lines = shtmlResponse.split('\\r\\n|\\n|\\r')
             def images = lines.findAll { it.startsWith('theImageNames[') }
+
+																			   
+
+									
+															   
+		  
+ 
 
             String staticImagesJson = '{\n'
             int b = 1 // background image count
@@ -110,10 +129,21 @@ void retrieveImageURLsCallback(resp, data) {
             int i = 1
             images.each {
                 imagesJson += "\"image${i}\": \"http://www.bom.gov.au/radar/${it.substring(32).substring(0,it.substring(32).length() - 7)}\"";
+											
+						 
+										   
+																 
+											  
+																   
+		 
+																	
+													 
                 if (i != images.size()) { imagesJson += ',' }
                 imagesJson += '\n'
+																		   
                 i++
             }
+ 
             imagesJson += '}'
             debugLog("retrieveImageURLsCallback: radar images JSON = ${imagesJson}");
 
